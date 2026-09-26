@@ -13,7 +13,11 @@ pub const MUTED: Color32 = Color32::from_rgb(0x9b, 0x94, 0x7f);
 pub const GOLD: Color32 = Color32::from_rgb(0xff, 0xd1, 0x00);
 
 // Chart series, validated on PANEL (dark band, all pairs): gold, blue, aqua.
-pub const SERIES: [Color32; 3] = [Color32::from_rgb(0xc9, 0x85, 0x00), Color32::from_rgb(0x39, 0x87, 0xe5), Color32::from_rgb(0x19, 0x9e, 0x70)];
+pub const SERIES: [Color32; 3] = [
+    Color32::from_rgb(0xc9, 0x85, 0x00),
+    Color32::from_rgb(0x39, 0x87, 0xe5),
+    Color32::from_rgb(0x19, 0x9e, 0x70),
+];
 pub const DANGER: Color32 = Color32::from_rgb(0xe6, 0x67, 0x67);
 pub const GOOD: Color32 = Color32::from_rgb(0x1e, 0xff, 0x00);
 
@@ -76,20 +80,40 @@ pub fn display_font(size: f32) -> FontId {
 pub fn install(ctx: &egui::Context) {
     let mut fonts = FontDefinitions::default();
     for (name, bytes) in [
-        ("marcellus", &include_bytes!("../assets/fonts/marcellus.ttf")[..]),
-        ("alegreya", &include_bytes!("../assets/fonts/alegreya-sans-400.ttf")[..]),
-        ("alegreya-bold", &include_bytes!("../assets/fonts/alegreya-sans-700.ttf")[..]),
-        ("alegreya-italic", &include_bytes!("../assets/fonts/alegreya-sans-400i.ttf")[..]),
+        (
+            "marcellus",
+            &include_bytes!("../assets/fonts/marcellus.ttf")[..],
+        ),
+        (
+            "alegreya",
+            &include_bytes!("../assets/fonts/alegreya-sans-400.ttf")[..],
+        ),
+        (
+            "alegreya-bold",
+            &include_bytes!("../assets/fonts/alegreya-sans-700.ttf")[..],
+        ),
+        (
+            "alegreya-italic",
+            &include_bytes!("../assets/fonts/alegreya-sans-400i.ttf")[..],
+        ),
     ] {
-        fonts.font_data.insert(name.into(), Arc::new(FontData::from_static(bytes)));
+        fonts
+            .font_data
+            .insert(name.into(), Arc::new(FontData::from_static(bytes)));
     }
-    let fallback = fonts.families.get(&FontFamily::Proportional).cloned().unwrap_or_default();
+    let fallback = fonts
+        .families
+        .get(&FontFamily::Proportional)
+        .cloned()
+        .unwrap_or_default();
     let with = |first: &str| {
         let mut v = vec![first.to_string()];
         v.extend(fallback.iter().cloned());
         v
     };
-    fonts.families.insert(FontFamily::Proportional, with("alegreya"));
+    fonts
+        .families
+        .insert(FontFamily::Proportional, with("alegreya"));
     fonts.families.insert(display(), with("marcellus"));
     fonts.families.insert(bold(), with("alegreya-bold"));
     fonts.families.insert(italic(), with("alegreya-italic"));
@@ -142,7 +166,12 @@ pub fn install(ctx: &egui::Context) {
         v.widgets.inactive.bg_stroke = egui::Stroke::NONE;
         v.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, EDGE);
         v.window_corner_radius = egui::CornerRadius::same(8);
-        v.popup_shadow = egui::Shadow { offset: [0, 6], blur: 24, spread: 0, color: Color32::from_black_alpha(140) };
+        v.popup_shadow = egui::Shadow {
+            offset: [0, 6],
+            blur: 24,
+            spread: 0,
+            color: Color32::from_black_alpha(140),
+        };
     });
 }
 
@@ -176,7 +205,9 @@ pub fn money(copper: i64) -> String {
 }
 
 pub fn local(t: f64) -> chrono::DateTime<chrono::Local> {
-    chrono::DateTime::from_timestamp(t as i64, 0).unwrap_or_default().with_timezone(&chrono::Local)
+    chrono::DateTime::from_timestamp(t as i64, 0)
+        .unwrap_or_default()
+        .with_timezone(&chrono::Local)
 }
 pub fn clock(t: f64) -> String {
     local(t).format("%H:%M").to_string()

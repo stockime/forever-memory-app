@@ -52,8 +52,16 @@ pub fn load(p: &Paths) -> Model {
     let combat = combat::load(&combat_files, &guids);
     let fights = combat::fights(&combat);
     let chat = chat::load(&chat_files);
-    let players = players::build(&combat, &chat, &names);
-    Model { memory, combat, fights, chat, players, loaded_at: SystemTime::now(), stamp: stamp(p) }
+    let players = players::build(&combat, &chat, &names, &memory.players);
+    Model {
+        memory,
+        combat,
+        fights,
+        chat,
+        players,
+        loaded_at: SystemTime::now(),
+        stamp: stamp(p),
+    }
 }
 
 /// Changes whenever the archive commits or the live logs grow, so the app
@@ -62,7 +70,12 @@ pub fn stamp(p: &Paths) -> u64 {
     let mut s = 0u64;
     let mut add = |path: &Path| {
         if let Ok(m) = std::fs::metadata(path) {
-            let t = m.modified().ok().and_then(|t| t.duration_since(SystemTime::UNIX_EPOCH).ok()).map(|d| d.as_secs()).unwrap_or(0);
+            let t = m
+                .modified()
+                .ok()
+                .and_then(|t| t.duration_since(SystemTime::UNIX_EPOCH).ok())
+                .map(|d| d.as_secs())
+                .unwrap_or(0);
             s = s.wrapping_mul(31).wrapping_add(t ^ m.len());
         }
     };

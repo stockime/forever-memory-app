@@ -22,6 +22,7 @@ pub enum UnitKind {
 
 #[derive(Clone, Debug)]
 pub struct Unit {
+    pub guid: String,
     pub name: String,
     pub kind: UnitKind,
 }
@@ -86,9 +87,17 @@ impl Combat {
         };
         let name = name.trim_matches('"');
         // Players come as "First-Realm-"; the realm is noise here.
-        let name = if kind == UnitKind::Player { name.split('-').next().unwrap_or(name) } else { name };
+        let name = if kind == UnitKind::Player {
+            name.split('-').next().unwrap_or(name)
+        } else {
+            name
+        };
         let i = self.units.len() as u32;
-        self.units.push(Unit { name: name.to_string(), kind });
+        self.units.push(Unit {
+            guid: guid.to_string(),
+            name: name.to_string(),
+            kind,
+        });
         self.index.insert(guid.to_string(), i);
         i
     }
@@ -108,10 +117,16 @@ impl Combat {
     }
 
     pub fn unit_name(&self, i: u32) -> &str {
-        self.units.get(i as usize).map(|u| u.name.as_str()).unwrap_or("?")
+        self.units
+            .get(i as usize)
+            .map(|u| u.name.as_str())
+            .unwrap_or("?")
     }
     pub fn spell_name(&self, i: u32) -> &str {
-        self.spells.get(i as usize).map(String::as_str).unwrap_or("?")
+        self.spells
+            .get(i as usize)
+            .map(String::as_str)
+            .unwrap_or("?")
     }
 }
 
@@ -138,7 +153,11 @@ pub fn parse_time(s: &str) -> Option<f64> {
     use chrono::{Local, NaiveDate, TimeZone};
     let (date, time) = s.split_once(' ')?;
     let mut d = date.split('/');
-    let (m, day, y) = (d.next()?.parse().ok()?, d.next()?.parse().ok()?, d.next()?.parse().ok()?);
+    let (m, day, y) = (
+        d.next()?.parse().ok()?,
+        d.next()?.parse().ok()?,
+        d.next()?.parse().ok()?,
+    );
     let mut t = time.split(':');
     let (h, min) = (t.next()?.parse().ok()?, t.next()?.parse().ok()?);
     let sec: f64 = t.next()?.parse().ok()?;
@@ -166,7 +185,9 @@ pub fn load(files: &[std::path::PathBuf], me: &[String]) -> Combat {
 fn parse(c: &mut Combat, text: &str, mine: &[u32], last_hit: &mut HashMap<u32, f64>) {
     let is_me = |u: u32| mine.contains(&u);
     for line in text.lines() {
-        let Some((ts, rest)) = line.split_once("  ") else { continue };
+        let Some((ts, rest)) = line.split_once("  ") else {
+            continue;
+        };
         let Some(t) = parse_time(ts) else { continue };
         let f = fields(rest);
         if f.len() < 9 {
@@ -174,17 +195,33 @@ fn parse(c: &mut Combat, text: &str, mine: &[u32], last_hit: &mut HashMap<u32, f
         }
         c.lines += 1;
         let event = f[0];
-        let src = if f[1].starts_with("0000") || f[1] == "nil" { u32::MAX } else { c.unit(f[1], f[2]) };
-        let dst = if f[5].starts_with("0000") || f[5] == "nil" { u32::MAX } else { c.unit(f[5], f[6]) };
+        let src = if f[1].starts_with("0000") || f[1] == "nil" {
+            u32::MAX
+        } else {
+            c.unit(f[1], f[2])
+        };
+        let dst = if f[5].starts_with("0000") || f[5] == "nil" {
+            u32::MAX
+        } else {
+            c.unit(f[5], f[6])
+        };
         let spell_prefix = event.starts_with("SPELL_") || event.starts_with("RANGE_");
-        let spell = if spell_prefix && f.len() > 10 { c.spell(f[10]) } else { 0 };
+        let spell = if spell_prefix && f.len() > 10 {
+            c.spell(f[10])
+        } else {
+            0
+        };
         let adv = if spell_prefix { 12 } else { 9 };
         let amount_at = adv + ADVANCED;
 
         // Advanced info: position of the unit it describes.
         if f.len() > adv + 17 {
             let info = f[adv];
-            if let (Ok(x), Ok(y), Ok(map)) = (f[adv + 14].parse::<f64>(), f[adv + 15].parse::<f64>(), f[adv + 16].parse::<i64>()) {
+            if let (Ok(x), Ok(y), Ok(map)) = (
+                f[adv + 14].parse::<f64>(),
+                f[adv + 15].parse::<f64>(),
+                f[adv + 16].parse::<i64>(),
+            ) {
                 if let Some(&u) = c.index.get(info) {
                     if is_me(u) {
                         if c.my_positions.last().map_or(true, |p| t - p.0 >= 2.0) {
@@ -215,7 +252,14 @@ fn parse(c: &mut Combat, text: &str, mine: &[u32], last_hit: &mut HashMap<u32, f
         }
 
         let amount = |i: usize| f.get(i).and_then(|v| v.parse::<i64>().ok()).unwrap_or(0);
-        let damage = matches!(event, "SWING_DAMAGE" | "SPELL_DAMAGE" | "SPELL_PERIODIC_DAMAGE" | "RANGE_DAMAGE" | "DAMAGE_SHIELD");
+        let damage = matches!(
+            event,
+            "SWING_DAMAGE"
+                | "SPELL_DAMAGE"
+                | "SPELL_PERIODIC_DAMAGE"
+                | "RANGE_DAMAGE"
+                | "DAMAGE_SHIELD"
+        );
         let heal = matches!(event, "SPELL_HEAL" | "SPELL_PERIODIC_HEAL");
         if damage || heal {
             let hit = Hit {
@@ -229,8 +273,10 @@ fn parse(c: &mut Combat, text: &str, mine: &[u32], last_hit: &mut HashMap<u32, f
                 // Heal: amount, base, overheal, absorbed, critical.
                 crit: f.get(amount_at + if damage { 7 } else { 4 }) == Some(&"1"),
             };
-            let src_player = src != u32::MAX && c.units[src as usize].kind == UnitKind::Player && !is_me(src);
-            let dst_player = dst != u32::MAX && c.units[dst as usize].kind == UnitKind::Player && !is_me(dst);
+            let src_player =
+                src != u32::MAX && c.units[src as usize].kind == UnitKind::Player && !is_me(src);
+            let dst_player =
+                dst != u32::MAX && c.units[dst as usize].kind == UnitKind::Player && !is_me(dst);
             if damage {
                 if src != u32::MAX && is_me(src) {
                     c.dealt.push(hit);
@@ -258,8 +304,17 @@ fn parse(c: &mut Combat, text: &str, mine: &[u32], last_hit: &mut HashMap<u32, f
             }
         }
         match event {
-            "SPELL_CAST_SUCCESS" if src != u32::MAX && !is_me(src) && c.units[src as usize].kind == UnitKind::Player => {
-                *c.players.entry(src).or_default().spells.entry(spell).or_default() += 1;
+            "SPELL_CAST_SUCCESS"
+                if src != u32::MAX
+                    && !is_me(src)
+                    && c.units[src as usize].kind == UnitKind::Player =>
+            {
+                *c.players
+                    .entry(src)
+                    .or_default()
+                    .spells
+                    .entry(spell)
+                    .or_default() += 1;
             }
             "UNIT_DIED" if dst != u32::MAX => {
                 if is_me(dst) {
@@ -299,7 +354,14 @@ pub fn fights(c: &Combat) -> Vec<Fight> {
                 f.to = i + 1;
                 f.damage += h.amount;
             }
-            _ => out.push(Fight { start: h.t, end: h.t, from: i, to: i + 1, damage: h.amount, target: c.unit_name(h.dst).to_string() }),
+            _ => out.push(Fight {
+                start: h.t,
+                end: h.t,
+                from: i,
+                to: i + 1,
+                damage: h.amount,
+                target: c.unit_name(h.dst).to_string(),
+            }),
         }
     }
     out
@@ -308,15 +370,57 @@ pub fn fights(c: &Combat) -> Vec<Fight> {
 /// A best guess at a player's class from the spells they cast.
 pub fn guess_class(spells: &HashMap<u32, u32>, c: &Combat) -> Option<&'static str> {
     const SIGNS: &[(&str, &str)] = &[
-        ("Fireball", "MAGE"), ("Frostbolt", "MAGE"), ("Arcane Missiles", "MAGE"), ("Arcane Intellect", "MAGE"), ("Frost Armor", "MAGE"), ("Fire Blast", "MAGE"),
-        ("Shadow Bolt", "WARLOCK"), ("Immolate", "WARLOCK"), ("Corruption", "WARLOCK"), ("Curse of Agony", "WARLOCK"), ("Demon Skin", "WARLOCK"), ("Life Tap", "WARLOCK"), ("Summon Imp", "WARLOCK"),
-        ("Smite", "PRIEST"), ("Lesser Heal", "PRIEST"), ("Power Word: Fortitude", "PRIEST"), ("Power Word: Shield", "PRIEST"), ("Shadow Word: Pain", "PRIEST"), ("Renew", "PRIEST"),
-        ("Holy Light", "PALADIN"), ("Seal of Righteousness", "PALADIN"), ("Blessing of Might", "PALADIN"), ("Judgement", "PALADIN"), ("Devotion Aura", "PALADIN"), ("Holy Strike", "PALADIN"),
-        ("Heroic Strike", "WARRIOR"), ("Battle Shout", "WARRIOR"), ("Charge", "WARRIOR"), ("Rend", "WARRIOR"), ("Thunder Clap", "WARRIOR"),
-        ("Sinister Strike", "ROGUE"), ("Eviscerate", "ROGUE"), ("Stealth", "ROGUE"), ("Backstab", "ROGUE"),
-        ("Raptor Strike", "HUNTER"), ("Auto Shot", "HUNTER"), ("Serpent Sting", "HUNTER"), ("Arcane Shot", "HUNTER"), ("Aspect of the Monkey", "HUNTER"), ("Hunter's Mark", "HUNTER"),
-        ("Lightning Bolt", "SHAMAN"), ("Earth Shock", "SHAMAN"), ("Rockbiter Weapon", "SHAMAN"), ("Healing Wave", "SHAMAN"), ("Lightning Shield", "SHAMAN"),
-        ("Wrath", "DRUID"), ("Moonfire", "DRUID"), ("Healing Touch", "DRUID"), ("Rejuvenation", "DRUID"), ("Mark of the Wild", "DRUID"), ("Thorns", "DRUID"),
+        ("Fireball", "MAGE"),
+        ("Frostbolt", "MAGE"),
+        ("Arcane Missiles", "MAGE"),
+        ("Arcane Intellect", "MAGE"),
+        ("Frost Armor", "MAGE"),
+        ("Fire Blast", "MAGE"),
+        ("Shadow Bolt", "WARLOCK"),
+        ("Immolate", "WARLOCK"),
+        ("Corruption", "WARLOCK"),
+        ("Curse of Agony", "WARLOCK"),
+        ("Demon Skin", "WARLOCK"),
+        ("Life Tap", "WARLOCK"),
+        ("Summon Imp", "WARLOCK"),
+        ("Smite", "PRIEST"),
+        ("Lesser Heal", "PRIEST"),
+        ("Power Word: Fortitude", "PRIEST"),
+        ("Power Word: Shield", "PRIEST"),
+        ("Shadow Word: Pain", "PRIEST"),
+        ("Renew", "PRIEST"),
+        ("Holy Light", "PALADIN"),
+        ("Seal of Righteousness", "PALADIN"),
+        ("Blessing of Might", "PALADIN"),
+        ("Judgement", "PALADIN"),
+        ("Devotion Aura", "PALADIN"),
+        ("Holy Strike", "PALADIN"),
+        ("Heroic Strike", "WARRIOR"),
+        ("Battle Shout", "WARRIOR"),
+        ("Charge", "WARRIOR"),
+        ("Rend", "WARRIOR"),
+        ("Thunder Clap", "WARRIOR"),
+        ("Sinister Strike", "ROGUE"),
+        ("Eviscerate", "ROGUE"),
+        ("Stealth", "ROGUE"),
+        ("Backstab", "ROGUE"),
+        ("Raptor Strike", "HUNTER"),
+        ("Auto Shot", "HUNTER"),
+        ("Serpent Sting", "HUNTER"),
+        ("Arcane Shot", "HUNTER"),
+        ("Aspect of the Monkey", "HUNTER"),
+        ("Hunter's Mark", "HUNTER"),
+        ("Lightning Bolt", "SHAMAN"),
+        ("Earth Shock", "SHAMAN"),
+        ("Rockbiter Weapon", "SHAMAN"),
+        ("Healing Wave", "SHAMAN"),
+        ("Lightning Shield", "SHAMAN"),
+        ("Wrath", "DRUID"),
+        ("Moonfire", "DRUID"),
+        ("Healing Touch", "DRUID"),
+        ("Rejuvenation", "DRUID"),
+        ("Mark of the Wild", "DRUID"),
+        ("Thorns", "DRUID"),
     ];
     let mut votes: HashMap<&str, u32> = HashMap::new();
     for (&s, &n) in spells {
@@ -334,7 +438,10 @@ pub fn log_files(dirs: &[&Path], prefix: &str) -> Vec<std::path::PathBuf> {
         if let Ok(rd) = fs::read_dir(d) {
             for f in rd.flatten() {
                 let n = f.file_name().to_string_lossy().to_string();
-                if n.contains(prefix) && n.ends_with(".txt") && f.metadata().map(|m| m.len() > 0).unwrap_or(false) {
+                if n.contains(prefix)
+                    && n.ends_with(".txt")
+                    && f.metadata().map(|m| m.len() > 0).unwrap_or(false)
+                {
                     out.push(f.path());
                 }
             }

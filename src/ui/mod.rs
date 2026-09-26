@@ -9,8 +9,8 @@ pub mod players;
 pub mod quests;
 
 use crate::art::Art;
-use crate::data::memory::{parse_link, Character, QuestStatus};
 use crate::data::Model;
+use crate::data::memory::{Character, QuestStatus, parse_link};
 use crate::theme::{self, EDGE, GOLD, INK, MUTED, PANEL, RAISED};
 use crate::{Page, State};
 use egui::{Color32, RichText, Stroke, Ui, Vec2};
@@ -20,17 +20,48 @@ pub fn character<'a>(m: &'a Model, st: &State) -> &'a Character {
     &m.memory.characters[st.character.min(m.memory.characters.len() - 1)]
 }
 
-pub fn top_bar(ui: &mut Ui, m: &Model, st: &mut State, page: &mut Page, art: &mut Art, loading: bool) {
+pub fn top_bar(
+    ui: &mut Ui,
+    m: &Model,
+    st: &mut State,
+    page: &mut Page,
+    art: &mut Art,
+    loading: bool,
+) {
     ui.horizontal(|ui| {
-        ui.label(RichText::new("Forever Memory").font(theme::display_font(22.0)).color(GOLD));
+        ui.label(
+            RichText::new("Forever Memory")
+                .font(theme::display_font(22.0))
+                .color(GOLD),
+        );
         ui.add_space(28.0);
         for (i, c) in m.memory.characters.iter().enumerate() {
             let selected = i == st.character;
-            if let Some(tex) = art.get(ui.ctx(), &format!("class-{}.png", c.class_file.to_lowercase())) {
-                ui.add(egui::Image::new(&tex).fit_to_exact_size(Vec2::splat(22.0)).corner_radius(4));
+            if let Some(tex) = art.get(
+                ui.ctx(),
+                &format!("class-{}.png", c.class_file.to_lowercase()),
+            ) {
+                ui.add(
+                    egui::Image::new(&tex)
+                        .fit_to_exact_size(Vec2::splat(22.0))
+                        .corner_radius(4),
+                );
             }
-            let text = RichText::new(format!("{}  {}", c.name, c.level)).size(16.0).color(if selected { theme::class_color(&c.class_file) } else { MUTED });
-            if ui.add(egui::Button::new(text).fill(if selected { RAISED } else { Color32::TRANSPARENT })).clicked() {
+            let text = RichText::new(format!("{}  {}", c.name, c.level))
+                .size(16.0)
+                .color(if selected {
+                    theme::class_color(&c.class_file)
+                } else {
+                    MUTED
+                });
+            if ui
+                .add(egui::Button::new(text).fill(if selected {
+                    RAISED
+                } else {
+                    Color32::TRANSPARENT
+                }))
+                .clicked()
+            {
                 st.character = i;
                 st.quest = None;
                 st.session = None;
@@ -39,8 +70,21 @@ pub fn top_bar(ui: &mut Ui, m: &Model, st: &mut State, page: &mut Page, art: &mu
             }
         }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let status = if loading { "reading…".to_string() } else { format!("read {}", theme::ago(m.loaded_at.duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs_f64()).unwrap_or(0.0))) };
-            ui.label(RichText::new(status).small().color(MUTED)).on_hover_text("Reloads on its own after each save; F5 reloads now");
+            let status = if loading {
+                "reading…".to_string()
+            } else {
+                format!(
+                    "read {}",
+                    theme::ago(
+                        m.loaded_at
+                            .duration_since(std::time::UNIX_EPOCH)
+                            .map(|d| d.as_secs_f64())
+                            .unwrap_or(0.0)
+                    )
+                )
+            };
+            ui.label(RichText::new(status).small().color(MUTED))
+                .on_hover_text("Reloads on its own after each save; F5 reloads now");
             ui.add_space(12.0);
             search(ui, m, st, page);
         });
@@ -53,7 +97,12 @@ fn search(ui: &mut Ui, m: &Model, st: &mut State, page: &mut Page) {
     if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::K)) {
         ui.memory_mut(|mem| mem.request_focus(id));
     }
-    let resp = ui.add(egui::TextEdit::singleline(&mut st.search).id(id).hint_text("Search quests, players, items  (Ctrl+K)").desired_width(320.0));
+    let resp = ui.add(
+        egui::TextEdit::singleline(&mut st.search)
+            .id(id)
+            .hint_text("Search quests, players, items  (Ctrl+K)")
+            .desired_width(320.0),
+    );
     if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
         st.search.clear();
     }
@@ -68,25 +117,59 @@ fn search(ui: &mut Ui, m: &Model, st: &mut State, page: &mut Page) {
     for quest in &c.quests {
         if quest.title.to_lowercase().contains(&q) {
             let id = quest.id;
-            let tab = match quest.status { QuestStatus::Active => 0, QuestStatus::Completed => 1, _ => 2 };
-            hits.push(("Quest".into(), quest.title.clone(), Box::new(move |s, p| { s.quest = Some(id); s.quest_tab = tab; *p = Page::Quests; })));
+            let tab = match quest.status {
+                QuestStatus::Active => 0,
+                QuestStatus::Completed => 1,
+                _ => 2,
+            };
+            hits.push((
+                "Quest".into(),
+                quest.title.clone(),
+                Box::new(move |s, p| {
+                    s.quest = Some(id);
+                    s.quest_tab = tab;
+                    *p = Page::Quests;
+                }),
+            ));
         }
     }
     for p in &m.players {
         if p.name.to_lowercase().contains(&q) {
             let name = p.name.clone();
-            hits.push(("Player".into(), p.name.clone(), Box::new(move |s, pg| { s.player = Some(name.clone()); *pg = Page::Players; })));
+            hits.push((
+                "Player".into(),
+                p.name.clone(),
+                Box::new(move |s, pg| {
+                    s.player = Some(name.clone());
+                    *pg = Page::Players;
+                }),
+            ));
         }
     }
-    let mut items: Vec<_> = m.memory.items.values().filter(|i| i.name.to_lowercase().contains(&q)).map(|i| i.name.clone()).collect();
+    let mut items: Vec<_> = m
+        .memory
+        .items
+        .values()
+        .filter(|i| i.name.to_lowercase().contains(&q))
+        .map(|i| i.name.clone())
+        .collect();
     items.sort();
     items.dedup();
     for name in items.into_iter().take(6) {
         let n = name.clone();
-        hits.push(("Item".into(), name, Box::new(move |s, p| { s.loot_search = n.clone(); *p = Page::Economy; })));
+        hits.push((
+            "Item".into(),
+            name,
+            Box::new(move |s, p| {
+                s.loot_search = n.clone();
+                *p = Page::Economy;
+            }),
+        ));
     }
     hits.truncate(12);
-    let area = egui::Area::new(id.with("results")).order(egui::Order::Foreground).fixed_pos(resp.rect.left_bottom() + egui::vec2(0.0, 6.0));
+    let area = egui::Area::new(id.with("results"))
+        .order(egui::Order::Foreground)
+        .fixed_pos(resp.rect.left_bottom() + egui::vec2(0.0, 6.0));
     area.show(ui.ctx(), |ui| {
         egui::Frame::popup(ui.style()).fill(PANEL).show(ui, |ui| {
             ui.set_width(resp.rect.width().max(320.0));
@@ -94,7 +177,12 @@ fn search(ui: &mut Ui, m: &Model, st: &mut State, page: &mut Page) {
                 ui.label(RichText::new("Nothing found").color(MUTED));
             }
             for (kind, label, go) in &hits {
-                let r = ui.add(egui::Button::new(RichText::new(label.as_str())).fill(Color32::TRANSPARENT).right_text(RichText::new(kind.as_str()).small().color(MUTED)).min_size(egui::vec2(ui.available_width(), 28.0)));
+                let r = ui.add(
+                    egui::Button::new(RichText::new(label.as_str()))
+                        .fill(Color32::TRANSPARENT)
+                        .right_text(RichText::new(kind.as_str()).small().color(MUTED))
+                        .min_size(egui::vec2(ui.available_width(), 28.0)),
+                );
                 if r.clicked() {
                     go(st, page);
                     st.search.clear();
@@ -104,25 +192,42 @@ fn search(ui: &mut Ui, m: &Model, st: &mut State, page: &mut Page) {
     });
 }
 
+/// Tables and bar lists lay out on one line per row; names never break.
+pub fn nowrap(ui: &mut Ui) {
+    ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Extend);
+}
+
 pub fn empty(ui: &mut Ui, text: &str) {
     ui.add_space(40.0);
     ui.label(RichText::new(text).color(MUTED).size(17.0));
 }
 
 pub fn heading(ui: &mut Ui, text: &str) {
-    ui.label(RichText::new(text).font(theme::display_font(24.0)).color(INK));
+    ui.label(
+        RichText::new(text)
+            .font(theme::display_font(24.0))
+            .color(INK),
+    );
 }
 
 /// A smaller section title in the client's label gold.
 pub fn label(ui: &mut Ui, text: &str) {
-    ui.label(RichText::new(text).font(theme::display_font(17.0)).color(GOLD));
+    ui.label(
+        RichText::new(text)
+            .font(theme::display_font(17.0))
+            .color(GOLD),
+    );
 }
 
 /// A number with a caption underneath.
 pub fn figure(ui: &mut Ui, value: &str, caption: &str) {
     ui.vertical(|ui| {
         ui.spacing_mut().item_spacing.y = 0.0;
-        ui.label(RichText::new(value).font(theme::display_font(26.0)).color(INK));
+        ui.label(
+            RichText::new(value)
+                .font(theme::display_font(26.0))
+                .color(INK),
+        );
         ui.label(RichText::new(caption).small().color(MUTED));
     });
 }
@@ -147,14 +252,30 @@ pub fn card<R>(ui: &mut Ui, add: impl FnOnce(&mut Ui) -> R) -> R {
 }
 
 /// An item or spell icon with a quality-coloured border.
-pub fn icon(ui: &mut Ui, art: &mut Art, icon: Option<i64>, border: Color32, size: f32) -> egui::Response {
+pub fn icon(
+    ui: &mut Ui,
+    art: &mut Art,
+    icon: Option<i64>,
+    border: Color32,
+    size: f32,
+) -> egui::Response {
     let (rect, resp) = ui.allocate_exact_size(Vec2::splat(size), egui::Sense::hover());
     let p = ui.painter();
     p.rect_filled(rect, 5.0, Color32::from_rgb(5, 7, 15));
     if let Some(tex) = art.icon(ui.ctx(), icon) {
-        p.image(tex.id(), rect.shrink(2.0), egui::Rect::from_min_max(egui::pos2(0.07, 0.07), egui::pos2(0.93, 0.93)), Color32::WHITE);
+        p.image(
+            tex.id(),
+            rect.shrink(2.0),
+            egui::Rect::from_min_max(egui::pos2(0.07, 0.07), egui::pos2(0.93, 0.93)),
+            Color32::WHITE,
+        );
     }
-    p.rect_stroke(rect, 5.0, Stroke::new(1.5, border), egui::StrokeKind::Inside);
+    p.rect_stroke(
+        rect,
+        5.0,
+        Stroke::new(1.5, border),
+        egui::StrokeKind::Inside,
+    );
     resp
 }
 
@@ -193,7 +314,12 @@ pub fn hex(s: &str) -> Option<Color32> {
 pub fn item_link(ui: &mut Ui, m: &Model, art: &mut Art, link: &str, size: f32) -> egui::Response {
     let l = parse_link(link).unwrap_or_default();
     let info = m.memory.items.get(&l.id);
-    let name = if l.name.is_empty() { info.map(|i| i.name.clone()).unwrap_or_else(|| format!("Item {}", l.id)) } else { l.name.clone() };
+    let name = if l.name.is_empty() {
+        info.map(|i| i.name.clone())
+            .unwrap_or_else(|| format!("Item {}", l.id))
+    } else {
+        l.name.clone()
+    };
     let q = l.quality.or(info.and_then(|i| i.quality));
     ui.horizontal(|ui| {
         if let Some(i) = info.and_then(|i| i.icon) {
@@ -218,12 +344,23 @@ pub fn plot(id: &str) -> egui_plot::Plot<'static> {
 }
 
 /// A row of toggles; `hidden` holds the ones switched off.
-pub fn chips(ui: &mut Ui, all: &[&'static str], hidden: &mut std::collections::HashSet<&'static str>) {
+pub fn chips(
+    ui: &mut Ui,
+    all: &[&'static str],
+    hidden: &mut std::collections::HashSet<&'static str>,
+) {
     ui.horizontal_wrapped(|ui| {
         for &c in all {
             let on = !hidden.contains(c);
             let text = RichText::new(c).color(if on { INK } else { MUTED });
-            if ui.add(egui::Button::new(text).fill(if on { RAISED } else { Color32::TRANSPARENT }).stroke(Stroke::new(1.0, EDGE))).clicked() {
+            if ui
+                .add(
+                    egui::Button::new(text)
+                        .fill(if on { RAISED } else { Color32::TRANSPARENT })
+                        .stroke(Stroke::new(1.0, EDGE)),
+                )
+                .clicked()
+            {
                 if on {
                     hidden.insert(c);
                 } else {

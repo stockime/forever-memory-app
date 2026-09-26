@@ -12,13 +12,14 @@ characters: the armory, plus everything the memory recorder keeps.
   loot or deaths; each one as a feed of loot, money, XP, quests, places,
   deaths, NPCs and the chat going on at the time, with filters.
 - **Diary**: a personality note per character, and for each day played an
-  entry the character writes themselves, in first person and from inside the
-  world, written by Claude (`claude-opus-5`) from that day's recorded facts.
-  The facts sit under each entry so every sentence can be checked; entries and
-  notes are committed to the memory archive (`characters/<name>/diary/`,
-  `personality.md`). Other players' chat is never sent. Needs an Anthropic API
-  key: `ANTHROPIC_API_KEY`, or paste one in the app (kept in
-  `~/.config/forever-memory/anthropic-api-key`, mode 600).
+  entry the character writes themselves: a first-person look back on the day's
+  journey, from inside the world, written by Claude Code (`claude -p`, the CLI
+  behind `cx`, with its existing login; no API key) from that day's recorded
+  facts. The facts sit under each entry so every sentence can be checked;
+  entries and notes are committed to the memory archive
+  (`characters/<name>/diary/`, `personality.md`). Other players' chat is never
+  sent. `forever-memory diary <character> [YYYY-MM-DD]` writes one from the
+  command line.
 - **Quests**: active (with objective progress), completed and abandoned, with
   the full quest text, rewards offered and chosen, time taken, and how the
   objectives progressed.
@@ -28,7 +29,9 @@ characters: the armory, plus everything the memory recorder keeps.
   and the ten seconds before every death, from the native combat logs.
 - **Gold & loot**: where money comes from and goes, every item that went
   through the bags.
-- **Players**: everyone met, searchable, with a class guess from their spells,
+- **Players**: everyone met, searchable, with full names, class, race, level
+  and guild once the addon has seen them up close (else a class guess from
+  their spells),
   what passed between you, what they cast and what they said.
 
 Ctrl+K searches quests, players and items from anywhere; F5 reloads. The app

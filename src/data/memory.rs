@@ -20,7 +20,9 @@ impl Event {
         self.v.get(k).and_then(Value::as_str)
     }
     pub fn i(&self, k: &str) -> Option<i64> {
-        self.v.get(k).and_then(|x| x.as_i64().or_else(|| x.as_f64().map(|f| f as i64)))
+        self.v
+            .get(k)
+            .and_then(|x| x.as_i64().or_else(|| x.as_f64().map(|f| f as i64)))
     }
     pub fn f(&self, k: &str) -> Option<f64> {
         self.v.get(k).and_then(Value::as_f64)
@@ -31,9 +33,16 @@ impl Event {
 /// string keys; this yields (lua index, value) either way.
 pub fn entries(v: &Value) -> Vec<(i64, &Value)> {
     match v {
-        Value::Array(a) => a.iter().enumerate().map(|(i, x)| (i as i64 + 1, x)).collect(),
+        Value::Array(a) => a
+            .iter()
+            .enumerate()
+            .map(|(i, x)| (i as i64 + 1, x))
+            .collect(),
         Value::Object(o) => {
-            let mut out: Vec<_> = o.iter().filter_map(|(k, x)| k.parse().ok().map(|i| (i, x))).collect();
+            let mut out: Vec<_> = o
+                .iter()
+                .filter_map(|(k, x)| k.parse().ok().map(|i| (i, x)))
+                .collect();
             out.sort_by_key(|(i, _)| *i);
             out
         }
@@ -57,9 +66,25 @@ pub struct Link {
 }
 
 pub fn parse_link(link: &str) -> Option<Link> {
-    let id = link.split("item:").nth(1)?.split(':').next()?.parse().ok()?;
-    let name = link.split('[').nth(1).and_then(|s| s.split(']').next()).unwrap_or("").to_string();
-    let quality = link.split("|cnIQ").nth(1).and_then(|s| s.chars().next()).and_then(|c| c.to_digit(10)).map(i64::from);
+    let id = link
+        .split("item:")
+        .nth(1)?
+        .split(':')
+        .next()?
+        .parse()
+        .ok()?;
+    let name = link
+        .split('[')
+        .nth(1)
+        .and_then(|s| s.split(']').next())
+        .unwrap_or("")
+        .to_string();
+    let quality = link
+        .split("|cnIQ")
+        .nth(1)
+        .and_then(|s| s.chars().next())
+        .and_then(|c| c.to_digit(10))
+        .map(i64::from);
     Some(Link { id, name, quality })
 }
 
@@ -166,8 +191,21 @@ impl Character {
     }
 }
 
+/// A player the addon saw up close (mouseover, target, nameplate, group).
+#[derive(Clone, Debug, Default)]
+pub struct KnownPlayer {
+    pub name: String,
+    pub surname: String,
+    pub class: String,
+    pub race: String,
+    pub level: i64,
+    pub guild: String,
+}
+
 pub struct Memory {
     pub characters: Vec<Character>,
+    /// By GUID, the same key the combat log uses.
+    pub players: HashMap<String, KnownPlayer>,
     pub items: HashMap<i64, ItemInfo>,
     /// NPC gossip: (npc name, text, options)
     pub gossip: Vec<(String, String, Vec<String>)>,
@@ -182,18 +220,28 @@ pub fn load(repo: &Path) -> Memory {
     if let Some(Value::Object(o)) = read_json(&repo.join("items.json")) {
         for (k, v) in o {
             let Ok(id) = k.parse() else { continue };
-            items.insert(id, ItemInfo {
-                name: v.get("name").and_then(Value::as_str).unwrap_or("").to_string(),
-                icon: v.get("icon").and_then(Value::as_i64),
-                quality: v.get("q").and_then(Value::as_i64),
-            });
+            items.insert(
+                id,
+                ItemInfo {
+                    name: v
+                        .get("name")
+                        .and_then(Value::as_str)
+                        .unwrap_or("")
+                        .to_string(),
+                    icon: v.get("icon").and_then(Value::as_i64),
+                    quality: v.get("q").and_then(Value::as_i64),
+                },
+            );
         }
     }
     let mut texts: HashMap<i64, Value> = HashMap::new();
     if let Ok(dir) = fs::read_dir(repo.join("quests")) {
         for f in dir.flatten() {
             let name = f.file_name().to_string_lossy().to_string();
-            if let (Some(id), Some(v)) = (name.strip_suffix(".json").and_then(|s| s.parse().ok()), read_json(&f.path())) {
+            if let (Some(id), Some(v)) = (
+                name.strip_suffix(".json").and_then(|s| s.parse().ok()),
+                read_json(&f.path()),
+            ) {
                 texts.insert(id, v);
             }
         }
@@ -201,10 +249,24 @@ pub fn load(repo: &Path) -> Memory {
     let mut gossip = vec![];
     if let Some(Value::Object(o)) = read_json(&repo.join("gossip.json")) {
         for v in o.values() {
-            let opts = v.get("options").map(|o| entries(o).into_iter().filter_map(|(_, x)| x.as_str().map(str::to_string)).collect()).unwrap_or_default();
+            let opts = v
+                .get("options")
+                .map(|o| {
+                    entries(o)
+                        .into_iter()
+                        .filter_map(|(_, x)| x.as_str().map(str::to_string))
+                        .collect()
+                })
+                .unwrap_or_default();
             gossip.push((
-                v.get("name").and_then(Value::as_str).unwrap_or("?").to_string(),
-                v.get("text").and_then(Value::as_str).unwrap_or("").to_string(),
+                v.get("name")
+                    .and_then(Value::as_str)
+                    .unwrap_or("?")
+                    .to_string(),
+                v.get("text")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string(),
                 opts,
             ));
         }
@@ -219,12 +281,42 @@ pub fn load(repo: &Path) -> Memory {
         }
     }
     characters.sort_by(|a, b| b.level.cmp(&a.level).then(a.name.cmp(&b.name)));
-    Memory { characters, items, gossip }
+    let mut players = HashMap::new();
+    if let Some(Value::Object(o)) = read_json(&repo.join("players.json")) {
+        for (guid, v) in o {
+            let s = |k: &str| v.get(k).and_then(Value::as_str).unwrap_or("").to_string();
+            let known = KnownPlayer {
+                name: s("name"),
+                surname: s("surname"),
+                class: s("class"),
+                race: s("race"),
+                level: v.get("level").and_then(Value::as_i64).unwrap_or(0),
+                guild: s("guild"),
+            };
+            players.insert(guid, known);
+        }
+    }
+    Memory {
+        characters,
+        players,
+        items,
+        gossip,
+    }
 }
 
-fn load_character(dir: &Path, texts: &HashMap<i64, Value>, items: &mut HashMap<i64, ItemInfo>) -> Option<Character> {
+fn load_character(
+    dir: &Path,
+    texts: &HashMap<i64, Value>,
+    items: &mut HashMap<i64, ItemInfo>,
+) -> Option<Character> {
     let snapshot = read_json(&dir.join("snapshot.json"))?;
-    let s = |k: &str| snapshot.get(k).and_then(Value::as_str).unwrap_or("").to_string();
+    let s = |k: &str| {
+        snapshot
+            .get(k)
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string()
+    };
     let i = |k: &str| snapshot.get(k).and_then(Value::as_i64).unwrap_or(0);
     let mut name = s("displayName");
     if name.is_empty() {
@@ -233,7 +325,10 @@ fn load_character(dir: &Path, texts: &HashMap<i64, Value>, items: &mut HashMap<i
     let mut c = Character {
         slug: dir.file_name()?.to_string_lossy().to_string(),
         name,
-        personality: fs::read_to_string(dir.join("personality.md")).unwrap_or_default().trim().to_string(),
+        personality: fs::read_to_string(dir.join("personality.md"))
+            .unwrap_or_default()
+            .trim()
+            .to_string(),
         guid: s("guid"),
         class: s("class"),
         class_file: s("classFile"),
@@ -242,15 +337,24 @@ fn load_character(dir: &Path, texts: &HashMap<i64, Value>, items: &mut HashMap<i
         zone: s("zone"),
         money: i("money"),
         xp: (
-            snapshot.pointer("/xp/cur").and_then(Value::as_i64).unwrap_or(0),
-            snapshot.pointer("/xp/max").and_then(Value::as_i64).unwrap_or(0),
+            snapshot
+                .pointer("/xp/cur")
+                .and_then(Value::as_i64)
+                .unwrap_or(0),
+            snapshot
+                .pointer("/xp/max")
+                .and_then(Value::as_i64)
+                .unwrap_or(0),
         ),
         ..Default::default()
     };
     // Worn items teach the catalogue their icons too.
     if let Some(eq) = snapshot.get("equipment") {
         for (_, it) in entries(eq) {
-            if let (Some(id), Some(icon)) = (it.get("id").and_then(Value::as_i64), it.get("icon").and_then(Value::as_i64)) {
+            if let (Some(id), Some(icon)) = (
+                it.get("id").and_then(Value::as_i64),
+                it.get("icon").and_then(Value::as_i64),
+            ) {
                 let e = items.entry(id).or_default();
                 e.icon.get_or_insert(icon);
                 if e.quality.is_none() {
@@ -274,14 +378,27 @@ fn load_character(dir: &Path, texts: &HashMap<i64, Value>, items: &mut HashMap<i
         }
     }
     if let Some(Value::Object(o)) = read_json(&dir.join("seen.json")) {
-        c.seen = o.into_iter().filter_map(|(k, v)| v.as_i64().map(|t| (k, t))).collect();
+        c.seen = o
+            .into_iter()
+            .filter_map(|(k, v)| v.as_i64().map(|t| (k, t)))
+            .collect();
     }
-    let mut files: Vec<_> = fs::read_dir(dir.join("log")).map(|d| d.flatten().map(|f| f.path()).collect()).unwrap_or_default();
+    let mut files: Vec<_> = fs::read_dir(dir.join("log"))
+        .map(|d| d.flatten().map(|f| f.path()).collect())
+        .unwrap_or_default();
     files.sort();
     for f in files {
         for line in fs::read_to_string(&f).unwrap_or_default().lines() {
-            let Ok(v) = serde_json::from_str::<Value>(line) else { continue };
-            let (Some(n), Some(t), Some(e)) = (v.get("n").and_then(Value::as_i64), v.get("t").and_then(Value::as_i64), v.get("e").and_then(Value::as_str)) else { continue };
+            let Ok(v) = serde_json::from_str::<Value>(line) else {
+                continue;
+            };
+            let (Some(n), Some(t), Some(e)) = (
+                v.get("n").and_then(Value::as_i64),
+                v.get("t").and_then(Value::as_i64),
+                v.get("e").and_then(Value::as_str),
+            ) else {
+                continue;
+            };
             let e = e.to_string();
             c.events.push(Event { n, t, e, v });
         }
@@ -325,7 +442,15 @@ fn sessions(events: &[Event]) -> Vec<Session> {
                 out.push(s);
             }
             level = e.i("level").unwrap_or(level);
-            cur = Some(Session { start: e.t, end: e.t, from: i, to: i + 1, level_from: level, level_to: level, ..Default::default() });
+            cur = Some(Session {
+                start: e.t,
+                end: e.t,
+                from: i,
+                to: i + 1,
+                level_from: level,
+                level_to: level,
+                ..Default::default()
+            });
             continue;
         }
         let Some(s) = cur.as_mut() else { continue };
@@ -334,7 +459,9 @@ fn sessions(events: &[Event]) -> Vec<Session> {
         match e.e.as_str() {
             "xp" => s.xp += e.i("d").unwrap_or(0).max(0),
             "money" => s.money += e.i("d").unwrap_or(0),
-            "item" if e.i("d").unwrap_or(0) > 0 && e.s("ctx") == Some("loot") => s.items += e.i("d").unwrap_or(0),
+            "item" if e.i("d").unwrap_or(0) > 0 && e.s("ctx") == Some("loot") => {
+                s.items += e.i("d").unwrap_or(0)
+            }
             "quest" if e.s("act") == Some("turnin") => {
                 s.quests += 1;
                 s.xp += e.i("xp").unwrap_or(0);
@@ -410,12 +537,16 @@ fn quests(c: &Character, texts: &HashMap<i64, Value>, questlog: Option<Value>) -
             }
             "objective" => {
                 if let Some(id) = e.i("id") {
-                    by_id.entry(id).or_insert_with(|| new(id)).progress_events.push((
-                        e.t,
-                        e.i("i").unwrap_or(0),
-                        e.i("have").unwrap_or(0),
-                        e.i("need").unwrap_or(0),
-                    ));
+                    by_id
+                        .entry(id)
+                        .or_insert_with(|| new(id))
+                        .progress_events
+                        .push((
+                            e.t,
+                            e.i("i").unwrap_or(0),
+                            e.i("have").unwrap_or(0),
+                            e.i("need").unwrap_or(0),
+                        ));
                 }
             }
             _ => {}
@@ -424,7 +555,9 @@ fn quests(c: &Character, texts: &HashMap<i64, Value>, questlog: Option<Value>) -
     let mut active = std::collections::HashSet::new();
     if let Some(ql) = questlog {
         for (_, q) in entries(&ql) {
-            let Some(id) = q.get("id").and_then(Value::as_i64) else { continue };
+            let Some(id) = q.get("id").and_then(Value::as_i64) else {
+                continue;
+            };
             active.insert(id);
             let quest = by_id.entry(id).or_insert_with(|| new(id));
             if let Some(t) = q.get("title").and_then(Value::as_str) {
@@ -432,14 +565,24 @@ fn quests(c: &Character, texts: &HashMap<i64, Value>, questlog: Option<Value>) -
             }
             quest.level = q.get("level").and_then(Value::as_i64);
             quest.complete = q.get("complete").and_then(Value::as_bool).unwrap_or(false);
-            quest.objectives = q.get("objectives").map(|o| {
-                entries(o).into_iter().map(|(_, o)| Objective {
-                    text: o.get("text").and_then(Value::as_str).unwrap_or("").to_string(),
-                    have: o.get("have").and_then(Value::as_i64).unwrap_or(0),
-                    need: o.get("need").and_then(Value::as_i64).unwrap_or(0),
-                    done: o.get("done").and_then(Value::as_bool).unwrap_or(false),
-                }).collect()
-            }).unwrap_or_default();
+            quest.objectives = q
+                .get("objectives")
+                .map(|o| {
+                    entries(o)
+                        .into_iter()
+                        .map(|(_, o)| Objective {
+                            text: o
+                                .get("text")
+                                .and_then(Value::as_str)
+                                .unwrap_or("")
+                                .to_string(),
+                            have: o.get("have").and_then(Value::as_i64).unwrap_or(0),
+                            need: o.get("need").and_then(Value::as_i64).unwrap_or(0),
+                            done: o.get("done").and_then(Value::as_bool).unwrap_or(false),
+                        })
+                        .collect()
+                })
+                .unwrap_or_default();
         }
     }
     for q in by_id.values_mut() {
@@ -453,7 +596,15 @@ fn quests(c: &Character, texts: &HashMap<i64, Value>, questlog: Option<Value>) -
             q.progress = s("progress");
             q.reward = s("reward");
             q.level = q.level.or(t.get("level").and_then(Value::as_i64));
-            q.choices = t.get("choices").map(|c| entries(c).into_iter().filter_map(|(_, x)| x.as_str().map(str::to_string)).collect()).unwrap_or_default();
+            q.choices = t
+                .get("choices")
+                .map(|c| {
+                    entries(c)
+                        .into_iter()
+                        .filter_map(|(_, x)| x.as_str().map(str::to_string))
+                        .collect()
+                })
+                .unwrap_or_default();
         }
         if q.title.is_empty() {
             q.title = format!("Quest {}", q.id);

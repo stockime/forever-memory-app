@@ -1,82 +1,81 @@
-//! One call to the Claude API (raw HTTP: Rust has no official Anthropic SDK).
-//! Refused requests are re-run server-side on Anthropic's recommended model
-//! (`fallbacks: "default"`).
+//! Writes with Claude Code (`claude -p`, the CLI behind `cx`), using the
+//! login it already has: no API key. Runs with no tools, no MCP servers and
+//! no saved session, from an empty directory so no project settings apply.
 
-use serde_json::{json, Value};
-use std::path::PathBuf;
-use std::time::Duration;
+use std::io::Write;
+use std::process::{Command, Stdio};
 
-pub const MODEL: &str = "claude-opus-5";
+pub const WRITER: &str = "Claude Code";
 
-/// The key comes from ANTHROPIC_API_KEY or ~/.config/forever-memory/anthropic-api-key.
-pub fn key_file() -> PathBuf {
-    PathBuf::from(std::env::var("HOME").unwrap_or_default()).join(".config/forever-memory/anthropic-api-key")
+fn binary() -> String {
+    // The installed binary itself: ~/.local/bin/claude is a mise wrapper
+    // that rewrites the global mise config on every run.
+    std::env::var("FM_CLAUDE").unwrap_or_else(|_| {
+        let installed = format!(
+            "{}/.local/share/mise/installs/claude/latest/claude",
+            std::env::var("HOME").unwrap_or_default()
+        );
+        if std::path::Path::new(&installed).exists() {
+            installed
+        } else {
+            "claude".into()
+        }
+    })
 }
 
-pub fn api_key() -> Option<String> {
-    std::env::var("ANTHROPIC_API_KEY")
-        .ok()
-        .or_else(|| std::fs::read_to_string(key_file()).ok())
-        .map(|k| k.trim().to_string())
-        .filter(|k| !k.is_empty())
+/// Whether Claude Code can be run; checked once.
+pub fn available() -> bool {
+    static OK: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *OK.get_or_init(|| {
+        Command::new(binary())
+            .arg("--version")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .is_ok_and(|s| s.success())
+    })
 }
 
-pub fn save_key(key: &str) -> std::io::Result<()> {
-    let path = key_file();
-    std::fs::create_dir_all(path.parent().unwrap())?;
-    std::fs::write(&path, key.trim())?;
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600))?;
+/// Sends the prompt on stdin and returns the answer.
+pub fn write(system: &str, prompt: &str) -> Result<String, String> {
+    let dir = std::env::temp_dir().join("forever-memory-writer");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let mut child = Command::new(binary())
+        .current_dir(&dir)
+        .args([
+            "-p",
+            "--output-format",
+            "text",
+            "--tools",
+            "",
+            "--strict-mcp-config",
+            "--no-session-persistence",
+            "--system-prompt",
+            system,
+        ])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("Could not start claude: {e}"))?;
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(prompt.as_bytes())
+        .map_err(|e| e.to_string())?;
+    let out = child.wait_with_output().map_err(|e| e.to_string())?;
+    let text = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    if !out.status.success() || text.is_empty() {
+        let err = String::from_utf8_lossy(&out.stderr);
+        return Err(format!(
+            "claude failed: {}",
+            if err.trim().is_empty() {
+                text.as_str()
+            } else {
+                err.trim()
+            }
+        ));
     }
-    Ok(())
-}
-
-/// Sends one system + user message and returns the text of the answer.
-pub fn write(key: &str, system: &str, user: &str) -> Result<String, String> {
-    let body = json!({
-        "model": MODEL,
-        "max_tokens": 16000,
-        "thinking": {"type": "adaptive"},
-        "fallbacks": "default",
-        "system": system,
-        "messages": [{"role": "user", "content": user}],
-    });
-    let mut resp = ureq::post("https://api.anthropic.com/v1/messages")
-        .header("x-api-key", key)
-        .header("anthropic-version", "2023-06-01")
-        .header("anthropic-beta", "server-side-fallback-2026-07-01")
-        .header("content-type", "application/json")
-        .config()
-        .timeout_global(Some(Duration::from_secs(600)))
-        .http_status_as_error(false)
-        .build()
-        .send_json(body)
-        .map_err(|e| format!("Could not reach the Claude API: {e}"))?;
-    let status = resp.status().as_u16();
-    let text = resp.body_mut().read_to_string().map_err(|e| e.to_string())?;
-    let v: Value = serde_json::from_str(&text).map_err(|_| format!("Unexpected answer ({status}): {text}"))?;
-    if status != 200 {
-        let msg = v.pointer("/error/message").and_then(Value::as_str).unwrap_or(&text);
-        return Err(match status {
-            401 => "The API key was rejected. Paste a valid one.".to_string(),
-            429 => "Rate limited by the Claude API; try again in a minute.".to_string(),
-            _ => format!("Claude API error {status}: {msg}"),
-        });
-    }
-    match v.get("stop_reason").and_then(Value::as_str) {
-        Some("refusal") => return Err("Claude declined to write this entry.".into()),
-        Some("max_tokens") => return Err("The entry ran past the length limit; try again.".into()),
-        _ => {}
-    }
-    let out: String = v
-        .get("content")
-        .and_then(Value::as_array)
-        .map(|blocks| blocks.iter().filter(|b| b.get("type").and_then(Value::as_str) == Some("text")).filter_map(|b| b.get("text").and_then(Value::as_str)).collect::<Vec<_>>().join(""))
-        .unwrap_or_default();
-    if out.trim().is_empty() {
-        return Err("The answer came back empty.".into());
-    }
-    Ok(out.trim().to_string())
+    Ok(text)
 }

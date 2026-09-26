@@ -11,6 +11,10 @@ pub struct Player {
     pub first: String, // "Scyle"
     pub unit: Option<u32>,
     pub class: Option<&'static str>,
+    pub class_known: bool, // seen up close, not guessed from spells
+    pub race: String,
+    pub level: i64,
+    pub guild: String,
     pub first_seen: f64,
     pub last_seen: f64,
     pub days: BTreeSet<String>,
@@ -19,10 +23,23 @@ pub struct Player {
     pub maps: Vec<i64>,
 }
 
-pub fn build(c: &Combat, chat: &[Line], me: &[String]) -> Vec<Player> {
+pub fn build(
+    c: &Combat,
+    chat: &[Line],
+    me: &[String],
+    known: &std::collections::HashMap<String, super::memory::KnownPlayer>,
+) -> Vec<Player> {
     let mine: Vec<String> = me.iter().map(|n| first_name(n)).collect();
     let mut by_first: HashMap<String, Player> = HashMap::new();
-    let day = |t: f64| chrono::DateTime::from_timestamp(t as i64, 0).map(|d| d.with_timezone(&chrono::Local).format("%Y-%m-%d").to_string()).unwrap_or_default();
+    let day = |t: f64| {
+        chrono::DateTime::from_timestamp(t as i64, 0)
+            .map(|d| {
+                d.with_timezone(&chrono::Local)
+                    .format("%Y-%m-%d")
+                    .to_string()
+            })
+            .unwrap_or_default()
+    };
 
     for (&u, seen) in &c.players {
         let unit = &c.units[u as usize];
@@ -34,6 +51,18 @@ pub fn build(c: &Combat, chat: &[Line], me: &[String]) -> Vec<Player> {
         p.name = unit.name.clone();
         p.unit = Some(u);
         p.class = combat::guess_class(&seen.spells, c);
+        if let Some(k) = known.get(&unit.guid) {
+            if !k.surname.is_empty() {
+                p.name = format!("{} {}", k.name, k.surname);
+            }
+            if let Some(cf) = CLASSES.iter().find(|x| **x == k.class) {
+                p.class = Some(cf);
+                p.class_known = true;
+            }
+            p.race = k.race.clone();
+            p.level = k.level;
+            p.guild = k.guild.clone();
+        }
         p.first_seen = seen.first;
         p.last_seen = seen.last;
         p.combat_lines = seen.lines;
@@ -77,6 +106,10 @@ pub fn build(c: &Combat, chat: &[Line], me: &[String]) -> Vec<Player> {
     out.sort_by(|a, b| b.last_seen.total_cmp(&a.last_seen));
     out
 }
+
+const CLASSES: [&str; 9] = [
+    "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "SHAMAN", "MAGE", "WARLOCK", "DRUID",
+];
 
 pub fn first_name(n: &str) -> String {
     n.split([' ', '-']).next().unwrap_or(n).to_lowercase()

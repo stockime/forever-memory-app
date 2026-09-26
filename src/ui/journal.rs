@@ -2,16 +2,34 @@
 //! happened, in order, with the chat that was going on at the time.
 
 use super::{character, chips, item_link};
+use crate::State;
 use crate::art::Art;
+use crate::data::Model;
 use crate::data::chat::Kind;
 use crate::data::memory::{Character, Event};
-use crate::data::Model;
 use crate::theme::{self, DANGER, GOLD, INK, MUTED, RAISED};
-use crate::State;
 use egui::{Color32, RichText, Ui};
 
-const SORTS: [&str; 7] = ["Newest first", "Oldest first", "Longest", "Most experience", "Fastest leveling", "Most loot", "Most deaths"];
-const CATEGORIES: [&str; 9] = ["Quests", "Loot", "Money", "Experience", "Places", "Combat", "People", "Chat", "System"];
+const SORTS: [&str; 7] = [
+    "Newest first",
+    "Oldest first",
+    "Longest",
+    "Most experience",
+    "Fastest leveling",
+    "Most loot",
+    "Most deaths",
+];
+const CATEGORIES: [&str; 9] = [
+    "Quests",
+    "Loot",
+    "Money",
+    "Experience",
+    "Places",
+    "Combat",
+    "People",
+    "Chat",
+    "System",
+];
 
 pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     let c = character(m, st);
@@ -19,17 +37,22 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
         super::empty(ui, "No sessions recorded yet.");
         return;
     }
-    let sel = st.session.unwrap_or(c.sessions.len() - 1).min(c.sessions.len() - 1);
+    let sel = st
+        .session
+        .unwrap_or(c.sessions.len() - 1)
+        .min(c.sessions.len() - 1);
     ui.horizontal_top(|ui| {
         ui.vertical(|ui| {
             ui.set_width(300.0);
             ui.horizontal(|ui| {
                 super::heading(ui, "Sessions");
-                egui::ComboBox::from_id_salt("session-sort").selected_text(SORTS[st.session_sort.min(SORTS.len() - 1)]).show_ui(ui, |ui| {
-                    for (i, s) in SORTS.iter().enumerate() {
-                        ui.selectable_value(&mut st.session_sort, i, *s);
-                    }
-                });
+                egui::ComboBox::from_id_salt("session-sort")
+                    .selected_text(SORTS[st.session_sort.min(SORTS.len() - 1)])
+                    .show_ui(ui, |ui| {
+                        for (i, s) in SORTS.iter().enumerate() {
+                            ui.selectable_value(&mut st.session_sort, i, *s);
+                        }
+                    });
             });
             let mut order: Vec<usize> = (0..c.sessions.len()).collect();
             let rate = |s: &crate::data::memory::Session| s.xp as f64 / s.seconds().max(60) as f64;
@@ -40,39 +63,79 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 3 => order.sort_by_key(|&i| std::cmp::Reverse(c.sessions[i].xp)),
                 4 => order.sort_by(|&a, &b| rate(&c.sessions[b]).total_cmp(&rate(&c.sessions[a]))),
                 5 => order.sort_by_key(|&i| std::cmp::Reverse(c.sessions[i].items)),
-                _ => order.sort_by_key(|&i| std::cmp::Reverse((c.sessions[i].deaths, c.sessions[i].start))),
+                _ => order.sort_by_key(|&i| {
+                    std::cmp::Reverse((c.sessions[i].deaths, c.sessions[i].start))
+                }),
             }
-            egui::ScrollArea::vertical().id_salt("sessions").auto_shrink(false).show(ui, |ui| {
-                for i in order {
-                    let s = &c.sessions[i];
-                    let selected = i == sel;
-                    let r = egui::Frame::new()
-                        .fill(if selected { RAISED } else { Color32::TRANSPARENT })
-                        .corner_radius(6)
-                        .inner_margin(egui::Margin::symmetric(10, 8))
-                        .show(ui, |ui| {
-                            ui.set_width(ui.available_width());
-                            ui.label(RichText::new(format!("{}, {}", theme::day(s.start as f64), theme::clock(s.start as f64))).color(if selected { GOLD } else { INK }).size(16.0));
-                            let levels = if s.level_to > s.level_from { format!("level {} → {}", s.level_from, s.level_to) } else { format!("level {}", s.level_from) };
-                            ui.label(RichText::new(format!("{}, {}, {} XP", theme::duration(s.seconds() as f64), levels, theme::thousands(s.xp))).small().color(MUTED));
-                            if !s.zones.is_empty() {
-                                ui.label(RichText::new(s.zones.join(", ")).small().color(MUTED));
-                            }
-                        })
-                        .response
-                        .interact(egui::Sense::click());
-                    if r.clicked() {
-                        st.session = Some(i);
+            egui::ScrollArea::vertical()
+                .id_salt("sessions")
+                .auto_shrink(false)
+                .show(ui, |ui| {
+                    for i in order {
+                        let s = &c.sessions[i];
+                        let selected = i == sel;
+                        let r = egui::Frame::new()
+                            .fill(if selected {
+                                RAISED
+                            } else {
+                                Color32::TRANSPARENT
+                            })
+                            .corner_radius(6)
+                            .inner_margin(egui::Margin::symmetric(10, 8))
+                            .show(ui, |ui| {
+                                ui.set_width(ui.available_width());
+                                ui.label(
+                                    RichText::new(format!(
+                                        "{}, {}",
+                                        theme::day(s.start as f64),
+                                        theme::clock(s.start as f64)
+                                    ))
+                                    .color(if selected { GOLD } else { INK })
+                                    .size(16.0),
+                                );
+                                let levels = if s.level_to > s.level_from {
+                                    format!("level {} → {}", s.level_from, s.level_to)
+                                } else {
+                                    format!("level {}", s.level_from)
+                                };
+                                ui.label(
+                                    RichText::new(format!(
+                                        "{}, {}, {} XP",
+                                        theme::duration(s.seconds() as f64),
+                                        levels,
+                                        theme::thousands(s.xp)
+                                    ))
+                                    .small()
+                                    .color(MUTED),
+                                );
+                                if !s.zones.is_empty() {
+                                    ui.label(
+                                        RichText::new(s.zones.join(", ")).small().color(MUTED),
+                                    );
+                                }
+                            })
+                            .response
+                            .interact(egui::Sense::click());
+                        if r.clicked() {
+                            st.session = Some(i);
+                        }
                     }
-                }
-            });
+                });
         });
         ui.add_space(16.0);
         let w = ui.available_width();
         ui.vertical(|ui| {
             ui.set_width(w);
             let s = &c.sessions[sel];
-            ui.label(RichText::new(format!("{}, {} to {}", theme::day(s.start as f64), theme::clock(s.start as f64), theme::clock(s.end as f64))).font(theme::display_font(28.0)));
+            ui.label(
+                RichText::new(format!(
+                    "{}, {} to {}",
+                    theme::day(s.start as f64),
+                    theme::clock(s.start as f64),
+                    theme::clock(s.end as f64)
+                ))
+                .font(theme::display_font(28.0)),
+            );
             ui.horizontal_wrapped(|ui| {
                 ui.spacing_mut().item_spacing.x = 36.0;
                 super::figure(ui, &theme::duration(s.seconds() as f64), "played");
@@ -95,7 +158,14 @@ enum Row<'a> {
     Chat(usize),
 }
 
-fn feed(ui: &mut Ui, m: &Model, c: &Character, sel: usize, hide: &std::collections::HashSet<&'static str>, art: &mut Art) {
+fn feed(
+    ui: &mut Ui,
+    m: &Model,
+    c: &Character,
+    sel: usize,
+    hide: &std::collections::HashSet<&'static str>,
+    art: &mut Art,
+) {
     let s = &c.sessions[sel];
     let events = &c.events[s.from..s.to];
     let mut rows: Vec<(f64, Row)> = events.iter().map(|e| (e.t as f64, Row::Event(e))).collect();
@@ -107,31 +177,48 @@ fn feed(ui: &mut Ui, m: &Model, c: &Character, sel: usize, hide: &std::collectio
         }
     }
     rows.sort_by(|a, b| a.0.total_cmp(&b.0));
-    let titles: std::collections::HashMap<i64, &str> = c.quests.iter().map(|q| (q.id, q.title.as_str())).collect();
-    egui::ScrollArea::vertical().id_salt("feed").auto_shrink(false).show(ui, |ui| {
-        let mut last_turnin: Option<(i64, i64)> = None;
-        for (t, row) in rows {
-            match row {
-                Row::Chat(i) => {
-                    let l = &m.chat[i];
-                    line(ui, t, "›", |ui| {
-                        ui.label(RichText::new(format!("[{}]", l.label())).small().color(MUTED));
-                        ui.label(RichText::new(format!("{}:", l.speaker.as_deref().unwrap_or(""))).color(MUTED));
-                        ui.label(RichText::new(&l.text).color(Color32::from_rgb(0xc8, 0xc3, 0xb4)));
-                    });
-                }
-                Row::Event(e) => {
-                    if e.e == "quest" && e.s("act") == Some("turnin") {
-                        last_turnin = e.i("id").map(|id| (id, e.t));
+    let titles: std::collections::HashMap<i64, &str> =
+        c.quests.iter().map(|q| (q.id, q.title.as_str())).collect();
+    egui::ScrollArea::vertical()
+        .id_salt("feed")
+        .auto_shrink(false)
+        .show(ui, |ui| {
+            let mut last_turnin: Option<(i64, i64)> = None;
+            for (t, row) in rows {
+                match row {
+                    Row::Chat(i) => {
+                        let l = &m.chat[i];
+                        line(ui, t, "›", |ui| {
+                            ui.label(
+                                RichText::new(format!("[{}]", l.label()))
+                                    .small()
+                                    .color(MUTED),
+                            );
+                            ui.label(
+                                RichText::new(format!("{}:", l.speaker.as_deref().unwrap_or("")))
+                                    .color(MUTED),
+                            );
+                            ui.label(
+                                RichText::new(&l.text).color(Color32::from_rgb(0xc8, 0xc3, 0xb4)),
+                            );
+                        });
                     }
-                    if e.e == "quest" && e.s("act") == Some("remove") && last_turnin.is_some_and(|(id, at)| Some(id) == e.i("id") && e.t - at < 10) {
-                        continue; // removal is part of every turn-in
+                    Row::Event(e) => {
+                        if e.e == "quest" && e.s("act") == Some("turnin") {
+                            last_turnin = e.i("id").map(|id| (id, e.t));
+                        }
+                        if e.e == "quest"
+                            && e.s("act") == Some("remove")
+                            && last_turnin
+                                .is_some_and(|(id, at)| Some(id) == e.i("id") && e.t - at < 10)
+                        {
+                            continue; // removal is part of every turn-in
+                        }
+                        event(ui, m, e, &titles, hide, art);
                     }
-                    event(ui, m, e, &titles, hide, art);
                 }
             }
-        }
-    });
+        });
 }
 
 fn line(ui: &mut Ui, t: f64, glyph: &str, add: impl FnOnce(&mut Ui)) {
@@ -171,20 +258,44 @@ fn context(ctx: Option<&str>, gained: bool) -> &'static str {
     }
 }
 
-fn event(ui: &mut Ui, m: &Model, e: &Event, titles: &std::collections::HashMap<i64, &str>, hide: &std::collections::HashSet<&'static str>, art: &mut Art) {
+fn event(
+    ui: &mut Ui,
+    m: &Model,
+    e: &Event,
+    titles: &std::collections::HashMap<i64, &str>,
+    hide: &std::collections::HashSet<&'static str>,
+    art: &mut Art,
+) {
     let cat = category(e);
     if hide.contains(cat) {
         return;
     }
     let t = e.t as f64;
-    let title = |id: Option<i64>| id.and_then(|i| titles.get(&i).copied()).map(str::to_string).or_else(|| e.s("title").map(str::to_string)).unwrap_or_else(|| "a quest".into());
+    let title = |id: Option<i64>| {
+        id.and_then(|i| titles.get(&i).copied())
+            .map(str::to_string)
+            .or_else(|| e.s("title").map(str::to_string))
+            .unwrap_or_else(|| "a quest".into())
+    };
     match e.e.as_str() {
         "login" => line(ui, t, "▶", |ui| {
-            let place = e.s("zone").filter(|z| !z.is_empty()).map(|z| format!(" in {z}")).unwrap_or_default();
-            ui.label(RichText::new(format!("Logged in at level {}{place}", e.i("level").unwrap_or(0))).color(INK));
+            let place = e
+                .s("zone")
+                .filter(|z| !z.is_empty())
+                .map(|z| format!(" in {z}"))
+                .unwrap_or_default();
+            ui.label(
+                RichText::new(format!(
+                    "Logged in at level {}{place}",
+                    e.i("level").unwrap_or(0)
+                ))
+                .color(INK),
+            );
         }),
         "logout" => line(ui, t, "■", |ui| {
-            ui.label(RichText::new(format!("Logged out in {}", e.s("zone").unwrap_or("?"))).color(MUTED));
+            ui.label(
+                RichText::new(format!("Logged out in {}", e.s("zone").unwrap_or("?"))).color(MUTED),
+            );
         }),
         "item" => {
             let d = e.i("d").unwrap_or(0);
@@ -204,21 +315,46 @@ fn event(ui: &mut Ui, m: &Model, e: &Event, titles: &std::collections::HashMap<i
                 item_link(ui, m, art, l, 20.0);
             }
             None => {
-                ui.label(RichText::new(format!("Took off slot {}", e.i("slot").unwrap_or(0))).color(MUTED));
+                ui.label(
+                    RichText::new(format!("Took off slot {}", e.i("slot").unwrap_or(0)))
+                        .color(MUTED),
+                );
             }
         }),
         "money" => {
             let d = e.i("d").unwrap_or(0);
             line(ui, t, "⛃", |ui| {
-                ui.label(RichText::new(if d > 0 { format!("+{}", theme::money(d)) } else { theme::money(d) }).color(if d > 0 { GOLD } else { INK }));
-                ui.label(RichText::new(match e.s("ctx") { Some("loot") => "looted", Some("merchant") => "at a vendor", Some("quest") => "quest reward", Some("trainer") => "at a trainer", Some("mail") => "mail", Some(x) => x, None => "" }).color(MUTED));
+                ui.label(
+                    RichText::new(if d > 0 {
+                        format!("+{}", theme::money(d))
+                    } else {
+                        theme::money(d)
+                    })
+                    .color(if d > 0 { GOLD } else { INK }),
+                );
+                ui.label(
+                    RichText::new(match e.s("ctx") {
+                        Some("loot") => "looted",
+                        Some("merchant") => "at a vendor",
+                        Some("quest") => "quest reward",
+                        Some("trainer") => "at a trainer",
+                        Some("mail") => "mail",
+                        Some(x) => x,
+                        None => "",
+                    })
+                    .color(MUTED),
+                );
             });
         }
         "xp" => line(ui, t, "↑", |ui| {
             ui.label(RichText::new(format!("+{} XP", e.i("d").unwrap_or(0))).color(MUTED));
         }),
         "level" => line(ui, t, "★", |ui| {
-            ui.label(RichText::new(format!("Reached level {}", e.i("level").unwrap_or(0))).font(theme::display_font(20.0)).color(GOLD));
+            ui.label(
+                RichText::new(format!("Reached level {}", e.i("level").unwrap_or(0)))
+                    .font(theme::display_font(20.0))
+                    .color(GOLD),
+            );
         }),
         "quest" => line(ui, t, "❗", |ui| match e.s("act") {
             Some("accept") => {
@@ -241,7 +377,14 @@ fn event(ui: &mut Ui, m: &Model, e: &Event, titles: &std::collections::HashMap<i
             }
         }),
         "objective" => line(ui, t, "◦", |ui| {
-            ui.label(RichText::new(format!("{}/{}", e.i("have").unwrap_or(0), e.i("need").unwrap_or(0))).color(INK));
+            ui.label(
+                RichText::new(format!(
+                    "{}/{}",
+                    e.i("have").unwrap_or(0),
+                    e.i("need").unwrap_or(0)
+                ))
+                .color(INK),
+            );
             ui.label(RichText::new(e.s("text").unwrap_or("")).color(MUTED));
         }),
         "zone" => line(ui, t, "⌖", |ui| {
@@ -255,7 +398,11 @@ fn event(ui: &mut Ui, m: &Model, e: &Event, titles: &std::collections::HashMap<i
             }
         }
         "death" => line(ui, t, "☠", |ui| {
-            let place = [e.s("sub").unwrap_or(""), e.s("zone").unwrap_or("")].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join(", ");
+            let place = [e.s("sub").unwrap_or(""), e.s("zone").unwrap_or("")]
+                .into_iter()
+                .filter(|s| !s.is_empty())
+                .collect::<Vec<_>>()
+                .join(", ");
             ui.label(RichText::new(format!("Died in {place}")).color(DANGER));
         }),
         "alive" | "unghost" => line(ui, t, "✚", |ui| {
@@ -279,8 +426,21 @@ fn event(ui: &mut Ui, m: &Model, e: &Event, titles: &std::collections::HashMap<i
             ui.label(RichText::new(format!("“{}”", e.s("option").unwrap_or(""))).color(INK));
         }),
         "group" => line(ui, t, "☺", |ui| {
-            let names: Vec<String> = e.v.get("members").map(crate::data::memory::entries).unwrap_or_default().into_iter().filter_map(|(_, v)| v.as_str().map(str::to_string)).collect();
-            ui.label(RichText::new(if names.is_empty() { "Left the group".into() } else { format!("Group: {}", names.join(", ")) }).color(INK));
+            let names: Vec<String> =
+                e.v.get("members")
+                    .map(crate::data::memory::entries)
+                    .unwrap_or_default()
+                    .into_iter()
+                    .filter_map(|(_, v)| v.as_str().map(str::to_string))
+                    .collect();
+            ui.label(
+                RichText::new(if names.is_empty() {
+                    "Left the group".into()
+                } else {
+                    format!("Group: {}", names.join(", "))
+                })
+                .color(INK),
+            );
         }),
         "open" => {
             if let Some(w) = e.s("what").filter(|w| *w != "loot") {
@@ -300,7 +460,13 @@ fn event(ui: &mut Ui, m: &Model, e: &Event, titles: &std::collections::HashMap<i
             ui.label(RichText::new("Learned a new spell").color(INK));
         }),
         "played" => line(ui, t, "•", |ui| {
-            ui.label(RichText::new(format!("/played: {}", theme::duration(e.f("total").unwrap_or(0.0)))).color(MUTED));
+            ui.label(
+                RichText::new(format!(
+                    "/played: {}",
+                    theme::duration(e.f("total").unwrap_or(0.0))
+                ))
+                .color(MUTED),
+            );
         }),
         _ => {}
     }

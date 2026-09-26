@@ -8,11 +8,71 @@ mod theme;
 mod ui;
 
 use data::{Model, Paths};
-use std::sync::mpsc::{channel, Receiver};
 use std::sync::Arc;
+use std::sync::mpsc::{Receiver, channel};
 use std::time::{Duration, Instant};
 
+/// `forever-memory diary <character> [YYYY-MM-DD]` writes one diary entry
+/// without opening the window (the day defaults to the latest one played).
+fn diary_cli(args: &[String]) -> ! {
+    let paths = Paths::from_env();
+    let model = data::load(&paths);
+    let who = args.first().map(|s| s.to_lowercase()).unwrap_or_default();
+    let Some(c) = model
+        .memory
+        .characters
+        .iter()
+        .find(|c| c.slug == who || c.name.to_lowercase() == who)
+    else {
+        eprintln!(
+            "no character {who:?}; have: {}",
+            model
+                .memory
+                .characters
+                .iter()
+                .map(|c| c.slug.as_str())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+        std::process::exit(2);
+    };
+    let day = args
+        .get(1)
+        .cloned()
+        .or_else(|| data::diary::days(c).first().map(|(d, _)| d.clone()))
+        .unwrap_or_default();
+    let facts = data::diary::facts(&model, c, &day);
+    if facts.is_empty() {
+        eprintln!("nothing recorded on {day}");
+        std::process::exit(2);
+    }
+    let previous = data::diary::previous(&paths.repo, c, &day);
+    let prompt = data::diary::prompt(
+        c,
+        &day,
+        &facts,
+        previous.as_ref().map(|(d, t)| (d.as_str(), t.as_str())),
+    );
+    match claude::write(data::diary::SYSTEM, &prompt).and_then(|entry| {
+        data::diary::store(&paths.repo, c, &day, &entry, &facts)?;
+        Ok(entry)
+    }) {
+        Ok(entry) => {
+            println!("{entry}");
+            std::process::exit(0);
+        }
+        Err(e) => {
+            eprintln!("{e}");
+            std::process::exit(1);
+        }
+    }
+}
+
 fn main() -> eframe::Result {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().map(String::as_str) == Some("diary") {
+        diary_cli(&args[1..]);
+    }
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title("Forever Memory")
@@ -21,7 +81,11 @@ fn main() -> eframe::Result {
             .with_min_inner_size([980.0, 640.0]),
         ..Default::default()
     };
-    eframe::run_native("Forever Memory", options, Box::new(|cc| Ok(Box::new(App::new(&cc.egui_ctx)))))
+    eframe::run_native(
+        "Forever Memory",
+        options,
+        Box::new(|cc| Ok(Box::new(App::new(&cc.egui_ctx)))),
+    )
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -38,7 +102,17 @@ pub enum Page {
 }
 
 impl Page {
-    const ALL: [Page; 9] = [Page::Overview, Page::Armory, Page::Journal, Page::Diary, Page::Quests, Page::Map, Page::Combat, Page::Economy, Page::Players];
+    const ALL: [Page; 9] = [
+        Page::Overview,
+        Page::Armory,
+        Page::Journal,
+        Page::Diary,
+        Page::Quests,
+        Page::Map,
+        Page::Combat,
+        Page::Economy,
+        Page::Players,
+    ];
     fn label(self) -> &'static str {
         match self {
             Page::Overview => "Overview",
@@ -96,7 +170,6 @@ pub struct State {
     pub diary_queue: Vec<String>,
     pub diary_error: Option<String>,
     pub diary_status: Option<String>,
-    pub key_input: String,
 }
 
 pub struct App {
@@ -126,11 +199,19 @@ impl App {
             last_load: Instant::now(),
             art,
             page: Page::Overview,
-            state: State { repo, ..Default::default() },
-            shot: std::env::var("FM_SHOT").ok().map(|p| (p.into(), Instant::now(), false)),
+            state: State {
+                repo,
+                ..Default::default()
+            },
+            shot: std::env::var("FM_SHOT")
+                .ok()
+                .map(|p| (p.into(), Instant::now(), false)),
         };
         if let Ok(p) = std::env::var("FM_PAGE") {
-            app.page = Page::ALL.into_iter().find(|x| x.label().to_lowercase().starts_with(&p.to_lowercase())).unwrap_or(Page::Overview);
+            app.page = Page::ALL
+                .into_iter()
+                .find(|x| x.label().to_lowercase().starts_with(&p.to_lowercase()))
+                .unwrap_or(Page::Overview);
         }
         app.reload(ctx);
         app
@@ -163,7 +244,9 @@ impl App {
         if self.last_check.elapsed() > Duration::from_secs(5) {
             self.last_check = Instant::now();
             if let Some(m) = &self.model {
-                if data::stamp(&self.paths) != m.stamp && self.last_load.elapsed() > Duration::from_secs(30) {
+                if data::stamp(&self.paths) != m.stamp
+                    && self.last_load.elapsed() > Duration::from_secs(30)
+                {
                     self.reload(ctx);
                 }
             }
@@ -174,17 +257,26 @@ impl App {
 
 impl App {
     fn screenshot(&mut self, ctx: &egui::Context) {
-        let Some((path, started, asked)) = &mut self.shot else { return };
+        let Some((path, started, asked)) = &mut self.shot else {
+            return;
+        };
         for e in ctx.input(|i| i.raw.events.clone()) {
             if let egui::Event::Screenshot { image, .. } = e {
-                let img = image::RgbaImage::from_raw(image.width() as u32, image.height() as u32, image.as_raw().to_vec());
+                let img = image::RgbaImage::from_raw(
+                    image.width() as u32,
+                    image.height() as u32,
+                    image.as_raw().to_vec(),
+                );
                 if let Some(img) = img {
                     img.save(&*path).ok();
                 }
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
             }
         }
-        let wait = std::env::var("FM_SHOT_WAIT").ok().and_then(|s| s.parse().ok()).unwrap_or(6.0);
+        let wait = std::env::var("FM_SHOT_WAIT")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(6.0);
         if !*asked && self.model.is_some() && started.elapsed().as_secs_f64() > wait {
             *asked = true;
             ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::UserData::default()));
@@ -199,8 +291,15 @@ impl eframe::App for App {
     /// FM_HOVER=x,y places the pointer there (with FM_SHOT, to check tooltips).
     fn raw_input_hook(&mut self, _ctx: &egui::Context, raw: &mut egui::RawInput) {
         if let Ok(v) = std::env::var("FM_HOVER") {
-            if let Some((x, y)) = v.split_once(',').and_then(|(x, y)| Some((x.parse().ok()?, y.parse().ok()?))) {
-                if self.shot.as_ref().is_some_and(|(_, t, _)| t.elapsed().as_secs_f64() < 1.5) {
+            if let Some((x, y)) = v
+                .split_once(',')
+                .and_then(|(x, y)| Some((x.parse().ok()?, y.parse().ok()?)))
+            {
+                if self
+                    .shot
+                    .as_ref()
+                    .is_some_and(|(_, t, _)| t.elapsed().as_secs_f64() < 1.5)
+                {
                     raw.events.push(egui::Event::PointerMoved(egui::pos2(x, y)));
                 }
             }
@@ -214,7 +313,11 @@ impl eframe::App for App {
         let Some(model) = self.model.clone() else {
             egui::CentralPanel::default().show(ui, |ui| {
                 ui.centered_and_justified(|ui| {
-                    ui.label(egui::RichText::new("Reading your memories…").font(theme::display_font(28.0)).color(theme::MUTED));
+                    ui.label(
+                        egui::RichText::new("Reading your memories…")
+                            .font(theme::display_font(28.0))
+                            .color(theme::MUTED),
+                    );
                 });
             });
             return;
@@ -222,20 +325,41 @@ impl eframe::App for App {
         if self.state.character >= model.memory.characters.len() {
             self.state.character = 0;
         }
-        if ctx.input(|i| i.key_pressed(egui::Key::F5)) || std::mem::take(&mut self.state.reload_now) {
+        if ctx.input(|i| i.key_pressed(egui::Key::F5)) || std::mem::take(&mut self.state.reload_now)
+        {
             self.reload(&ctx);
         }
 
         egui::Panel::top("top")
-            .frame(egui::Frame::new().fill(theme::NIGHT).inner_margin(egui::Margin::symmetric(18, 10)))
+            .frame(
+                egui::Frame::new()
+                    .fill(theme::NIGHT)
+                    .inner_margin(egui::Margin::symmetric(18, 10)),
+            )
             .show(ui, |ui| {
-                ui::top_bar(ui, &model, &mut self.state, &mut self.page, &mut self.art, self.loading.is_some());
+                ui::top_bar(
+                    ui,
+                    &model,
+                    &mut self.state,
+                    &mut self.page,
+                    &mut self.art,
+                    self.loading.is_some(),
+                );
             });
 
         egui::Panel::left("nav")
             .resizable(false)
             .exact_size(196.0)
-            .frame(egui::Frame::new().fill(theme::NIGHT).inner_margin(egui::Margin { left: 12, right: 12, top: 8, bottom: 12 }))
+            .frame(
+                egui::Frame::new()
+                    .fill(theme::NIGHT)
+                    .inner_margin(egui::Margin {
+                        left: 12,
+                        right: 12,
+                        top: 8,
+                        bottom: 12,
+                    }),
+            )
             .show(ui, |ui| {
                 ui.spacing_mut().item_spacing.y = 2.0;
                 for p in Page::ALL {
@@ -245,7 +369,11 @@ impl eframe::App for App {
                         .size(16.5)
                         .color(if selected { theme::GOLD } else { theme::INK });
                     let button = egui::Button::new(text)
-                        .fill(if selected { theme::RAISED } else { egui::Color32::TRANSPARENT })
+                        .fill(if selected {
+                            theme::RAISED
+                        } else {
+                            egui::Color32::TRANSPARENT
+                        })
                         .min_size(egui::vec2(ui.available_width(), 36.0));
                     if ui.add(button).clicked() {
                         self.page = p;
@@ -256,7 +384,13 @@ impl eframe::App for App {
                     ui.label(
                         egui::RichText::new(format!(
                             "{} events\n{} combat log lines\n{} chat lines\n{} players met",
-                            theme::thousands(m.memory.characters.iter().map(|c| c.events.len() as i64).sum()),
+                            theme::thousands(
+                                m.memory
+                                    .characters
+                                    .iter()
+                                    .map(|c| c.events.len() as i64)
+                                    .sum()
+                            ),
                             theme::thousands(m.combat.lines as i64),
                             theme::thousands(m.chat.len() as i64),
                             m.players.len()

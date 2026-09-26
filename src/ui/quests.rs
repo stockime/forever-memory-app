@@ -2,15 +2,19 @@
 //! progress, rewards and how long each took.
 
 use super::{card, character, item_link, label, plot};
-use crate::art::Art;
-use crate::data::memory::{Character, Quest, QuestStatus};
-use crate::data::Model;
-use crate::theme::{self, EDGE, GOLD, INK, MUTED, RAISED, SERIES};
 use crate::State;
+use crate::art::Art;
+use crate::data::Model;
+use crate::data::memory::{Character, Quest, QuestStatus};
+use crate::theme::{self, EDGE, GOLD, INK, MUTED, RAISED, SERIES};
 use egui::{Color32, RichText, Stroke, Ui};
 use egui_plot::{Line, PlotPoints};
 
-const TABS: [(&str, QuestStatus); 3] = [("Active", QuestStatus::Active), ("Completed", QuestStatus::Completed), ("Abandoned", QuestStatus::Abandoned)];
+const TABS: [(&str, QuestStatus); 3] = [
+    ("Active", QuestStatus::Active),
+    ("Completed", QuestStatus::Completed),
+    ("Abandoned", QuestStatus::Abandoned),
+];
 
 pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     let c = character(m, st);
@@ -34,7 +38,10 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
 }
 
 fn progress(q: &Quest) -> Option<(i64, i64)> {
-    let (h, n) = q.objectives.iter().fold((0, 0), |(h, n), o| (h + o.have.min(o.need), n + o.need));
+    let (h, n) = q
+        .objectives
+        .iter()
+        .fold((0, 0), |(h, n), o| (h + o.have.min(o.need), n + o.need));
     (n > 0).then_some((h, n))
 }
 
@@ -42,13 +49,28 @@ fn list(ui: &mut Ui, c: &Character, st: &mut State) {
     ui.horizontal(|ui| {
         for (i, (name, status)) in TABS.iter().enumerate() {
             let n = c.quests.iter().filter(|q| q.status == *status).count();
-            let text = RichText::new(format!("{name} {n}")).color(if st.quest_tab == i { GOLD } else { INK });
-            if ui.add(egui::Button::new(text).fill(if st.quest_tab == i { RAISED } else { Color32::TRANSPARENT })).clicked() {
+            let text = RichText::new(format!("{name} {n}")).color(if st.quest_tab == i {
+                GOLD
+            } else {
+                INK
+            });
+            if ui
+                .add(egui::Button::new(text).fill(if st.quest_tab == i {
+                    RAISED
+                } else {
+                    Color32::TRANSPARENT
+                }))
+                .clicked()
+            {
                 st.quest_tab = i;
             }
         }
     });
-    ui.add(egui::TextEdit::singleline(&mut st.quest_search).hint_text("Filter by title, zone or text").desired_width(f32::INFINITY));
+    ui.add(
+        egui::TextEdit::singleline(&mut st.quest_search)
+            .hint_text("Filter by title, zone or text")
+            .desired_width(f32::INFINITY),
+    );
     ui.add_space(4.0);
     let status = TABS[st.quest_tab.min(2)].1;
     let needle = st.quest_search.to_lowercase();
@@ -56,48 +78,101 @@ fn list(ui: &mut Ui, c: &Character, st: &mut State) {
         .quests
         .iter()
         .filter(|q| q.status == status)
-        .filter(|q| needle.is_empty() || q.title.to_lowercase().contains(&needle) || q.zone.as_deref().unwrap_or("").to_lowercase().contains(&needle) || q.text.to_lowercase().contains(&needle))
+        .filter(|q| {
+            needle.is_empty()
+                || q.title.to_lowercase().contains(&needle)
+                || q.zone
+                    .as_deref()
+                    .unwrap_or("")
+                    .to_lowercase()
+                    .contains(&needle)
+                || q.text.to_lowercase().contains(&needle)
+        })
         .collect();
     match status {
         QuestStatus::Completed => qs.sort_by_key(|q| std::cmp::Reverse(q.done)),
-        QuestStatus::Active => qs.sort_by_key(|q| (!q.complete, q.level.unwrap_or(0), q.title.clone())),
+        QuestStatus::Active => {
+            qs.sort_by_key(|q| (!q.complete, q.level.unwrap_or(0), q.title.clone()))
+        }
         _ => qs.sort_by_key(|q| std::cmp::Reverse(q.removed)),
     }
     if qs.is_empty() {
-        ui.label(RichText::new(if needle.is_empty() { "Nothing here yet." } else { "No quest matches." }).color(MUTED));
+        ui.label(
+            RichText::new(if needle.is_empty() {
+                "Nothing here yet."
+            } else {
+                "No quest matches."
+            })
+            .color(MUTED),
+        );
     }
     if !st.quest.is_some_and(|id| qs.iter().any(|q| q.id == id)) {
         st.quest = qs.first().map(|q| q.id);
     }
-    egui::ScrollArea::vertical().id_salt("quest-list").auto_shrink(false).show(ui, |ui| {
-        for q in qs {
-            let selected = st.quest == Some(q.id);
-            let frame = egui::Frame::new().fill(if selected { RAISED } else { Color32::TRANSPARENT }).corner_radius(6).inner_margin(egui::Margin::symmetric(10, 7));
-            let r = frame
-                .show(ui, |ui| {
-                    ui.set_width(ui.available_width());
-                    ui.horizontal(|ui| {
-                        if let Some(l) = q.level {
-                            ui.label(RichText::new(format!("{l:>2}")).color(MUTED).monospace());
-                        }
-                        ui.label(RichText::new(&q.title).color(if selected { GOLD } else { INK }).size(16.0));
-                    });
-                    let sub = match q.status {
-                        QuestStatus::Active if q.complete => "Ready to turn in".to_string(),
-                        QuestStatus::Active => progress(q).map(|(h, n)| format!("{h}/{n}")).unwrap_or_default(),
-                        QuestStatus::Completed => q.done.map(|t| theme::day(t as f64)).unwrap_or_default(),
-                        _ => q.removed.map(|t| format!("dropped {}", theme::day(t as f64))).unwrap_or_default(),
-                    };
-                    let zone = q.zone.clone().unwrap_or_default();
-                    ui.label(RichText::new([zone, sub].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join(", ")).small().color(if q.complete { theme::GOOD } else { MUTED }));
-                })
-                .response
-                .interact(egui::Sense::click());
-            if r.clicked() {
-                st.quest = Some(q.id);
+    egui::ScrollArea::vertical()
+        .id_salt("quest-list")
+        .auto_shrink(false)
+        .show(ui, |ui| {
+            for q in qs {
+                let selected = st.quest == Some(q.id);
+                let frame = egui::Frame::new()
+                    .fill(if selected {
+                        RAISED
+                    } else {
+                        Color32::TRANSPARENT
+                    })
+                    .corner_radius(6)
+                    .inner_margin(egui::Margin::symmetric(10, 7));
+                let r = frame
+                    .show(ui, |ui| {
+                        ui.set_width(ui.available_width());
+                        ui.horizontal(|ui| {
+                            if let Some(l) = q.level {
+                                ui.label(RichText::new(format!("{l:>2}")).color(MUTED).monospace());
+                            }
+                            ui.label(
+                                RichText::new(&q.title)
+                                    .color(if selected { GOLD } else { INK })
+                                    .size(16.0),
+                            );
+                        });
+                        let sub = match q.status {
+                            QuestStatus::Active if q.complete => "Ready to turn in".to_string(),
+                            QuestStatus::Active => progress(q)
+                                .map(|(h, n)| format!("{h}/{n}"))
+                                .unwrap_or_default(),
+                            QuestStatus::Completed => {
+                                q.done.map(|t| theme::day(t as f64)).unwrap_or_default()
+                            }
+                            _ => q
+                                .removed
+                                .map(|t| format!("dropped {}", theme::day(t as f64)))
+                                .unwrap_or_default(),
+                        };
+                        let zone = q.zone.clone().unwrap_or_default();
+                        ui.label(
+                            RichText::new(
+                                [zone, sub]
+                                    .into_iter()
+                                    .filter(|s| !s.is_empty())
+                                    .collect::<Vec<_>>()
+                                    .join(", "),
+                            )
+                            .small()
+                            .color(if q.complete {
+                                theme::GOOD
+                            } else {
+                                MUTED
+                            }),
+                        );
+                    })
+                    .response
+                    .interact(egui::Sense::click());
+                if r.clicked() {
+                    st.quest = Some(q.id);
+                }
             }
-        }
-    });
+        });
 }
 
 fn detail(ui: &mut Ui, m: &Model, c: &Character, q: &Quest, art: &mut Art) {
@@ -203,7 +278,11 @@ fn detail(ui: &mut Ui, m: &Model, c: &Character, q: &Quest, art: &mut Art) {
 }
 
 fn choices(ui: &mut Ui, m: &Model, q: &Quest, art: &mut Art) {
-    let chosen = q.choice.as_deref().and_then(crate::data::memory::parse_link).map(|l| l.id);
+    let chosen = q
+        .choice
+        .as_deref()
+        .and_then(crate::data::memory::parse_link)
+        .map(|l| l.id);
     ui.horizontal_wrapped(|ui| {
         for link in &q.choices {
             let id = crate::data::memory::parse_link(link).map(|l| l.id);

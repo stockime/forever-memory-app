@@ -2,10 +2,10 @@
 //! entry the character writes themselves, from the recorded facts.
 
 use super::{card, character, label};
-use crate::art::Art;
-use crate::data::{diary, Model};
-use crate::theme::{self, EDGE, GOLD, INK, MUTED, RAISED};
 use crate::State;
+use crate::art::Art;
+use crate::data::{Model, diary};
+use crate::theme::{self, EDGE, GOLD, INK, MUTED, RAISED};
 use egui::{Color32, RichText, Ui};
 
 pub struct Job {
@@ -23,10 +23,18 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, _art: &mut Art) {
         super::empty(ui, "No days played yet.");
         return;
     }
-    if !st.diary_day.as_ref().is_some_and(|d| days.iter().any(|(x, _)| x == d)) {
+    if !st
+        .diary_day
+        .as_ref()
+        .is_some_and(|d| days.iter().any(|(x, _)| x == d))
+    {
         st.diary_day = days.first().map(|(d, _)| d.clone());
     }
-    if st.note_edit.as_ref().is_none_or(|(slug, _)| *slug != c.slug) {
+    if st
+        .note_edit
+        .as_ref()
+        .is_none_or(|(slug, _)| *slug != c.slug)
+    {
         st.note_edit = Some((c.slug.clone(), c.personality.clone()));
     }
 
@@ -57,7 +65,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, _art: &mut Art) {
             ui.horizontal(|ui| {
                 super::heading(ui, "Days");
                 let missing: Vec<String> = days.iter().filter(|(d, _)| !c.diary.contains_key(d)).map(|(d, _)| d.clone()).collect();
-                if !missing.is_empty() && st.diary_job.is_none() && crate::claude::api_key().is_some() {
+                if !missing.is_empty() && st.diary_job.is_none() {
                     if ui.button(format!("Write {} missing", missing.len())).on_hover_text("Writes every day without an entry, oldest first").clicked() {
                         st.diary_queue = missing.into_iter().rev().collect();
                         start_next(m, st);
@@ -96,7 +104,8 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, _art: &mut Art) {
         });
     });
     if st.diary_job.is_some() {
-        ui.ctx().request_repaint_after(std::time::Duration::from_millis(250));
+        ui.ctx()
+            .request_repaint_after(std::time::Duration::from_millis(250));
     }
 }
 
@@ -145,34 +154,19 @@ fn entry(ui: &mut Ui, m: &Model, st: &mut State, day: &str) {
                     }
                 });
                 ui.add_space(10.0);
-                match crate::claude::api_key() {
-                    Some(_) => {
-                        ui.horizontal(|ui| {
-                            if ui.add_enabled(st.diary_job.is_none() && !facts.is_empty(), egui::Button::new(RichText::new("Write this day's entry").color(GOLD))).clicked() {
-                                start(m, st, day.to_string());
-                            }
-                            ui.label(RichText::new(format!("Sends these facts and the note to Claude ({}). Other players' chat stays out.", crate::claude::MODEL)).small().color(MUTED));
-                        });
+                ui.horizontal(|ui| {
+                    if !crate::claude::available() {
+                        ui.label(RichText::new("Claude Code (claude) isn't installed or can't run, so entries can't be written.").color(theme::DANGER));
+                        return;
                     }
-                    None => key_form(ui, st),
-                }
+                    if ui.add_enabled(st.diary_job.is_none() && !facts.is_empty(), egui::Button::new(RichText::new("Write this day's entry").color(GOLD))).clicked() {
+                        start(m, st, day.to_string());
+                    }
+                    ui.label(RichText::new(format!("Written by {} (claude -p) from these facts and the note. Other players' chat stays out.", crate::claude::WRITER)).small().color(MUTED));
+                });
             }
         }
         ui.add_space(24.0);
-    });
-}
-
-fn key_form(ui: &mut Ui, st: &mut State) {
-    card(ui, |ui| {
-        label(ui, "Connect Claude");
-        ui.label(RichText::new(format!("Entries are written by Claude through the Anthropic API. Paste an API key; it is kept in {} (readable only by you), or set ANTHROPIC_API_KEY.", crate::claude::key_file().display())).small().color(MUTED));
-        ui.horizontal(|ui| {
-            ui.add(egui::TextEdit::singleline(&mut st.key_input).password(true).hint_text("sk-ant-…").desired_width(320.0));
-            if ui.add_enabled(st.key_input.trim().starts_with("sk-"), egui::Button::new("Save key")).clicked() {
-                st.diary_error = crate::claude::save_key(&st.key_input).err().map(|e| e.to_string());
-                st.key_input.clear();
-            }
-        });
     });
 }
 
@@ -184,29 +178,51 @@ fn render(ui: &mut Ui, md: &str) {
             continue;
         }
         if let Some(h) = block.strip_prefix('#') {
-            ui.label(RichText::new(h.trim_start_matches('#').trim()).font(theme::display_font(22.0)).color(GOLD));
+            ui.label(
+                RichText::new(h.trim_start_matches('#').trim())
+                    .font(theme::display_font(22.0))
+                    .color(GOLD),
+            );
             ui.add_space(4.0);
             continue;
         }
-        let text = block.replace("**", "").replace('*', "").replace('_', " ").replace('\n', " ");
-        ui.label(RichText::new(text).family(theme::italic()).size(18.0).color(Color32::from_rgb(0xe4, 0xd9, 0xbd)));
+        let text = block
+            .replace("**", "")
+            .replace('*', "")
+            .replace('_', " ")
+            .replace('\n', " ");
+        ui.label(
+            RichText::new(text)
+                .family(theme::italic())
+                .size(18.0)
+                .color(Color32::from_rgb(0xe4, 0xd9, 0xbd)),
+        );
         ui.add_space(8.0);
     }
 }
 
 fn start(m: &Model, st: &mut State, day: String) {
     let c = character(m, st);
-    let Some(key) = crate::claude::api_key() else { return };
     let facts = diary::facts(m, c, &day);
     let previous = diary::previous(&st.repo, c, &day);
-    let prompt = diary::prompt(c, &day, &facts, previous.as_ref().map(|(d, t)| (d.as_str(), t.as_str())));
+    let prompt = diary::prompt(
+        c,
+        &day,
+        &facts,
+        previous.as_ref().map(|(d, t)| (d.as_str(), t.as_str())),
+    );
     let (tx, rx) = std::sync::mpsc::channel();
     std::thread::spawn(move || {
-        tx.send(crate::claude::write(&key, diary::SYSTEM, &prompt)).ok();
+        tx.send(crate::claude::write(diary::SYSTEM, &prompt)).ok();
     });
     st.diary_error = None;
     st.diary_status = None;
-    st.diary_job = Some(Job { slug: c.slug.clone(), day, facts, rx });
+    st.diary_job = Some(Job {
+        slug: c.slug.clone(),
+        day,
+        facts,
+        rx,
+    });
 }
 
 fn start_next(m: &Model, st: &mut State) {
@@ -218,9 +234,13 @@ fn start_next(m: &Model, st: &mut State) {
 
 fn finish_job(m: &Model, st: &mut State) {
     let Some(job) = &st.diary_job else { return };
-    let Ok(result) = job.rx.try_recv() else { return };
+    let Ok(result) = job.rx.try_recv() else {
+        return;
+    };
     let job = st.diary_job.take().unwrap();
-    let Some(c) = m.memory.characters.iter().find(|c| c.slug == job.slug) else { return };
+    let Some(c) = m.memory.characters.iter().find(|c| c.slug == job.slug) else {
+        return;
+    };
     match result.and_then(|entry| diary::store(&st.repo, c, &job.day, &entry, &job.facts)) {
         Ok(()) => {
             st.diary_status = Some("Written and committed to the archive.".into());

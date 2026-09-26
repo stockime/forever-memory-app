@@ -5,7 +5,7 @@
 use egui::{ColorImage, TextureHandle, TextureOptions};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{Receiver, Sender, channel};
 use std::time::Duration;
 
 pub struct Art {
@@ -45,7 +45,13 @@ impl Art {
                 ctx.request_repaint();
             }
         });
-        Art { dir, textures: HashMap::new(), requested: HashSet::new(), tx, done }
+        Art {
+            dir,
+            textures: HashMap::new(),
+            requested: HashSet::new(),
+            tx,
+            done,
+        }
     }
 
     /// The texture for a key like "icon-135274.png", if it is ready.
@@ -71,7 +77,8 @@ impl Art {
     }
 
     pub fn icon(&mut self, ctx: &egui::Context, id: Option<i64>) -> Option<TextureHandle> {
-        id.filter(|i| *i > 0).and_then(|i| self.get(ctx, &format!("icon-{i}.png")))
+        id.filter(|i| *i > 0)
+            .and_then(|i| self.get(ctx, &format!("icon-{i}.png")))
     }
 }
 
