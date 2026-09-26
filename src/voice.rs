@@ -318,36 +318,63 @@ pub fn audio_path(c: &Character, day: &str, voice_id: &str, text: &str) -> PathB
 
 // ---- playback ----
 
-/// One narration playing at a time.
+/// The narration speeds offered; the chosen one is kept in the settings.
+pub const SPEEDS: [f32; 6] = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
+
+/// One narration playing at a time. Faster or slower playback keeps the
+/// voice's pitch (see Stretch), and the speed can change while it plays.
 pub struct Player {
     _sink: rodio::MixerDeviceSink,
     player: rodio::Player,
     pub key: String,
     pub length: f64,
+    rate: f64,
+    pos: Arc<AtomicU64>,
+    speed: Arc<AtomicU32>,
 }
 
 impl Player {
-    pub fn play(path: &Path, key: String) -> Result<Player, String> {
+    pub fn play(path: &Path, key: String, speed: f32) -> Result<Player, String> {
+        use rodio::Source;
+        let file = std::fs::File::open(path).map_err(|e| e.to_string())?;
+        let bytes = file.metadata().map(|m| m.len()).unwrap_or(0);
+        let decoder =
+            rodio::Decoder::new_mp3(std::io::BufReader::new(file)).map_err(|e| e.to_string())?;
+        let channels = decoder.channels().get() as usize;
+        let rate = decoder.sample_rate();
+        // Narration is one voice: mixed down to mono, decoded as it plays.
+        let mut decoder = decoder;
+        let mono = std::iter::from_fn(move || {
+            let first = decoder.next()?;
+            let rest: f32 = (1..channels).filter_map(|_| decoder.next()).sum();
+            Some((first + rest) / channels as f32)
+        });
+        // 128 kbit/s mp3: bytes to seconds.
+        let length = bytes as f64 * 8.0 / 128_000.0;
+        let pos = Arc::new(AtomicU64::new(0));
+        let speed = Arc::new(AtomicU32::new(speed.to_bits()));
         let sink = rodio::DeviceSinkBuilder::open_default_sink()
             .map_err(|e| format!("No audio output: {e}"))?;
         let player = rodio::Player::connect_new(sink.mixer());
-        let file = std::fs::File::open(path).map_err(|e| e.to_string())?;
-        let len = file.metadata().map(|m| m.len()).unwrap_or(0);
-        let source =
-            rodio::Decoder::new_mp3(std::io::BufReader::new(file)).map_err(|e| e.to_string())?;
-        player.append(source);
+        player.append(Stretch::new(mono, rate, speed.clone(), pos.clone()));
         let mut sink = sink;
         sink.log_on_drop(false);
-        // 128 kbit/s mp3: bytes to seconds.
         Ok(Player {
             _sink: sink,
             player,
             key,
-            length: len as f64 * 8.0 / 128_000.0,
+            length,
+            rate: rate.get() as f64,
+            pos,
+            speed,
         })
     }
+    /// Seconds into the recording (not of listening).
     pub fn position(&self) -> f64 {
-        self.player.get_pos().as_secs_f64()
+        self.pos.load(Ordering::Relaxed) as f64 / self.rate
+    }
+    pub fn set_speed(&self, speed: f32) {
+        self.speed.store(speed.to_bits(), Ordering::Relaxed);
     }
     pub fn finished(&self) -> bool {
         self.player.empty()
@@ -363,3 +390,185 @@ impl Player {
         }
     }
 }
+
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
+
+/// Time-stretching by WSOLA (waveform-similarity overlap-add): the voice is
+/// cut into overlapping windows that are laid down at the normal pace but
+/// taken from the recording faster or slower, each one shifted slightly to
+/// where it best continues the last, so speech speeds up without rising in
+/// pitch.
+struct Stretch {
+    source: Box<dyn Iterator<Item = f32> + Send>,
+    data: Vec<f32>,
+    rate: rodio::SampleRate,
+    speed: Arc<AtomicU32>,
+    pos: Arc<AtomicU64>,
+    window: Vec<f32>,
+    /// Where the next window should come from, at the current speed.
+    next: f64,
+    /// Where the last window came from.
+    last: Option<usize>,
+    /// The second half of the last window, to overlap with the next.
+    tail: Vec<f32>,
+    out: std::collections::VecDeque<f32>,
+    done: bool,
+}
+
+const WINDOW: usize = 1024;
+const HOP: usize = WINDOW / 2;
+const SEEK: isize = 256;
+
+impl Stretch {
+    fn new(
+        source: impl Iterator<Item = f32> + Send + 'static,
+        rate: rodio::SampleRate,
+        speed: Arc<AtomicU32>,
+        pos: Arc<AtomicU64>,
+    ) -> Self {
+        // A periodic Hann window: at half overlap the windows add up to one.
+        let window = (0..WINDOW)
+            .map(|n| 0.5 - 0.5 * (std::f32::consts::TAU * n as f32 / WINDOW as f32).cos())
+            .collect();
+        Stretch {
+            source: Box::new(source),
+            data: vec![],
+            rate,
+            speed,
+            pos,
+            window,
+            next: 0.0,
+            last: None,
+            tail: vec![0.0; HOP],
+            out: Default::default(),
+            done: false,
+        }
+    }
+
+    /// Decodes up to sample `n` (or the end).
+    fn fill(&mut self, n: usize) {
+        while self.data.len() < n {
+            match self.source.next() {
+                Some(v) => self.data.push(v),
+                None => break,
+            }
+        }
+    }
+
+    fn at(&self, i: isize) -> f32 {
+        if i < 0 { 0.0 } else { self.data.get(i as usize).copied().unwrap_or(0.0) }
+    }
+
+    /// The start near `target` whose opening best matches what naturally
+    /// follows the last window.
+    fn best_start(&self, target: isize) -> isize {
+        let Some(last) = self.last else { return target.max(0) };
+        let natural = (last + HOP) as isize;
+        if (target - natural).abs() <= 1 {
+            return natural; // normal speed: the recording as it is
+        }
+        let mut best = (f32::MIN, target);
+        for d in (-SEEK..=SEEK).step_by(2) {
+            let start = (target + d).max(0);
+            let (mut dot, mut energy) = (0.0f32, 1e-9f32);
+            for k in (0..HOP as isize).step_by(4) {
+                let a = self.at(start + k);
+                dot += a * self.at(natural + k);
+                energy += a * a;
+            }
+            let score = dot / energy.sqrt();
+            if score > best.0 {
+                best = (score, start);
+            }
+        }
+        best.1
+    }
+
+    fn frame(&mut self) {
+        self.fill(self.next as usize + WINDOW + SEEK as usize + HOP);
+        if self.next as usize >= self.data.len() {
+            // Let the last window fade out, then stop.
+            self.out.extend(self.tail.drain(..));
+            self.done = true;
+            return;
+        }
+        let speed = f32::from_bits(self.speed.load(Ordering::Relaxed)).clamp(0.5, 3.0) as f64;
+        let start = self.best_start(self.next.round() as isize);
+        for k in 0..HOP {
+            let v = self.at(start + k as isize) * self.window[k] + self.tail[k];
+            self.out.push_back(v);
+        }
+        for k in 0..HOP {
+            self.tail[k] = self.at(start + (HOP + k) as isize) * self.window[HOP + k];
+        }
+        self.last = Some(start.max(0) as usize);
+        self.next += HOP as f64 * speed;
+        self.pos.store(self.next.min(self.data.len() as f64) as u64, Ordering::Relaxed);
+    }
+}
+
+impl Iterator for Stretch {
+    type Item = f32;
+    fn next(&mut self) -> Option<f32> {
+        while self.out.is_empty() {
+            if self.done {
+                return None;
+            }
+            self.frame();
+        }
+        self.out.pop_front()
+    }
+}
+
+impl rodio::Source for Stretch {
+    fn current_span_len(&self) -> Option<usize> {
+        None
+    }
+    fn channels(&self) -> rodio::ChannelCount {
+        rodio::ChannelCount::new(1).unwrap()
+    }
+    fn sample_rate(&self) -> rodio::SampleRate {
+        self.rate
+    }
+    fn total_duration(&self) -> Option<std::time::Duration> {
+        None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A tone stretched to 1.5x keeps its pitch and gets two thirds as long.
+    #[test]
+    fn stretch_keeps_pitch() {
+        let rate = 44100;
+        let tone: Vec<f32> = (0..rate * 2)
+            .map(|i| (std::f32::consts::TAU * 220.0 * i as f32 / rate as f32).sin())
+            .collect();
+        let speed = Arc::new(AtomicU32::new(1.5f32.to_bits()));
+        let s = Stretch::new(tone.into_iter(), rodio::SampleRate::new(rate as u32).unwrap(), speed, Default::default());
+        let out: Vec<f32> = s.collect();
+        let len = out.len() as f32 / rate as f32;
+        assert!((len - 2.0 / 1.5).abs() < 0.05, "length {len}");
+        // Count zero crossings in the steady middle: 2 per cycle at 220 Hz.
+        let mid = &out[rate / 4..rate];
+        let crossings = mid.windows(2).filter(|w| w[0] < 0.0 && w[1] >= 0.0).count();
+        let hz = crossings as f32 / (mid.len() as f32 / rate as f32);
+        assert!((hz - 220.0).abs() < 8.0, "pitch {hz}");
+    }
+
+    #[test]
+    fn normal_speed_is_the_recording() {
+        let data: Vec<f32> = (0..20000).map(|i| ((i * 7919) % 200) as f32 / 100.0 - 1.0).collect();
+        let speed = Arc::new(AtomicU32::new(1.0f32.to_bits()));
+        let s = Stretch::new(data.clone().into_iter(), rodio::SampleRate::new(44100).unwrap(), speed, Default::default());
+        let out: Vec<f32> = s.collect();
+        // After the first half window fades in, it's the input unchanged.
+        for i in HOP..data.len() - WINDOW {
+            assert!((out[i] - data[i]).abs() < 1e-4, "sample {i}");
+        }
+    }
+}
+

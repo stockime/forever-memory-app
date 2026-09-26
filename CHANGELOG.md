@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.0
+
+- The map reveals only what your character has explored: the rest of the
+  zone stays dark, as on the game's map. Needs the updated addon (0.2.1; the
+  app offers the update in Settings) and a login; it also records when each
+  place was discovered.
+- A speed selector for reading the diary aloud (0.75× to 2×), remembered.
+  Faster or slower, the voice keeps its pitch; the speed can change while
+  it plays, and playback starts right away.
+- `forever-memory sync` runs the recorder without the window, e.g. as a
+  service, so saves, logs and backups are kept even while the app is closed.
+  Only one recorder works on an archive at a time.
+- The backup check reads the bucket instead of writing a test file (which a
+  bucket with object lock would keep for years), and runs every minute, so
+  diary entries and notes are backed up too.
+- Bar chart tooltips float above the chart instead of being cut off at its
+  top.
+
 ## 0.1.1
 
 - Tables and lists no longer flicker: rows with equal values (the same

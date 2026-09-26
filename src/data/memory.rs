@@ -171,6 +171,64 @@ pub struct Character {
     pub events: Vec<Event>,
     pub sessions: Vec<Session>,
     pub quests: Vec<Quest>,
+    /// The explored parts of each zone map, by uiMapID.
+    pub explored: BTreeMap<i64, Explored>,
+}
+
+/// What the game reveals of a zone map: its overlay textures, each laid out
+/// as a grid of tiles on the map canvas.
+#[derive(Clone, Debug, Default)]
+pub struct Explored {
+    pub width: f64,
+    pub height: f64,
+    pub overlays: Vec<Overlay>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Overlay {
+    pub x: f64,
+    pub y: f64,
+    pub w: f64,
+    pub h: f64,
+    pub across: usize,
+    pub files: Vec<i64>,
+}
+
+fn explored(v: Option<Value>) -> BTreeMap<i64, Explored> {
+    let Some(Value::Object(maps)) = v else {
+        return BTreeMap::new();
+    };
+    let num = |v: &Value, k: &str| v.get(k).and_then(Value::as_f64).unwrap_or(0.0);
+    maps.iter()
+        .filter_map(|(id, m)| {
+            let overlays = m
+                .get("overlays")?
+                .as_array()?
+                .iter()
+                .map(|o| Overlay {
+                    x: num(o, "x"),
+                    y: num(o, "y"),
+                    w: num(o, "w"),
+                    h: num(o, "h"),
+                    across: (num(o, "across") as usize).max(1),
+                    files: o
+                        .get("files")
+                        .and_then(Value::as_array)
+                        .map(|a| a.iter().filter_map(Value::as_i64).collect())
+                        .unwrap_or_default(),
+                })
+                .collect();
+            Some((
+                id.parse().ok()?,
+                Explored {
+                    // Classic zone maps are 1002 by 668 on the canvas.
+                    width: Some(num(m, "width")).filter(|w| *w > 0.0).unwrap_or(1002.0),
+                    height: Some(num(m, "height")).filter(|h| *h > 0.0).unwrap_or(668.0),
+                    overlays,
+                },
+            ))
+        })
+        .collect()
 }
 
 impl Character {
@@ -428,6 +486,7 @@ fn load_character(
     }
     c.sessions = sessions(&c.events);
     c.quests = quests(&c, texts, read_json(&dir.join("questlog.json")));
+    c.explored = explored(read_json(&dir.join("explored.json")));
     Some(c)
 }
 

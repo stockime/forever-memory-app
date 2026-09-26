@@ -282,7 +282,7 @@ fn poll_voice(st: &mut State) {
     st.voice_busy.clear();
     match msg {
         VoiceMsg::Created => st.reload_now = true,
-        VoiceMsg::Spoken(path, key) => match crate::voice::Player::play(&path, key) {
+        VoiceMsg::Spoken(path, key) => match crate::voice::Player::play(&path, key, crate::config::get().narration_speed) {
             Ok(p) => st.narrator = Some(p),
             Err(e) => st.voice_error = Some(e),
         },
@@ -418,6 +418,9 @@ fn narration(
                     if ui.button(format!("■ {}", tr!("Stop"))).clicked() {
                         stop = true;
                     }
+                    if let Some(s) = speed_picker(ui) {
+                        p.set_speed(s);
+                    }
                     let w = (ui.available_width() - 110.0).max(80.0);
                     super::widgets::bar(ui, (pos / len.max(1.0)) as f32, GOLD, w);
                     ui.label(
@@ -447,7 +450,7 @@ fn narration(
                         .clicked()
                     {
                         if path.exists() {
-                            match crate::voice::Player::play(&path, key_name.clone()) {
+                            match crate::voice::Player::play(&path, key_name.clone(), crate::config::get().narration_speed) {
                                 Ok(p) => st.narrator = Some(p),
                                 Err(e) => st.voice_error = Some(e),
                             }
@@ -474,6 +477,7 @@ fn narration(
                             );
                         }
                     }
+                    speed_picker(ui);
                     ui.label(
                         RichText::new(if path.exists() {
                             tr!("read aloud before; plays from the cache")
@@ -491,4 +495,27 @@ fn narration(
 
 fn clock(secs: f64) -> String {
     format!("{}:{:02}", secs as i64 / 60, secs as i64 % 60)
+}
+
+/// The narration speed, kept in the settings; returns a new choice.
+fn speed_picker(ui: &mut Ui) -> Option<f32> {
+    let current = crate::config::get().narration_speed;
+    let label = |s: f32| format!("{}×", format!("{s:.2}").trim_end_matches('0').trim_end_matches('.'));
+    let mut chosen = None;
+    egui::ComboBox::from_id_salt("narration-speed")
+        .selected_text(label(current))
+        .width(64.0)
+        .show_ui(ui, |ui| {
+            for s in crate::voice::SPEEDS {
+                if ui.selectable_label((s - current).abs() < 0.01, label(s)).clicked() {
+                    chosen = Some(s);
+                }
+            }
+        })
+        .response
+        .on_hover_text(tr!("Reading speed"));
+    if let Some(s) = chosen {
+        let _ = crate::config::update(|c| c.narration_speed = s);
+    }
+    chosen
 }

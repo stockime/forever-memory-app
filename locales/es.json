@@ -346,7 +346,6 @@
  "Bucket": "Bucket",
  "Check the connection": "Comprobar la conexión",
  "Choose…": "Elegir…",
- "Connected: a test file was written and read back.": "Conectado: se escribió y se volvió a leer un archivo de prueba.",
  "Days are listed with what happened, but no entries are written.": "Los días aparecen con lo que pasó, pero no se escriben entradas.",
  "Diary": "Diario",
  "Done, show my characters": "Listo, mostrar mis personajes",
@@ -411,5 +410,12 @@
  "Your characters' armory, every step on the map, their fights, quests and the people they met, and a diary they write themselves. Three steps and you're set:": "El arsenal de tus personajes, cada paso en el mapa, sus combates, misiones y la gente que conocieron, y un diario que escriben ellos mismos. Tres pasos y listo:",
  "game language: {locale}": "idioma del juego: {locale}",
  "not needed for local servers": "no hace falta para servidores locales",
- "{events} events\n{combat} combat log lines\n{chat} chat lines\n{players} players met": "{events} eventos\n{combat} líneas del registro de combate\n{chat} líneas de chat\n{players} jugadores conocidos"
+ "{events} events\n{combat} combat log lines\n{chat} chat lines\n{players} players met": "{events} eventos\n{combat} líneas del registro de combate\n{chat} líneas de chat\n{players} jugadores conocidos",
+ "Another Forever Memory (the background recorder or another window) is keeping the archive right now.": "Otro Forever Memory (el registro en segundo plano u otra ventana) está llevando el archivo ahora mismo.",
+ "Connected: the bucket accepts these keys.": "Conectado: el bucket acepta estas claves.",
+ "The storage refused these keys (403).": "El almacenamiento rechazó estas claves (403).",
+ "There is no bucket by that name (404).": "No hay ningún bucket con ese nombre (404).",
+ "The storage answered {status}.": "El almacenamiento respondió {status}.",
+ "Reading speed": "Velocidad de lectura",
+ "Unexplored parts stay dark": "Las zonas sin explorar quedan a oscuras"
 }

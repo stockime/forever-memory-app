@@ -113,10 +113,58 @@ fn main() -> eframe::Result {
         }
         std::process::exit(0);
     }
+    // `forever-memory check-s3`: checks the backup settings without writing.
+    if args.first().map(String::as_str) == Some("check-s3") {
+        match s3::check(&config::get().s3) {
+            Ok(()) => {
+                println!("ok");
+                std::process::exit(0);
+            }
+            Err(e) => {
+                eprintln!("{e}");
+                std::process::exit(1);
+            }
+        }
+    }
+    // `forever-memory sync`: the recorder without the window, e.g. as a
+    // service that runs all the time. Picks up settings changes on its own.
+    if args.first().map(String::as_str) == Some("sync") {
+        let shared = config::shared();
+        let status = sync::SharedStatus::default();
+        sync::spawn(shared.clone(), status.clone(), || {});
+        let file = config::file();
+        let modified = || std::fs::metadata(&file).and_then(|m| m.modified()).ok();
+        let mut seen = modified();
+        let mut shown: (Option<std::time::SystemTime>, Option<String>, bool) = (None, None, false);
+        loop {
+            std::thread::sleep(Duration::from_secs(2));
+            if modified() != seen {
+                seen = modified();
+                if let Ok(mut s) = shared.lock() {
+                    *s = config::Settings::load();
+                }
+                println!("settings reloaded");
+            }
+            let st = status.lock().map(|s| s.clone()).unwrap_or_default();
+            if let Some((t, msg)) = &st.last {
+                if shown.0 != Some(*t) {
+                    println!("{msg}");
+                }
+            }
+            if st.error.is_some() && st.error != shown.1 {
+                eprintln!("{}", st.error.clone().unwrap_or_default());
+            }
+            if st.elsewhere && !shown.2 {
+                println!("another recorder has the archive; waiting");
+            }
+            shown = (st.last.map(|l| l.0), st.error, st.elsewhere);
+        }
+    }
     // `forever-memory play <file.mp3>`: plays a file through the narration player (a check).
     if args.first().map(String::as_str) == Some("play") {
         let path = std::path::PathBuf::from(args.get(1).cloned().unwrap_or_default());
-        match voice::Player::play(&path, "cli".into()) {
+        let speed = args.get(2).and_then(|s| s.parse().ok()).unwrap_or(1.0);
+        match voice::Player::play(&path, "cli".into(), speed) {
             Ok(p) => {
                 println!("length ~{:.1}s", p.length);
                 while !p.finished() {

@@ -361,7 +361,7 @@ fn zones(ui: &mut Ui, c: &Character) {
         .collect();
     let height = (70.0 + 34.0 * z.len() as f32).min(320.0);
     let names2 = names.clone();
-    plot("zones")
+    let r = plot("zones")
         .height(height)
         .show_x(false)
         .show_y(false)
@@ -378,15 +378,13 @@ fn zones(ui: &mut Ui, c: &Character) {
                 BarChart::new("Minutes", bars)
                     .horizontal()
                     .color(SERIES[0])
-                    .element_formatter(Box::new(|b, _| {
-                        format!(
-                            "{}: {}",
-                            b.name,
-                            tr!("{n} min", n = format!("{:.0}", b.value))
-                        )
-                    })),
+                    .element_formatter(Box::new(|_, _| String::new())),
             );
         });
+    super::bar_tip(&r, |p| {
+        let (n, s) = z.get((-p.y).round().max(0.0) as usize)?;
+        Some(format!("{n}: {}", tr!("{n} min", n = format!("{:.0}", s / 60.0))))
+    });
 }
 
 fn sessions(ui: &mut Ui, c: &Character) {

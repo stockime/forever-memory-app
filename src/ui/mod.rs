@@ -382,6 +382,20 @@ pub fn chips(
 }
 
 /// The plot point under the pointer, near a data point or not.
+/// Hover text for a bar chart as a real tooltip: the chart's own label is
+/// drawn inside the plot and cut off at its edges above tall bars.
+pub fn bar_tip<R>(
+    r: &egui_plot::PlotResponse<R>,
+    text: impl FnOnce(egui_plot::PlotPoint) -> Option<String>,
+) {
+    let Some(pos) = r.response.hover_pos() else {
+        return;
+    };
+    if let Some(t) = text(r.transform.value_from_position(pos)) {
+        r.response.clone().on_hover_text_at_pointer(t);
+    }
+}
+
 pub fn hover(h: &egui_plot::HoverPosition<'_>) -> egui_plot::PlotPoint {
     match h {
         egui_plot::HoverPosition::NearDataPoint { position, .. } => *position,

@@ -189,15 +189,29 @@ pub fn head(cfg: &S3, key: &str) -> Result<Option<u64>, String> {
     }
 }
 
-/// Checks the settings by writing and reading back a small object.
+/// Checks the endpoint, bucket and keys by asking for the bucket itself,
+/// without writing anything (a bucket with object lock would keep a test
+/// file for years).
 pub fn check(cfg: &S3) -> Result<(), String> {
-    put(
-        cfg,
-        "forever-memory-check.txt",
-        b"Forever Memory can write here.\n",
-        "text/plain",
-        &[],
-    )
+    let path = format!("/{}", cfg.bucket.trim());
+    let headers = sign(cfg, "HEAD", &path, &sha256_hex(b""), &[]);
+    let mut req = ureq::head(format!("{}://{}{path}", scheme(cfg), host(cfg)));
+    for (k, v) in &headers {
+        req = req.header(k, v);
+    }
+    let resp = req
+        .config()
+        .timeout_global(Some(Duration::from_secs(30)))
+        .http_status_as_error(false)
+        .build()
+        .call()
+        .map_err(|e| e.to_string())?;
+    match resp.status().as_u16() {
+        200 => Ok(()),
+        403 => Err(crate::tr!("The storage refused these keys (403).").into()),
+        404 => Err(crate::tr!("There is no bucket by that name (404).").into()),
+        s => Err(crate::tr!("The storage answered {status}.", status = s)),
+    }
 }
 
 #[cfg(test)]

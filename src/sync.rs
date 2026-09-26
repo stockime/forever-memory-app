@@ -9,6 +9,7 @@
 //!   characters/<slug>/seen.json           item key -> first seen (unix seconds)
 //!   characters/<slug>/log/<date>.jsonl    event rows, one JSON object per line
 //!   characters/<slug>/questlog.json       the quest log with objective progress
+//!   characters/<slug>/explored.json       the explored parts of each zone map
 //!   items.json, players.json, gossip.json, quests/<id>.json
 //!   logs/manifest.jsonl                   every archived native log
 //!   state.json                            the last archived row number
@@ -31,66 +32,91 @@ pub struct Status {
     pub last: Option<(SystemTime, String)>,
     pub error: Option<String>,
     pub watching: Vec<PathBuf>,
+    /// Another recorder (the background service or another window) has the archive.
+    pub elsewhere: bool,
 }
 
 pub type SharedStatus = Arc<Mutex<Status>>;
 
 /// Runs the recorder until the app quits. It reads the settings on every
-/// round, so changes apply without a restart.
+/// round, so changes apply without a restart. Only one recorder works on an
+/// archive at a time (the window and `forever-memory sync` may both run);
+/// the other waits and takes over when the first one stops.
 pub fn spawn(
     settings: Arc<Mutex<Settings>>,
     status: SharedStatus,
     changed: impl Fn() + Send + 'static,
-) {
+) -> std::thread::JoinHandle<()> {
     std::thread::spawn(move || {
         let mut seen: HashMap<PathBuf, SystemTime> = HashMap::new();
         let mut last_logs = Instant::now() - Duration::from_secs(3600);
+        let mut lock: Option<(PathBuf, std::fs::File)> = None;
         loop {
             let s = settings.lock().map(|s| s.clone()).unwrap_or_default();
+            let archive = s.archive_dir();
+            if lock.as_ref().is_some_and(|(p, _)| *p != archive) {
+                lock = None;
+            }
+            if lock.is_none() {
+                lock = take_lock(&archive).map(|f| (archive.clone(), f));
+            }
+            if let Ok(mut st) = status.lock() {
+                st.elsewhere = lock.is_none();
+            }
             let mut did = false;
-            if let Some(install) = s.install() {
-                if let Some(flavor) = s.flavor_in(&install) {
-                    let files = platform::saved_variables(&install, &flavor);
-                    if let Ok(mut st) = status.lock() {
-                        st.watching = files.clone();
-                    }
-                    if s.record {
-                        for f in files {
-                            let Ok(modified) = std::fs::metadata(&f).and_then(|m| m.modified())
-                            else {
-                                continue;
-                            };
-                            if seen.get(&f) == Some(&modified) {
-                                continue;
-                            }
-                            match record(&s, &f) {
-                                Ok(msg) => {
-                                    seen.insert(f, modified);
-                                    if let Some(msg) = msg {
-                                        note(&status, Ok(msg));
-                                        did = true;
-                                    }
+            let install = s.install();
+            let flavor = install.as_ref().and_then(|i| s.flavor_in(i));
+            if let (Some(install), Some(flavor), Some(_)) = (&install, &flavor, &lock) {
+                let files = platform::saved_variables(install, flavor);
+                if let Ok(mut st) = status.lock() {
+                    st.watching = files.clone();
+                }
+                if s.record {
+                    for f in files {
+                        let Ok(modified) = std::fs::metadata(&f).and_then(|m| m.modified()) else {
+                            continue;
+                        };
+                        if seen.get(&f) == Some(&modified) {
+                            continue;
+                        }
+                        match record(&s, &f) {
+                            Ok(msg) => {
+                                seen.insert(f, modified);
+                                if let Some(msg) = msg {
+                                    note(&status, Ok(msg));
+                                    did = true;
                                 }
-                                Err(e) => note(&status, Err(e)), // tried again on the next change
                             }
+                            Err(e) => note(&status, Err(e)), // tried again on the next change
                         }
                     }
-                    if s.archive_logs && last_logs.elapsed() > Duration::from_secs(60) {
-                        last_logs = Instant::now();
-                        match archive_logs(&s, &install.join(&flavor).join("Logs")) {
-                            Ok(Some(msg)) => {
-                                note(&status, Ok(msg));
-                                did = true;
-                            }
-                            Ok(None) => {}
-                            Err(e) => note(&status, Err(format!("logs: {e}"))),
+                }
+            }
+            // Once a minute: finished logs, and a backup of anything new
+            // (diary entries and notes are committed by the window).
+            if lock.is_some() && last_logs.elapsed() > Duration::from_secs(60) {
+                last_logs = Instant::now();
+                if let (true, Some(install), Some(flavor)) = (s.archive_logs, &install, &flavor) {
+                    match archive_logs(&s, &install.join(flavor).join("Logs")) {
+                        Ok(Some(msg)) => {
+                            note(&status, Ok(msg));
+                            did = true;
                         }
+                        Ok(None) => {}
+                        Err(e) => note(&status, Err(format!("logs: {e}"))),
+                    }
+                }
+                if s.s3.ready() {
+                    match backup(&archive, &s.s3) {
+                        Ok(Some(key)) => note(&status, Ok(format!("backed up to {key}"))),
+                        Ok(None) => {}
+                        Err(e) => note(&status, Err(format!("backup: {e}"))),
                     }
                 }
             }
             if did {
                 if s.s3.ready() {
-                    match backup(&s.archive_dir(), &s.s3) {
+                    match backup(&archive, &s.s3) {
                         Ok(Some(key)) => note(&status, Ok(format!("backed up to {key}"))),
                         Ok(None) => {}
                         Err(e) => note(&status, Err(format!("backup: {e}"))),
@@ -100,7 +126,25 @@ pub fn spawn(
             }
             std::thread::sleep(Duration::from_secs(2));
         }
-    });
+    })
+}
+
+/// The recorder's lock for an archive, if no other recorder holds it. It
+/// lives in the data folder, so it never ends up in the archive's history.
+fn take_lock(archive: &Path) -> Option<std::fs::File> {
+    use std::hash::{Hash, Hasher};
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    archive.hash(&mut h);
+    let dir = platform::data_dir().join("locks");
+    std::fs::create_dir_all(&dir).ok()?;
+    let f = std::fs::OpenOptions::new()
+        .create(true)
+        .truncate(false)
+        .write(true)
+        .open(dir.join(format!("{:016x}.lock", h.finish())))
+        .ok()?;
+    f.try_lock().ok()?;
+    Some(f)
 }
 
 fn note(status: &SharedStatus, r: Result<String, String>) {
@@ -233,6 +277,9 @@ fn export(dir: &Path, raw: &[u8], vars: &Map<String, Value>) -> Result<Option<St
         }
         if let Some(ql) = c.get("questlog") {
             write_json(&base.join("questlog.json"), ql)?;
+        }
+        if let Some(ex) = c.get("explored").filter(|v| v.is_object()) {
+            write_json(&base.join("explored.json"), ex)?;
         }
         let mut by_day: BTreeMap<String, Vec<&Map<String, Value>>> = BTreeMap::new();
         let mut counts: HashMap<String, usize> = HashMap::new();

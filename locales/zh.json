@@ -346,7 +346,6 @@
  "Bucket": "存储桶",
  "Check the connection": "检查连接",
  "Choose…": "选择…",
- "Connected: a test file was written and read back.": "已连接：测试文件已写入并成功读回。",
  "Days are listed with what happened, but no entries are written.": "会列出每天发生的事，但不会写日记。",
  "Diary": "日记",
  "Done, show my characters": "完成，查看我的角色",
@@ -411,5 +410,12 @@
  "Your characters' armory, every step on the map, their fights, quests and the people they met, and a diary they write themselves. Three steps and you're set:": "角色的英雄榜、地图上的每一步、他们的战斗、任务和遇见的人，以及他们亲笔写下的日记。只需三步：",
  "game language: {locale}": "游戏语言：{locale}",
  "not needed for local servers": "本地服务器无需填写",
- "{events} events\n{combat} combat log lines\n{chat} chat lines\n{players} players met": "{events} 个事件\n{combat} 行战斗日志\n{chat} 行聊天\n遇见 {players} 名玩家"
+ "{events} events\n{combat} combat log lines\n{chat} chat lines\n{players} players met": "{events} 个事件\n{combat} 行战斗日志\n{chat} 行聊天\n遇见 {players} 名玩家",
+ "Another Forever Memory (the background recorder or another window) is keeping the archive right now.": "另一个 Forever Memory（后台记录程序或另一个窗口）正在维护档案。",
+ "Connected: the bucket accepts these keys.": "已连接：存储桶接受这些密钥。",
+ "The storage refused these keys (403).": "存储拒绝了这些密钥（403）。",
+ "There is no bucket by that name (404).": "没有该名称的存储桶（404）。",
+ "The storage answered {status}.": "存储返回了 {status}。",
+ "Reading speed": "朗读速度",
+ "Unexplored parts stay dark": "未探索的区域保持黑暗"
 }

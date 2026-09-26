@@ -27,6 +27,8 @@ pub struct Settings {
     pub archive_logs: bool,
     pub writer: Writer,
     pub elevenlabs_key: String,
+    /// How fast diary entries are read aloud.
+    pub narration_speed: f32,
     pub s3: S3,
     /// The welcome has been seen.
     pub onboarded: bool,
@@ -44,6 +46,7 @@ impl Default for Settings {
             archive_logs: true,
             writer: Writer::Auto,
             elevenlabs_key: String::new(),
+            narration_speed: 1.0,
             s3: S3::default(),
             onboarded: false,
         }
@@ -92,7 +95,7 @@ impl S3 {
     }
 }
 
-fn file() -> PathBuf {
+pub fn file() -> PathBuf {
     platform::config_dir().join("settings.json")
 }
 

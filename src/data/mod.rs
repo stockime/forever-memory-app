@@ -241,6 +241,13 @@ pub fn art_keys(m: &Model) -> Vec<String> {
                 _ => {}
             }
         }
+        for ex in c.explored.values() {
+            for o in &ex.overlays {
+                for id in &o.files {
+                    icon(Some(*id), &mut keys);
+                }
+            }
+        }
         for e in c.events.iter().filter(|e| e.e == "pos") {
             if let Some(map) = e.i("map").filter(|m| (1411..=1458).contains(m)) {
                 keys.insert(format!("map-{map}.jpg"));

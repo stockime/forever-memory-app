@@ -198,9 +198,17 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
         Rect::from_min_size(Pos2::new(cx as f32, cy as f32), Vec2::splat(side as f32))
     };
     match art.get(ui.ctx(), &format!("map-{zone}.jpg")) {
-        Some(tex) => {
-            p.image(tex.id(), rect, view, Color32::from_gray(210));
-        }
+        Some(tex) => match c.explored.get(&zone) {
+            // What the character hasn't explored stays in the dark, as on
+            // the game's own map.
+            Some(ex) => {
+                p.image(tex.id(), rect, view, Color32::from_gray(80));
+                reveal(&p, art, ui.ctx(), ex, rect, view);
+            }
+            None => {
+                p.image(tex.id(), rect, view, Color32::from_gray(210));
+            }
+        },
         None => {
             for i in 1..10 {
                 let f = i as f32 / 10.0;
@@ -343,5 +351,56 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 .small()
                 .color(MUTED),
         );
+        if c.explored.contains_key(&zone) {
+            ui.add_space(10.0);
+            ui.label(
+                RichText::new(tr!("Unexplored parts stay dark"))
+                    .small()
+                    .color(MUTED),
+            );
+        }
     });
+}
+
+/// Paints the explored parts of a zone at full brightness: each overlay is
+/// a grid of 256-pixel tiles placed on the map canvas.
+fn reveal(
+    p: &egui::Painter,
+    art: &mut Art,
+    ctx: &egui::Context,
+    ex: &crate::data::memory::Explored,
+    rect: Rect,
+    view: Rect,
+) {
+    let to_screen = |x: f64, y: f64| {
+        rect.lerp_inside(Vec2::new(
+            ((x / ex.width) as f32 - view.min.x) / view.width(),
+            ((y / ex.height) as f32 - view.min.y) / view.height(),
+        ))
+    };
+    for o in &ex.overlays {
+        for (i, id) in o.files.iter().enumerate() {
+            let (tx, ty) = ((i % o.across) as f64 * 256.0, (i / o.across) as f64 * 256.0);
+            let (tw, th) = ((o.w - tx).min(256.0), (o.h - ty).min(256.0));
+            if tw <= 0.0 || th <= 0.0 {
+                continue;
+            }
+            let Some(tex) = art.icon(ctx, Some(*id)) else {
+                continue;
+            };
+            let [sw, sh] = tex.size();
+            let uv = Rect::from_min_max(
+                Pos2::ZERO,
+                Pos2::new(
+                    (tw / sw as f64).min(1.0) as f32,
+                    (th / sh as f64).min(1.0) as f32,
+                ),
+            );
+            let r = Rect::from_min_max(
+                to_screen(o.x + tx, o.y + ty),
+                to_screen(o.x + tx + tw, o.y + ty + th),
+            );
+            p.image(tex.id(), r, uv, Color32::from_gray(210));
+        }
+    }
 }

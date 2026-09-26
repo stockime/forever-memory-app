@@ -781,6 +781,9 @@ fn archive(ui: &mut Ui, s: &mut Settings, status: &sync::SharedStatus) {
                     .color(MUTED),
             );
         }
+        if st.elsewhere {
+            note(ui, tr!("Another Forever Memory (the background recorder or another window) is keeping the archive right now."));
+        }
         if let Some(e) = &st.error {
             warn(ui, e);
         }
@@ -862,7 +865,7 @@ fn backup(
                 let cfg = s.s3.clone();
                 *job = Some(self::job("s3", move || {
                     crate::s3::check(&cfg).map(|()| {
-                        tr!("Connected: a test file was written and read back.").to_string()
+                        tr!("Connected: the bucket accepts these keys.").to_string()
                     })
                 }));
             }

@@ -61,7 +61,8 @@ The app speaks English, Deutsch, Français, Español, Português (Brasil) and
   the full quest text, rewards offered and chosen, time taken, and how the
   objectives progressed.
 - **Map**: the recorded path on the zone's Classic world map with quests,
-  deaths and level-ups where they happened, and a replay scrubber.
+  deaths and level-ups where they happened, and a replay scrubber. Only what
+  the character has explored is revealed; the rest stays dark.
 - **Combat**: fights and damage per second, abilities with crit rates, kills,
   and the ten seconds before every death, from the native combat logs.
 - **Gold & loot**: where money comes from and goes, every item that went
@@ -93,6 +94,7 @@ Everything works without setup; Settings lets you change:
 - **The archive**: where recordings are kept (with full git history when git
   is installed), and whether finished chat and combat logs are moved out of
   the game folder between sessions.
+- **Reading speed** of the diary, from 0.75× to 2×, right in the player.
 - **Backup** (optional): S3-compatible object storage (AWS, Hetzner,
   Backblaze B2, Cloudflare R2, MinIO, …). The archive goes up as incremental
   git bundles, the native logs compressed. With object lock on the bucket the
@@ -157,7 +159,12 @@ The addon lives in its own repository,
 [forever-memory-addon](https://github.com/stockime/forever-memory-addon),
 included here as a submodule and built into the app.
 
+To keep recording while the app is closed, run `forever-memory sync` in the
+background (e.g. as a systemd user service or a login item); it uses the same
+settings, and only one recorder works on an archive at a time.
+
 Command line: `forever-memory record` archives the current saves once;
+`forever-memory check-s3` checks the backup settings;
 `forever-memory diary <character> [YYYY-MM-DD]` writes a diary entry;
 `FM_SHOT=out.png FM_PAGE=quests forever-memory` saves a screenshot of a page
 and quits (used to check layouts), `FM_LANG=de` picks a language for it.

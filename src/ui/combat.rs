@@ -124,13 +124,6 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                                 Bar::new(k as f64 + 1.0, f.dps())
                                     .width(0.8)
                                     .fill(fill)
-                                    .name(tr!(
-                                        "{target} at {time}\n{dps} DPS over {duration}",
-                                        target = f.target,
-                                        time = theme::clock(f.start),
-                                        dps = format!("{:.1}", f.dps()),
-                                        duration = theme::duration(f.end - f.start)
-                                    ))
                             })
                             .collect();
                         let r = plot("fights")
@@ -140,9 +133,20 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                             .show(ui, |pu| {
                                 pu.bar_chart(
                                     BarChart::new("DPS", bars)
-                                        .element_formatter(Box::new(|b, _| b.name.clone())),
+                                        .element_formatter(Box::new(|_, _| String::new())),
                                 );
                                 pu.pointer_coordinate()
+                            });
+                        super::bar_tip(&r, |p| {
+                                let k = p.x.round() as usize;
+                                let (_, f) = fights.get(k.checked_sub(1)?)?;
+                                Some(tr!(
+                                    "{target} at {time}\n{dps} DPS over {duration}",
+                                    target = f.target,
+                                    time = theme::clock(f.start),
+                                    dps = format!("{:.1}", f.dps()),
+                                    duration = theme::duration(f.end - f.start)
+                                ))
                             });
                         if r.response.clicked() {
                             if let Some(p) = r.inner {
