@@ -444,9 +444,12 @@ pub fn guess_class(spells: &HashMap<u32, u32>, c: &Combat) -> Option<&'static st
     votes.into_iter().max_by_key(|(_, n)| *n).map(|(c, _)| c)
 }
 
+/// The logs in `dirs`, folder by folder (archived before live, so the
+/// files come in the order they were written), each folder by name.
 pub fn log_files(dirs: &[&Path], prefix: &str) -> Vec<std::path::PathBuf> {
-    let mut out = vec![];
+    let mut all = vec![];
     for d in dirs {
+        let mut out = vec![];
         if let Ok(rd) = fs::read_dir(d) {
             for f in rd.flatten() {
                 let n = f.file_name().to_string_lossy().to_string();
@@ -458,9 +461,10 @@ pub fn log_files(dirs: &[&Path], prefix: &str) -> Vec<std::path::PathBuf> {
                 }
             }
         }
+        out.sort();
+        all.extend(out);
     }
-    out.sort();
-    out
+    all
 }
 
 #[cfg(test)]
