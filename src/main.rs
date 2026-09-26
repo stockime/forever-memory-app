@@ -363,6 +363,8 @@ pub struct State {
     pub paths_changed: bool,
     /// A character to select once the archive is read.
     pub select_slug: Option<String>,
+    pub chronicle: ui::chronicle::Book,
+    pub dead: ui::dead::Deaths,
 }
 
 pub struct App {

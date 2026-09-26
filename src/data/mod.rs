@@ -2,6 +2,7 @@ pub mod bonds;
 mod cache;
 pub mod chat;
 pub mod combat;
+pub mod dead;
 pub mod deeds;
 pub mod diary;
 pub mod items;
