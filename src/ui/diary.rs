@@ -45,13 +45,20 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
             card(ui, |ui| {
                 ui.set_width(ui.available_width());
                 label(ui, &tr!("Who {name} is", name = c.name.split(' ').next().unwrap_or(&c.name)));
+                if let Some(p) = &c.rp {
+                    rp_line(ui, p, theme::class_color(&c.class_file));
+                }
                 ui.label(RichText::new(tr!("Voice, history, what they care about. The diary is written in this voice.")).small().color(MUTED));
                 let (_, text) = st.note_edit.as_mut().unwrap();
                 let preset = crate::data::presets::for_character(c, crate::i18n::current());
                 let hint = preset.clone().unwrap_or_else(|| tr!("Died of the plague in Brill and came back wrong. Dry, gallows humour; still loves the Light, which does not love him back…").into());
                 ui.add(egui::TextEdit::multiline(text).desired_rows(8).desired_width(f32::INFINITY).hint_text(hint));
                 let changed = *text != c.personality;
-                ui.horizontal(|ui| {
+                ui.horizontal_wrapped(|ui| {
+                    if let Some(p) = c.rp.as_ref().filter(|p| p.has_character() && text.trim().is_empty())
+                        && ui.button(tr!("Start from your {addon} profile", addon = p.addon)).on_hover_text(tr!("Fills in a short note made from your roleplay profile, to change as you like")).clicked() {
+                            *text = super::rp::note(p);
+                        }
                     if let Some(p) = preset.filter(|_| text.trim().is_empty())
                         && ui.button(tr!("Start from the suggestion")).on_hover_text(tr!("Fills in the suggestion above, to change as you like")).clicked() {
                             *text = p;
@@ -176,6 +183,25 @@ fn entry(ui: &mut Ui, m: &Model, st: &mut State, day: &str, art: &mut Art) {
         }
         ui.add_space(24.0);
     });
+}
+
+/// The name and title the character goes by in their roleplay profile.
+fn rp_line(ui: &mut Ui, p: &crate::data::rp::Profile, color: Color32) {
+    let name = p.full_name();
+    if name.is_empty() && p.full_title.is_empty() {
+        return;
+    }
+    ui.vertical(|ui| {
+        ui.spacing_mut().item_spacing.y = 0.0;
+        if !name.is_empty() {
+            ui.label(RichText::new(name).font(theme::display_font(19.0)).color(color));
+        }
+        if !p.full_title.is_empty() {
+            ui.label(RichText::new(&p.full_title).family(theme::italic()).color(INK));
+        }
+    })
+    .response
+    .on_hover_text(tr!("From {addon}. The diary knows this profile too; your note wins where they differ.", addon = p.addon));
 }
 
 /// Minimal Markdown: headings, paragraphs, and emphasis markers dropped.

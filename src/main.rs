@@ -437,6 +437,10 @@ impl App {
         if let Some(tab) = std::env::var("FM_PLAYERS_TAB").ok().and_then(|t| t.parse().ok()) {
             app.state.players_tab = tab;
         }
+        // FM_PLAYER=<name> opens that player's profile on the Players page.
+        if let Ok(name) = std::env::var("FM_PLAYER") {
+            app.state.player = Some(name);
+        }
         // FM_DIARY_DAY=YYYY-MM-DD opens the diary on that day.
         if let Ok(day) = std::env::var("FM_DIARY_DAY") {
             app.state.diary_day = Some(day);
@@ -646,7 +650,7 @@ impl eframe::App for App {
             .show(ui, |ui| {
                 let st = &mut self.state;
                 if self.page == Page::Settings {
-                    ui::settings::show(ui, st, model.memory.characters.len());
+                    ui::settings::show(ui, st, model.memory.characters.len(), &model.rp.sources);
                     return;
                 }
                 let art = &mut self.art;

@@ -173,6 +173,8 @@ pub struct Character {
     pub quests: Vec<Quest>,
     /// The explored parts of each zone map, by uiMapID.
     pub explored: BTreeMap<i64, Explored>,
+    /// Their roleplay profile (Total RP 3 and the like), if they have one.
+    pub rp: Option<std::sync::Arc<super::rp::Profile>>,
 }
 
 /// What the game reveals of a zone map: its overlay textures, each laid out
