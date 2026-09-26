@@ -151,6 +151,20 @@ fn paper_doll(ui: &mut Ui, c: &Character, art: &mut Art) {
         mesh.add_rect_with_uv(rect.shrink(1.0), uv, Color32::from_gray(120));
         shapes.push(egui::Shape::mesh(mesh));
     }
+    // The character, standing where the game shows them, above the weapons.
+    let race = c.snapshot.get("raceFile").and_then(Value::as_str).unwrap_or("");
+    if crate::gamedata::character_supported(race) {
+        let female = c.snapshot.get("sex").and_then(Value::as_i64) == Some(3);
+        let key = format!("char-{}-{}.png", race.to_lowercase(), if female { "f" } else { "m" });
+        if let Some(tex) = art.get(ui.ctx(), &key) {
+            let h = (rect.height() - 96.0).max(100.0);
+            let w = h * 600.0 / 900.0;
+            let at = Rect::from_min_size(egui::pos2(rect.center().x - w / 2.0, rect.top() + 6.0), egui::vec2(w, h));
+            let mut mesh = egui::Mesh::with_texture(tex.id());
+            mesh.add_rect_with_uv(at, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
+            shapes.push(egui::Shape::mesh(mesh));
+        }
+    }
     ui.painter().set(bg_shape, egui::Shape::Vec(shapes));
 }
 

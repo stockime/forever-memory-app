@@ -8,7 +8,7 @@ use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 
-type Key = [u8; 16];
+pub(super) type Key = [u8; 16];
 
 pub struct Storage {
     dir: PathBuf, // the install's Data directory
@@ -18,6 +18,8 @@ pub struct Storage {
     encoding: HashMap<Key, Key>, // content key -> first encoding key
     root: HashMap<u32, Key>,     // file data ID -> content key
     names: HashMap<u64, u32>,    // path name hash -> file data ID
+    /// Where files the install hasn't downloaded yet come from.
+    cdn: Option<super::cdn::Cdn>,
 }
 
 struct Location {
@@ -46,6 +48,12 @@ impl Storage {
             encoding: HashMap::new(),
             root: HashMap::new(),
             names: HashMap::new(),
+            cdn: super::cdn::Cdn::new(
+                &game_dir.join("Data"),
+                row.get("CDN Hosts").map(String::as_str).unwrap_or(""),
+                row.get("CDN Path").map(String::as_str).unwrap_or(""),
+                crate::platform::cache_dir().join("cdn"),
+            ),
         };
         let build_key = row.get("Build Key").map(String::as_str).unwrap_or("");
         s.build = s
@@ -165,10 +173,11 @@ impl Storage {
 
     /// The decoded contents of the blob with the given encoding key.
     fn read_ekey(&self, ekey: &Key) -> Result<Vec<u8>, String> {
-        let loc = self
-            .index
-            .get(&ekey[..9])
-            .ok_or_else(|| format!("ekey {} not stored locally", hex(ekey)))?;
+        let Some(loc) = self.index.get(&ekey[..9]) else {
+            // Not downloaded by the game yet: stream it like the game would.
+            let cdn = self.cdn.as_ref().ok_or_else(|| format!("ekey {} not stored locally", hex(ekey)))?;
+            return blte::decode(&cdn.fetch(ekey)?);
+        };
         let path = self
             .dir
             .join("data")
@@ -349,6 +358,6 @@ fn parse_key(h: Option<&String>) -> Result<Key, String> {
     Ok(k)
 }
 
-fn hex(k: &[u8]) -> String {
+pub(super) fn hex(k: &[u8]) -> String {
     k.iter().map(|b| format!("{b:02x}")).collect()
 }
