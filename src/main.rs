@@ -14,6 +14,7 @@ mod i18n;
 mod platform;
 mod s3;
 mod savedvars;
+mod stream;
 mod sync;
 mod theme;
 mod ui;
@@ -112,6 +113,46 @@ fn main() -> eframe::Result {
             }
         }
         std::process::exit(0);
+    }
+    // `forever-memory previously <character> [YYYY-MM-DD]`: writes the
+    // "Previously on…" stream page for a day's entry (read aloud once before).
+    if args.first().map(String::as_str) == Some("previously") {
+        let settings = config::get();
+        i18n::set(settings.lang());
+        let paths = Paths::from_settings(&settings);
+        let model = data::load(&paths, None);
+        let who = args.get(1).map(|s| s.to_lowercase()).unwrap_or_default();
+        let result = (|| {
+            let c = model
+                .memory
+                .characters
+                .iter()
+                .find(|c| c.slug == who || c.name.to_lowercase() == who)
+                .ok_or_else(|| format!("no character {who:?}"))?;
+            let day = args
+                .get(2)
+                .cloned()
+                .or_else(|| c.diary.keys().next_back().cloned())
+                .ok_or("no diary entry yet")?;
+            let stored = c.diary.get(&day).ok_or_else(|| format!("no entry on {day}"))?;
+            let prose = data::diary::split(stored).0;
+            let v = voice::load_voice(&paths.repo, c).ok_or("no voice yet: listen to an entry once")?;
+            let mp3 = voice::audio_path(c, &day, &v.voice_id, &voice::spoken_text(prose));
+            if !mp3.exists() {
+                return Err(format!("{day} hasn't been read aloud yet"));
+            }
+            stream::previously(c, &day, prose, &mp3, Some(&paths.art.join("icon-3450737.png")))
+        })();
+        match result {
+            Ok(p) => {
+                println!("{}", p.display());
+                std::process::exit(0);
+            }
+            Err(e) => {
+                eprintln!("{e}");
+                std::process::exit(1);
+            }
+        }
     }
     // `forever-memory check-s3`: checks the backup settings without writing.
     if args.first().map(String::as_str) == Some("check-s3") {
@@ -282,6 +323,10 @@ pub struct State {
     pub quest_search: String,
     pub quest: Option<i64>,
     pub player_search: String,
+    /// Players page: everyone, the fellowship or the nemeses.
+    pub players_tab: usize,
+    /// The last "Previously on…" page written, or why it couldn't be.
+    pub stream_page: Option<Result<std::path::PathBuf, String>>,
     pub player: Option<String>,
     pub session: Option<usize>,
     pub journal_hide: std::collections::HashSet<&'static str>,
@@ -373,6 +418,10 @@ impl App {
         // FM_CHARACTER=<slug> picks the character (with FM_SHOT, for screenshots).
         if let Ok(slug) = std::env::var("FM_CHARACTER") {
             app.state.select_slug = Some(slug);
+        }
+        // FM_PLAYERS_TAB=1 or 2 opens the fellowship or the nemeses.
+        if let Some(tab) = std::env::var("FM_PLAYERS_TAB").ok().and_then(|t| t.parse().ok()) {
+            app.state.players_tab = tab;
         }
         // FM_DIARY_DAY=YYYY-MM-DD opens the diary on that day.
         if let Ok(day) = std::env::var("FM_DIARY_DAY") {

@@ -1,5 +1,5 @@
 //! Everyone met in the world: search, and a profile per player from the combat
-//! and chat logs.
+//! and chat logs; the fellowship a character travelled with, and their nemeses.
 
 use super::widgets::{self, Col, Key, icons};
 use super::{card, label};
@@ -12,6 +12,133 @@ use crate::tr;
 use egui::{Color32, RichText, Ui};
 
 pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
+    ui.horizontal(|ui| {
+        for (i, name) in [tr!("Everyone"), tr!("Fellowship"), tr!("Nemeses")].into_iter().enumerate() {
+            let selected = st.players_tab == i;
+            let text = RichText::new(name).color(if selected { GOLD } else { INK });
+            if ui
+                .add(egui::Button::new(text).fill(if selected { RAISED } else { Color32::TRANSPARENT }))
+                .clicked()
+            {
+                st.players_tab = i;
+            }
+        }
+    });
+    ui.add_space(6.0);
+    let c = super::character(m, st);
+    match st.players_tab {
+        1 => fellowship(ui, m, c, art),
+        2 => nemeses(ui, m, c, art),
+        _ => everyone(ui, m, st, art),
+    }
+}
+
+/// Everyone the character's traveled with, longest first.
+fn fellowship(ui: &mut Ui, m: &Model, c: &crate::data::memory::Character, art: &mut Art) {
+    let list = crate::data::bonds::fellowship(m, c);
+    if list.is_empty() {
+        super::empty(ui, &tr!("No fellowship yet. Everyone {name} groups with shows up here.", name = first_name(c)));
+        return;
+    }
+    let most = list.iter().map(|x| x.together).max().unwrap_or(1).max(1) as f32;
+    egui::ScrollArea::vertical().id_salt("fellowship").auto_shrink(false).show(ui, |ui| {
+        for comp in &list {
+            card(ui, |ui| {
+                ui.set_width(ui.available_width());
+                ui.horizontal(|ui| {
+                    class_icon(ui, art, comp.class, 40.0);
+                    ui.vertical(|ui| {
+                        ui.label(
+                            RichText::new(&comp.name)
+                                .font(theme::display_font(24.0))
+                                .color(comp.class.map(theme::class_color).unwrap_or(INK)),
+                        );
+                        ui.label(
+                            RichText::new(if comp.days == 1 {
+                                tr!("Travelled together for {time}, since {day}", time = theme::duration(comp.together as f64), day = theme::day(comp.since as f64))
+                            } else {
+                                tr!("Travelled together for {time} over {days} days, since {day}", time = theme::duration(comp.together as f64), days = comp.days, day = theme::day(comp.since as f64))
+                            })
+                            .color(MUTED),
+                        );
+                    });
+                });
+                ui.add_space(6.0);
+                widgets::bar(ui, comp.together as f32 / most, SERIES[2], ui.available_width().min(520.0));
+                ui.add_space(4.0);
+                widgets::figure_row(ui, |ui| {
+                    ui.spacing_mut().item_spacing = egui::vec2(36.0, 12.0);
+                    widgets::figure_text(ui, art, icons::SWORDS, &theme::thousands(comp.kills as i64), tr!("fell at your side"));
+                    if comp.healed_me > 0 {
+                        widgets::figure_text(ui, art, icons::HEAL, &theme::thousands(comp.healed_me), tr!("health they gave you"));
+                    }
+                    if comp.healed_them > 0 {
+                        widgets::figure_text(ui, art, icons::HEAL, &theme::thousands(comp.healed_them), tr!("health you gave them"));
+                    }
+                    widgets::figure_text(ui, art, icons::WATCH, &theme::ago(comp.last as f64), tr!("last together"));
+                });
+            });
+            ui.add_space(10.0);
+        }
+    });
+}
+
+/// Who killed the character, most often first, and whether they've been paid back.
+fn nemeses(ui: &mut Ui, m: &Model, c: &crate::data::memory::Character, art: &mut Art) {
+    let list = crate::data::bonds::nemeses(m, c);
+    if list.is_empty() {
+        super::empty(ui, &tr!("No nemesis yet: nothing has killed {name}.", name = first_name(c)));
+        return;
+    }
+    egui::ScrollArea::vertical().id_salt("nemeses").auto_shrink(false).show(ui, |ui| {
+        for n in &list {
+            card(ui, |ui| {
+                ui.set_width(ui.available_width());
+                ui.horizontal(|ui| {
+                    if n.player {
+                        class_icon(ui, art, n.class, 40.0);
+                    } else {
+                        super::icon(ui, art, Some(icons::SKULL), theme::DANGER, 40.0);
+                    }
+                    ui.vertical(|ui| {
+                        ui.label(RichText::new(&n.name).font(theme::display_font(24.0)).color(theme::DANGER));
+                        let last = *n.deaths.iter().max().unwrap_or(&0) as f64;
+                        let times = if n.deaths.len() == 1 {
+                            tr!("Killed you once, {when}", when = theme::when(last))
+                        } else {
+                            tr!("Killed you {n} times, last {when}", n = n.deaths.len(), when = theme::when(last))
+                        };
+                        let place = if n.places.is_empty() { String::new() } else { format!(" · {}", n.places.join(", ")) };
+                        ui.label(RichText::new(format!("{times}{place}")).color(MUTED));
+                    });
+                });
+                ui.add_space(6.0);
+                match n.avenged {
+                    Some(t) => ui.label(RichText::new(format!("⚔ {}", tr!("Avenged {when}", when = theme::when(t)))).color(GOLD)),
+                    None => ui.label(RichText::new(format!("☠ {}", tr!("Not yet avenged"))).color(theme::DANGER)),
+                };
+                if n.slain > 0 {
+                    ui.label(
+                        RichText::new(if n.slain == 1 {
+                            tr!("You have struck down one of them.").to_string()
+                        } else {
+                            tr!("You have struck down {n} of them.", n = n.slain)
+                        })
+                        .small()
+                        .color(MUTED),
+                    );
+                }
+            });
+            ui.add_space(10.0);
+        }
+    });
+}
+
+fn first_name(c: &crate::data::memory::Character) -> &str {
+    c.name.split(' ').next().unwrap_or(&c.name)
+}
+
+fn everyone(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     if m.players.is_empty() {
         super::empty(
             ui,

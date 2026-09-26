@@ -80,13 +80,13 @@ pub fn display_font(size: f32) -> FontId {
     FontId::new(size, display())
 }
 
+pub const FONT_DISPLAY: &[u8] = include_bytes!("../assets/fonts/marcellus.ttf");
+pub const FONT_ITALIC: &[u8] = include_bytes!("../assets/fonts/alegreya-sans-400i.ttf");
+
 pub fn install(ctx: &egui::Context) {
     let mut fonts = FontDefinitions::default();
     for (name, bytes) in [
-        (
-            "marcellus",
-            &include_bytes!("../assets/fonts/marcellus.ttf")[..],
-        ),
+        ("marcellus", FONT_DISPLAY),
         (
             "alegreya",
             &include_bytes!("../assets/fonts/alegreya-sans-400.ttf")[..],
@@ -95,10 +95,7 @@ pub fn install(ctx: &egui::Context) {
             "alegreya-bold",
             &include_bytes!("../assets/fonts/alegreya-sans-700.ttf")[..],
         ),
-        (
-            "alegreya-italic",
-            &include_bytes!("../assets/fonts/alegreya-sans-400i.ttf")[..],
-        ),
+        ("alegreya-italic", FONT_ITALIC),
     ] {
         fonts
             .font_data

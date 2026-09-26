@@ -488,6 +488,40 @@ fn narration(
                 });
             }
         }
+        // "Previously on…": this entry, read aloud before a stream starts.
+        if path.exists() {
+            ui.add_space(6.0);
+            ui.horizontal(|ui| {
+                if ui
+                    .button(format!("🎬 {}", tr!("Previously on… for your stream")))
+                    .on_hover_text(tr!("A page for an OBS browser source: this entry read aloud on parchment, with a countdown to when the reading ends."))
+                    .clicked()
+                {
+                    let parchment = crate::platform::cache_dir().join("art").join("icon-3450737.png");
+                    st.stream_page = Some(crate::stream::previously(c, day, prose, &path, Some(&parchment)));
+                }
+                if let Some(Ok(page)) = &st.stream_page
+                    && ui.button(tr!("Open")).clicked() {
+                        crate::platform::reveal(page.parent().unwrap_or(page));
+                    }
+            });
+            match &st.stream_page {
+                Some(Ok(page)) => {
+                    ui.label(
+                        RichText::new(tr!(
+                            "In OBS, add a Browser source, tick Local file and pick {path}; tick Control audio via OBS and Refresh browser when scene becomes active.",
+                            path = page.display()
+                        ))
+                        .small()
+                        .color(MUTED),
+                    );
+                }
+                Some(Err(e)) => {
+                    ui.label(RichText::new(e).color(theme::DANGER));
+                }
+                None => {}
+            }
+        }
     });
 }
 

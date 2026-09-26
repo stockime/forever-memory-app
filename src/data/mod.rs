@@ -1,3 +1,4 @@
+pub mod bonds;
 pub mod chat;
 pub mod combat;
 pub mod diary;
