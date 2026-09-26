@@ -5,7 +5,6 @@ characters: the armory, plus everything the memory recorder keeps.
 
 [![Forever Memory: watch the 25-second video](docs/forever-memory.jpg)](docs/forever-memory.mp4)
 
-
 - **Overview**: leveling curve and gold against hours played, time per zone,
   XP per hour per session, open quests nearest to done.
 - **Armory**: gear on the class scene with the game's tooltips and when each
