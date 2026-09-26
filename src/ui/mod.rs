@@ -32,6 +32,15 @@ pub fn character<'a>(m: &'a Model, st: &State) -> &'a Character {
     &m.memory.characters[st.character.min(m.memory.characters.len() - 1)]
 }
 
+/// Makes character `i` the one the pages show.
+pub fn select(st: &mut State, i: usize) {
+    st.character = i;
+    st.quest = None;
+    st.session = None;
+    st.map_zone = None;
+    st.fight = None;
+}
+
 pub fn top_bar(
     ui: &mut Ui,
     m: &Model,
@@ -74,11 +83,7 @@ pub fn top_bar(
                 }))
                 .clicked()
             {
-                st.character = i;
-                st.quest = None;
-                st.session = None;
-                st.map_zone = None;
-                st.fight = None;
+                select(st, i);
             }
         }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {

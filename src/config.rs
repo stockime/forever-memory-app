@@ -32,6 +32,10 @@ pub struct Settings {
     pub s3: S3,
     /// The welcome has been seen.
     pub onboarded: bool,
+    /// What the player calls their House; empty takes the head's surname.
+    pub house_name: String,
+    /// The emblem on the House's banner (a game icon); 0 for the default.
+    pub house_emblem: i64,
 }
 
 impl Default for Settings {
@@ -49,6 +53,8 @@ impl Default for Settings {
             narration_speed: 1.0,
             s3: S3::default(),
             onboarded: false,
+            house_name: String::new(),
+            house_emblem: 0,
         }
     }
 }

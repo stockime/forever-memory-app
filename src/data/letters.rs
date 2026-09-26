@@ -6,7 +6,7 @@
 
 use super::Model;
 use super::diary::{self, MARKER, clip};
-use super::memory::{Character, QuestStatus, entries};
+use super::memory::{Character, QuestStatus};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 
@@ -182,21 +182,6 @@ fn place_at(c: &Character, t: i64) -> Option<String> {
     }
 }
 
-fn professions(c: &Character) -> Vec<String> {
-    const HEADERS: [&str; 6] = ["Professions", "Berufe", "Métiers", "Profesiones", "Profissões", "专业技能"];
-    let mut on = false;
-    let mut out = vec![];
-    for (_, s) in c.snapshot.get("skills").map(entries).unwrap_or_default() {
-        let name = s.get("name").and_then(Value::as_str).unwrap_or("");
-        if s.get("isHeader").and_then(Value::as_bool) == Some(true) {
-            on = HEADERS.contains(&name);
-        } else if on && !name.is_empty() {
-            out.push(name.to_string());
-        }
-    }
-    out
-}
-
 /// A character in a few lines: who they are, what they have done, and
 /// their latest days (from their diary where it is written).
 fn about(m: &Model, c: &Character, days: usize) -> Vec<String> {
@@ -207,7 +192,7 @@ fn about(m: &Model, c: &Character, days: usize) -> Vec<String> {
     if let Some(s) = c.sessions.first() {
         out.push(format!("On the road since {}.", diary::pretty_day(&diary::day_of(s.start))));
     }
-    let profs = professions(c);
+    let profs: Vec<String> = super::house::professions(c).into_iter().map(|p| p.name).collect();
     if !profs.is_empty() {
         out.push(format!("Skilled in {}.", profs.join(" and ")));
     }
@@ -276,37 +261,16 @@ fn household(m: &Model, from: &Character, to: &Character) -> Vec<String> {
         }
         out.push(f + ".");
     }
-    // Legacy is account-wide; the latest snapshot has the latest count.
-    let legacy = chars
-        .iter()
-        .filter(|c| c.snapshot.pointer("/legacy/trees").is_some())
-        .max_by_key(|c| c.snapshot.get("updated").and_then(Value::as_i64).unwrap_or(0))
-        .and_then(|c| c.snapshot.get("legacy"));
-    if let Some(l) = legacy {
-        let trees = l.get("trees").map(entries).unwrap_or_default();
-        let cur = trees
-            .first()
-            .and_then(|(_, t)| t.get("currency"))
-            .and_then(|c| entries(c).into_iter().next().map(|(_, v)| v));
-        let n = |k: &str| cur.and_then(|c| c.get(k)).and_then(Value::as_i64).unwrap_or(0);
-        let total = n("spent") + n("quantity");
-        let learned: Vec<String> = trees
-            .iter()
-            .flat_map(|(_, t)| t.get("nodes").map(entries).unwrap_or_default())
-            .filter(|(_, node)| node.get("ranks").and_then(Value::as_i64).unwrap_or(0) > 0)
-            .filter_map(|(_, node)| {
-                node.pointer("/entries/0/name")
-                    .and_then(Value::as_str)
-                    .map(str::to_string)
-            })
-            .collect();
-        if total > 0 {
-            let mut f = format!("The household's Legacy: {total} marks earned together by all of them");
-            if !learned.is_empty() {
-                f += &format!(", put into {}", learned.join(", "));
-            }
-            out.push(f + ".");
+    if let Some(c) = super::house::legacy_source(m)
+        && let Some((_, total)) = super::house::legacy_points(c)
+        && total > 0
+    {
+        let learned = super::house::legacy_learned(c);
+        let mut f = format!("The household's Legacy: {total} marks earned together by all of them");
+        if !learned.is_empty() {
+            f += &format!(", put into {}", learned.join(", "));
         }
+        out.push(f + ".");
     }
     let others: Vec<String> = chars
         .iter()
