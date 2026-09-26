@@ -9,7 +9,7 @@ use super::memory::{Character, Event, QuestStatus, parse_link};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
-const MARKER: &str = "<!-- forever-memory:";
+pub const MARKER: &str = "<!-- forever-memory:";
 
 pub fn day_of(t: i64) -> String {
     crate::theme::local(t as f64).format("%Y-%m-%d").to_string()
@@ -142,7 +142,7 @@ pub fn commit(repo: &Path, file: &Path, msg: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn clip(s: &str, n: usize) -> String {
+pub fn clip(s: &str, n: usize) -> String {
     let s = s.replace("$B", " ").replace('\n', " ");
     let s = s.split_whitespace().collect::<Vec<_>>().join(" ");
     if s.chars().count() <= n {
@@ -574,14 +574,11 @@ pub fn prompt(
     previous: Option<(&str, &str)>,
 ) -> String {
     let mut p = format!("The writer: {}, a {} {}.\n\n", c.name, c.race, c.class);
-    let note = c.personality.trim();
+    let note = super::presets::note_or_preset(c);
     p += &format!(
         "<personality>\n{}\n</personality>\n\n",
-        if note.is_empty() {
-            "(No note yet: find a voice that fits their race and class.)"
-        } else {
-            note
-        }
+        note.as_deref()
+            .unwrap_or("(No note yet: find a voice that fits their race and class.)")
     );
     if let Some((d, text)) = previous {
         p += &format!(

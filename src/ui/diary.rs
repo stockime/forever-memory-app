@@ -47,9 +47,15 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 label(ui, &tr!("Who {name} is", name = c.name.split(' ').next().unwrap_or(&c.name)));
                 ui.label(RichText::new(tr!("Voice, history, what they care about. The diary is written in this voice.")).small().color(MUTED));
                 let (_, text) = st.note_edit.as_mut().unwrap();
-                ui.add(egui::TextEdit::multiline(text).desired_rows(8).desired_width(f32::INFINITY).hint_text(tr!("Died of the plague in Brill and came back wrong. Dry, gallows humour; still loves the Light, which does not love him back…")));
+                let preset = crate::data::presets::for_character(c, crate::i18n::current());
+                let hint = preset.clone().unwrap_or_else(|| tr!("Died of the plague in Brill and came back wrong. Dry, gallows humour; still loves the Light, which does not love him back…").into());
+                ui.add(egui::TextEdit::multiline(text).desired_rows(8).desired_width(f32::INFINITY).hint_text(hint));
                 let changed = *text != c.personality;
                 ui.horizontal(|ui| {
+                    if let Some(p) = preset.filter(|_| text.trim().is_empty())
+                        && ui.button(tr!("Start from the suggestion")).on_hover_text(tr!("Fills in the suggestion above, to change as you like")).clicked() {
+                            *text = p;
+                        }
                     if ui.add_enabled(changed, egui::Button::new(tr!("Save note"))).clicked() {
                         st.diary_status = Some(match diary::save_personality(&st.repo, c, text) {
                             Ok(()) => tr!("Note saved and committed.").into(),
@@ -290,7 +296,7 @@ fn poll_voice(st: &mut State) {
 
 /// The voice bar above an entry: set up a key, give the character a voice,
 /// then listen.
-fn narration(
+pub(super) fn narration(
     ui: &mut Ui,
     st: &mut State,
     c: &crate::data::memory::Character,

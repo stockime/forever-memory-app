@@ -134,8 +134,7 @@ pub fn describe(c: &Character) -> String {
             lang().english_name()
         );
     }
-    let note = c.personality.trim();
-    if !note.is_empty() {
+    if let Some(note) = crate::data::presets::note_or_preset(c) {
         d += &format!(" Character: {note}");
     }
     d.chars().take(990).collect()
