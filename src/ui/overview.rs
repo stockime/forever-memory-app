@@ -332,7 +332,7 @@ pub fn zone_time(c: &Character) -> Vec<(String, f64)> {
         }
     }
     let mut v: Vec<_> = by.into_iter().filter(|(_, s)| *s > 0.0).collect();
-    v.sort_by(|a, b| b.1.total_cmp(&a.1));
+    v.sort_by(|a, b| b.1.total_cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
     v
 }
 

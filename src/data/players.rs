@@ -103,7 +103,7 @@ pub fn build(
         p.days.insert(day(l.t));
     }
     let mut out: Vec<Player> = by_first.into_values().collect();
-    out.sort_by(|a, b| b.last_seen.total_cmp(&a.last_seen));
+    out.sort_by(|a, b| b.last_seen.total_cmp(&a.last_seen).then_with(|| a.name.cmp(&b.name)));
     out
 }
 

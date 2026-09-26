@@ -288,13 +288,20 @@ pub fn table<R>(
         .data(|d| d.get_temp::<(usize, bool)>(state_id))
         .unwrap_or(default);
     let mut order: Vec<usize> = (0..rows.len()).collect();
+    let cmp = |a: &R, b: &R, i: usize| match (key(a, i), key(b, i)) {
+        (Key::Num(x), Key::Num(y)) => x.total_cmp(&y),
+        (Key::Text(x), Key::Text(y)) => x.to_lowercase().cmp(&y.to_lowercase()).then(x.cmp(&y)),
+        _ => std::cmp::Ordering::Equal,
+    };
+    // Ties are broken by the other columns in order, so rows keep their
+    // places however the caller built them (often from a HashMap, whose
+    // order changes each time it is rebuilt: rows would swap every frame).
     order.sort_by(|&a, &b| {
-        let o = match (key(&rows[a], sort), key(&rows[b], sort)) {
-            (Key::Num(x), Key::Num(y)) => x.total_cmp(&y),
-            (Key::Text(x), Key::Text(y)) => x.to_lowercase().cmp(&y.to_lowercase()),
-            _ => std::cmp::Ordering::Equal,
-        };
-        if desc { o.reverse() } else { o }
+        let o = cmp(&rows[a], &rows[b], sort);
+        let o = if desc { o.reverse() } else { o };
+        (0..cols.len())
+            .filter(|&i| i != sort)
+            .fold(o, |o, i| o.then_with(|| cmp(&rows[a], &rows[b], i)))
     });
     ui.push_id(id, |ui| {
         ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Truncate);

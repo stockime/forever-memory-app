@@ -93,7 +93,7 @@ fn flows(ui: &mut Ui, art: &mut Art, title: &str, map: &HashMap<&str, i64>) {
         ui.set_width(ui.available_width());
         label(ui, title);
         let mut rows: Vec<(&str, i64)> = map.iter().map(|(k, v)| (*k, *v)).collect();
-        rows.sort_by(|a, b| b.1.cmp(&a.1));
+        rows.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(b.0)));
         if rows.is_empty() {
             ui.label(RichText::new(tr!("Nothing yet.")).color(MUTED));
             return;
@@ -169,7 +169,7 @@ fn items(ui: &mut Ui, m: &Model, c: &Character, filter: &str, art: &mut Art) {
         .into_values()
         .map(|(mut r, src)| {
             let mut s: Vec<_> = src.into_iter().collect();
-            s.sort_by(|a, b| b.1.cmp(&a.1));
+            s.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(b.0)));
             r.from = s.iter().map(|(k, _)| *k).collect::<Vec<_>>().join(", ");
             r
         })

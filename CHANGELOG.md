@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1
+
+- Tables and lists no longer flicker: rows with equal values (the same
+  damage, count or gold) keep their places instead of swapping every frame.
+
 ## 0.1.0
 
 The first release for everyone.
