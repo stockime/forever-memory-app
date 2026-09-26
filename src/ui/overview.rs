@@ -21,19 +21,21 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art, page: &mut Pa
             }
             card(ui, |ui| figures(ui, m, c, art));
             ui.add_space(14.0);
+            // Both halves of a pair may draw an icon.
+            let a = std::cell::RefCell::new(&mut *art);
             super::pair(
                 ui,
-                |ui| card(ui, |ui| leveling(ui, c)),
-                |ui| card(ui, |ui| gold(ui, c)),
+                |ui| card(ui, |ui| leveling(ui, c, &mut a.borrow_mut())),
+                |ui| card(ui, |ui| gold(ui, c, &mut a.borrow_mut())),
             );
             ui.add_space(14.0);
             super::pair(
                 ui,
-                |ui| card(ui, |ui| zones(ui, c)),
-                |ui| card(ui, |ui| sessions(ui, c)),
+                |ui| card(ui, |ui| zones(ui, c, &mut a.borrow_mut())),
+                |ui| card(ui, |ui| sessions(ui, c, &mut a.borrow_mut())),
             );
             ui.add_space(14.0);
-            card(ui, |ui| up_next(ui, c, st, page));
+            card(ui, |ui| up_next(ui, c, st, page, &mut a.borrow_mut()));
             ui.add_space(24.0);
         });
 }
@@ -235,7 +237,7 @@ pub fn level_series(c: &Character) -> Vec<[f64; 2]> {
     out
 }
 
-fn leveling(ui: &mut Ui, c: &Character) {
+fn leveling(ui: &mut Ui, c: &Character, art: &mut Art) {
     label(ui, tr!("Leveling"));
     ui.label(
         RichText::new(tr!("Level against hours played"))
@@ -244,7 +246,7 @@ fn leveling(ui: &mut Ui, c: &Character) {
     );
     let pts = level_series(c);
     if pts.len() < 2 {
-        ui.label(RichText::new(tr!("Needs a little more play to draw.")).color(MUTED));
+        super::quiet(ui, art, super::widgets::icons::SPIRIT, tr!("One level is no curve yet. The next few will draw it."));
         return;
     }
     plot("leveling")
@@ -269,7 +271,7 @@ fn leveling(ui: &mut Ui, c: &Character) {
         });
 }
 
-fn gold(ui: &mut Ui, c: &Character) {
+fn gold(ui: &mut Ui, c: &Character, art: &mut Art) {
     label(ui, tr!("Gold"));
     ui.label(
         RichText::new(tr!("Money carried against hours played"))
@@ -287,8 +289,8 @@ fn gold(ui: &mut Ui, c: &Character) {
             pts.push([c.play_time(e.t) / 3600.0, v as f64]);
         }
     }
-    if pts.len() < 2 {
-        ui.label(RichText::new(tr!("No money changes yet.")).color(MUTED));
+    if pts.len() < 2 || pts.iter().all(|p| p[1] == pts[0][1]) {
+        super::quiet(ui, art, super::widgets::icons::COIN, tr!("The purse hasn't moved yet. Loot, sell, spend, and the line follows."));
         return;
     }
     plot("gold")
@@ -340,7 +342,7 @@ pub fn zone_time(c: &Character) -> Vec<(String, f64)> {
     v
 }
 
-fn zones(ui: &mut Ui, c: &Character) {
+fn zones(ui: &mut Ui, c: &Character, art: &mut Art) {
     label(ui, tr!("Where the time goes"));
     ui.label(
         RichText::new(tr!("Minutes played per zone"))
@@ -349,7 +351,7 @@ fn zones(ui: &mut Ui, c: &Character) {
     );
     let z = zone_time(c);
     if z.is_empty() {
-        ui.label(RichText::new(tr!("No zones recorded yet.")).color(MUTED));
+        super::quiet(ui, art, super::widgets::icons::MAP, tr!("No roads walked yet."));
         return;
     }
     let names: Vec<String> = z.iter().map(|(n, _)| n.clone()).collect();
@@ -391,7 +393,7 @@ fn zones(ui: &mut Ui, c: &Character) {
     });
 }
 
-fn sessions(ui: &mut Ui, c: &Character) {
+fn sessions(ui: &mut Ui, c: &Character, art: &mut Art) {
     label(ui, tr!("Sessions"));
     ui.label(
         RichText::new(tr!("Experience per hour, each session"))
@@ -417,8 +419,8 @@ fn sessions(ui: &mut Ui, c: &Character) {
                 .fill(SERIES[0])
         })
         .collect();
-    if bars.is_empty() {
-        ui.label(RichText::new(tr!("No sessions longer than a minute yet.")).color(MUTED));
+    if bars.iter().all(|b| b.value <= 0.0) {
+        super::quiet(ui, art, super::widgets::icons::WATCH, tr!("No experience earned yet. Each session's pace is measured here."));
         return;
     }
     plot("sessions")
@@ -447,7 +449,7 @@ fn sessions(ui: &mut Ui, c: &Character) {
 }
 
 /// What's open right now: active quests nearest to done first.
-fn up_next(ui: &mut Ui, c: &Character, st: &mut State, page: &mut Page) {
+fn up_next(ui: &mut Ui, c: &Character, st: &mut State, page: &mut Page, art: &mut Art) {
     label(ui, tr!("Up next"));
     let mut active: Vec<_> = c
         .quests
@@ -455,7 +457,7 @@ fn up_next(ui: &mut Ui, c: &Character, st: &mut State, page: &mut Page) {
         .filter(|q| q.status == QuestStatus::Active)
         .collect();
     if active.is_empty() {
-        ui.label(RichText::new(tr!("No open quests.")).color(MUTED));
+        super::quiet(ui, art, super::widgets::icons::NOTE, tr!("No quest in the log. Someone nearby surely needs a hand."));
         return;
     }
     let share = |q: &crate::data::memory::Quest| {

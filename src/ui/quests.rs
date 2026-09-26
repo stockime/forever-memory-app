@@ -26,12 +26,23 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
         return;
     }
     let c = character(m, st);
+    if c.quests.is_empty() {
+        tabs(ui, m, st);
+        super::empty(
+            ui,
+            art,
+            super::widgets::icons::NOTE,
+            tr!("No quest taken yet"),
+            &tr!("Look for the yellow marks. Every quest {name} takes is kept here, with its text, its rewards and how it went.", name = c.name.split(' ').next().unwrap_or("")),
+        );
+        return;
+    }
     let list_w = 360.0;
     ui.horizontal_top(|ui| {
         ui.vertical(|ui| {
             ui.set_width(list_w);
             tabs(ui, m, st);
-            list(ui, c, st);
+            list(ui, c, st, art);
         });
         ui.add_space(16.0);
         let w = ui.available_width();
@@ -87,7 +98,7 @@ pub fn tabs(ui: &mut Ui, m: &Model, st: &mut State) {
     });
 }
 
-fn list(ui: &mut Ui, c: &Character, st: &mut State) {
+fn list(ui: &mut Ui, c: &Character, st: &mut State, art: &mut Art) {
     ui.add(
         egui::TextEdit::singleline(&mut st.quest_search)
             .hint_text(tr!("Filter by title, zone or text"))
@@ -119,13 +130,11 @@ fn list(ui: &mut Ui, c: &Character, st: &mut State) {
         _ => qs.sort_by_key(|q| std::cmp::Reverse(q.removed)),
     }
     if qs.is_empty() {
-        ui.label(
-            RichText::new(if needle.is_empty() {
-                tr!("Nothing here yet.")
-            } else {
-                tr!("No quest matches.")
-            })
-            .color(MUTED),
+        super::quiet(
+            ui,
+            art,
+            super::widgets::icons::NOTE,
+            if needle.is_empty() { tr!("None of these yet.") } else { tr!("No quest matches.") },
         );
     }
     if !st.quest.is_some_and(|id| qs.iter().any(|q| q.id == id)) {

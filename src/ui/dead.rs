@@ -64,23 +64,15 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
 
     let n = read.deaths.len();
     if n == 0 {
-        ui.add_space(30.0);
-        ui.vertical_centered(|ui| {
-            let (rect, _) = ui.allocate_exact_size(vec2(150.0, 200.0), Sense::hover());
-            stone(ui, art, rect, &[], 0.6);
-            ui.add_space(16.0);
-            ui.label(
-                RichText::new(tr!("{name} has never died.", name = first))
-                    .font(theme::display_font(22.0))
-                    .color(INK),
-            );
-            ui.label(
-                RichText::new(tr!("The book waits, patient as the grave."))
-                    .family(theme::italic())
-                    .size(17.0)
-                    .color(MUTED),
-            );
-        });
+        super::empty_with(
+            ui,
+            &tr!("{name} has never died.", name = first),
+            tr!("The book waits, patient as the grave."),
+            |ui| {
+                let (rect, _) = ui.allocate_exact_size(vec2(120.0, 160.0), Sense::hover());
+                stone(ui, art, rect, &[], 0.6);
+            },
+        );
         st.dead.read = Some(read);
         return;
     }

@@ -34,11 +34,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
             art,
             236683,
             tr!("Unknown to the world"),
-            &tr!("No faction has taken notice of {name} yet.", name = name),
-        );
-        super::hint(
-            ui,
-            tr!("Standing is kept by the addon from version 0.4.0 on."),
+            &tr!("No faction has taken notice of {name} yet. Standing is kept from addon 0.4.0 on; log in once with it.", name = name),
         );
         return;
     }
@@ -415,7 +411,7 @@ fn detail(ui: &mut Ui, r: &Row, col: Color32) {
                 );
             }
             if r.history.len() < 2 {
-                ui.label(RichText::new(tr!("No change recorded yet.")).color(MUTED));
+                ui.label(RichText::new(tr!("No change recorded yet.")).family(theme::italic()).color(MUTED));
                 return;
             }
             // Changes by day: a day of questing is many small steps.

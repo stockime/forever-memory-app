@@ -255,9 +255,11 @@ fn draw_banner(ui: &Ui, art: &mut Art, r: Rect, color: Color32, emblem: i64, hot
         p.image(t.id(), cloth, full, if hot { GOLD } else { BRASS });
     }
     if let Some(t) = art.icon(ui.ctx(), Some(emblem)) {
+        // The cloth covers 4%-82% of the texture's width (the rest is its
+        // shadow) and is solid down to 58% of its height, above the tails.
         let e = Rect::from_center_size(
-            pos2(cloth.center().x - 2.0, cloth.top() + cloth.height() * 0.36),
-            Vec2::splat(r.width() * 0.78),
+            pos2(cloth.left() + cloth.width() * 0.43, cloth.top() + cloth.height() * 0.29),
+            Vec2::splat(cloth.width() * 0.64),
         );
         p.image(t.id(), e, full, Color32::from_rgb(0xf3, 0xe2, 0xb4));
     }
@@ -645,7 +647,7 @@ fn owned(ui: &mut Ui, m: &Model, art: &mut Art, mounts: bool) {
         } else {
             tr!("No companions yet. The first one brought home will wait here for all of them.")
         };
-        ui.label(RichText::new(text).color(MUTED));
+        super::quiet(ui, art, if mounts { 132261 } else { 132599 }, text);
         return;
     }
     let all_id = ui.id().with(("owned-all", mounts));
@@ -812,7 +814,7 @@ fn history(
     acc: &Account,
 ) {
     if acc.timeline.is_empty() {
-        ui.label(RichText::new(tr!("Nothing has happened yet. It will.")).color(MUTED));
+        super::quiet(ui, art, super::widgets::icons::BOOK, tr!("Nothing has happened yet. It will."));
         return;
     }
     let mut days: Vec<(String, Vec<&Moment>)> = vec![];

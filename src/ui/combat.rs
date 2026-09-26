@@ -43,6 +43,16 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
         .collect();
     let kills: Vec<&(f64, u32)> = cb.kills.iter().filter(|(t, _)| in_char(*t)).collect();
     let deaths: Vec<f64> = cb.deaths.iter().copied().filter(|t| in_char(*t)).collect();
+    if fights.is_empty() && deaths.is_empty() {
+        super::empty(
+            ui,
+            art,
+            widgets::icons::SWORDS,
+            tr!("No blood drawn yet"),
+            &tr!("{name} hasn't fought yet. Every fight is read from the game's combat log after the session.", name = c.name.split(' ').next().unwrap_or("")),
+        );
+        return;
+    }
 
     egui::ScrollArea::vertical()
         .auto_shrink(false)
@@ -355,7 +365,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 ui.set_width(ui.available_width());
                 label(ui, tr!("Deaths"));
                 if deaths.is_empty() {
-                    ui.label(RichText::new(tr!("No deaths. Keep it that way.")).color(MUTED));
+                    super::quiet(ui, art, widgets::icons::FEIGN, tr!("No deaths. Keep it that way."));
                 }
                 for t in deaths.iter().rev() {
                     ui.label(

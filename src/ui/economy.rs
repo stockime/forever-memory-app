@@ -38,6 +38,16 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
             *spent.entry(s).or_default() -= d;
         }
     }
+    if earned.is_empty() && spent.is_empty() && !c.events.iter().any(|e| e.e == "item") {
+        super::empty(
+            ui,
+            art,
+            icons::COINS,
+            tr!("Empty pockets"),
+            &tr!("Every coin {name} earns or spends and every item that passes through the bags is counted here.", name = c.name.split(' ').next().unwrap_or("")),
+        );
+        return;
+    }
     egui::ScrollArea::vertical()
         .auto_shrink(false)
         .show(ui, |ui| {
@@ -95,7 +105,7 @@ fn flows(ui: &mut Ui, art: &mut Art, title: &str, map: &HashMap<&str, i64>) {
         let mut rows: Vec<(&str, i64)> = map.iter().map(|(k, v)| (*k, *v)).collect();
         rows.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(b.0)));
         if rows.is_empty() {
-            ui.label(RichText::new(tr!("Nothing yet.")).color(MUTED));
+            super::quiet(ui, art, icons::COIN, tr!("Not a coin yet."));
             return;
         }
         let max = rows[0].1.max(1) as f32;
@@ -176,7 +186,7 @@ fn items(ui: &mut Ui, m: &Model, c: &Character, filter: &str, art: &mut Art) {
         .filter(|r| needle.is_empty() || r.name.to_lowercase().contains(&needle))
         .collect();
     if rows.is_empty() {
-        ui.label(RichText::new(tr!("No items match.")).color(MUTED));
+        super::quiet(ui, art, icons::BAG, tr!("No item by that name went through the bags."));
         return;
     }
     let stories = super::story::all(ui, m, c);

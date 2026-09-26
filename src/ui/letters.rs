@@ -258,12 +258,14 @@ fn thread(
         }
         ui.add_space(8.0);
         if letters.is_empty() {
-            ui.label(
-                RichText::new(tr!(
+            super::quiet(
+                ui,
+                art,
+                133468,
+                &tr!(
                     "No letters between them yet. {name} can write the first, from what both have lived and what they share.",
                     name = first(a)
-                ))
-                .color(MUTED),
+                ),
             );
         }
         for (i, l) in letters.iter().enumerate() {

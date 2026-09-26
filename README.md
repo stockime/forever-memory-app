@@ -98,6 +98,9 @@ The app speaks English, Deutsch, Français, Español, Português (Brasil) and
 - Every race and class starts with a personality of its own for the diary,
   which you can make your own.
 
+- **Help** explains what the app is, how it records and where to find what; it
+  opens on the first start.
+
 On start the app shows a loading screen (Forever's own continent art, a
 progress bar, tips about your characters) until the logs are read and all game
 art is painted, so pages never fill in piece by piece. Ctrl+K searches
@@ -134,6 +137,10 @@ on macOS, `%APPDATA%\forever-memory` on Windows), readable only by you.
 ## Screenshots
 
 Tom Crusader, a level 20 Undead Protection Paladin, and his alts are made-up demo characters (see `demo/`); no real account or player is shown.
+
+**Help**, shown on the first start
+
+![Help](docs/screenshots/help.png)
 
 **The House**
 

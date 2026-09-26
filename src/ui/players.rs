@@ -459,7 +459,7 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art, realm: &str) {
                                 .map(|(sp, n)| (m.combat.spell_name(*sp).to_string(), *n))
                                 .collect();
                             if rows.is_empty() {
-                                ui.label(RichText::new(tr!("Nothing seen.")).color(MUTED));
+                                super::quiet(ui, art, super::widgets::icons::SWORDS, tr!("Never seen casting."));
                                 return;
                             }
                             let max = rows.iter().map(|r| r.1).max().unwrap_or(1) as f32;
@@ -501,7 +501,7 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art, realm: &str) {
                 ui.set_width(ui.available_width());
                 label(ui, tr!("What they said"));
                 if p.chat.is_empty() {
-                    ui.label(RichText::new(tr!("Not a word in your chat log.")).color(MUTED));
+                    super::quiet(ui, art, super::widgets::icons::SCROLL, tr!("Not a word in your chat log."));
                 }
                 for &i in p.chat.iter().rev().take(200) {
                     let l = &m.chat[i];

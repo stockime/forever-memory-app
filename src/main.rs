@@ -254,6 +254,7 @@ pub enum Page {
     Chronicle,
     Letters,
     Dead,
+    Help,
     Settings,
 }
 
@@ -292,6 +293,7 @@ impl Page {
             Page::Chronicle => tr!("Chronicle"),
             Page::Letters => tr!("Letters"),
             Page::Dead => tr!("Book of the Dead"),
+            Page::Help => tr!("Help"),
             Page::Settings => tr!("Settings"),
         }
     }
@@ -321,6 +323,7 @@ impl Page {
             Page::Chronicle => 133741, // a bound tome
             Page::Letters => 133468,   // a sealed letter
             Page::Dead => 133738,      // a dark book
+            Page::Help => 134400,      // the question mark
             Page::Settings => 134063,  // a gear
         }
     }
@@ -429,7 +432,9 @@ impl App {
                 .ok()
                 .map(|p| (p.into(), Instant::now(), false)),
         };
-        if !settings.onboarded {
+        if !settings.help_seen {
+            app.page = Page::Help; // what this is, before anything else
+        } else if !settings.onboarded {
             app.page = Page::Settings;
         }
         // FM_CHARACTER=<slug> picks the character (with FM_SHOT, for screenshots).
@@ -462,7 +467,7 @@ impl App {
         if let Ok(p) = std::env::var("FM_PAGE") {
             app.page = Page::ALL
                 .into_iter()
-                .chain([Page::Settings])
+                .chain([Page::Help, Page::Settings])
                 .find(|x| x.id().starts_with(&p.to_lowercase()))
                 .unwrap_or(Page::Overview);
         }
@@ -576,7 +581,7 @@ impl eframe::App for App {
         if self.state.character >= model.memory.characters.len() {
             self.state.character = 0;
         }
-        if model.memory.characters.is_empty() {
+        if model.memory.characters.is_empty() && self.page != Page::Help {
             self.page = Page::Settings; // the welcome
         }
         if std::mem::take(&mut self.state.paths_changed) {
@@ -637,8 +642,15 @@ impl eframe::App for App {
                     if nav_item(ui, &mut self.art, Page::Settings, self.page == Page::Settings, &class) {
                         self.page = Page::Settings;
                     }
+                    if nav_item(ui, &mut self.art, Page::Help, self.page == Page::Help, &class) {
+                        self.page = Page::Help;
+                    }
                     ui.add_space(10.0);
                     let m = &model;
+                    // The counts give way when the window is too short for them.
+                    if ui.available_height() < 90.0 {
+                        return;
+                    }
                     ui.label(
                         egui::RichText::new(tr!(
                             "{events} events\n{combat} combat log lines\n{chat} chat lines\n{players} players met",
@@ -663,6 +675,10 @@ impl eframe::App for App {
             .frame(egui::Frame::new().fill(theme::NIGHT).inner_margin(egui::Margin { left: 8, right: 24, top: 8, bottom: 0 }))
             .show(ui, |ui| {
                 let st = &mut self.state;
+                if self.page == Page::Help {
+                    ui::help::show(ui, &mut self.art, &mut self.page, model.memory.characters.len());
+                    return;
+                }
                 if self.page == Page::Settings {
                     ui::settings::show(ui, st, model.memory.characters.len(), &model.rp.sources);
                     return;
@@ -684,7 +700,7 @@ impl eframe::App for App {
                     Page::Chronicle => ui::chronicle::show(ui, &model, st, art),
                     Page::Letters => ui::letters::show(ui, &model, st, art),
                     Page::Dead => ui::dead::show(ui, &model, st, art),
-                    Page::Settings => {}
+                    Page::Help | Page::Settings => {}
                 }
             });
     }

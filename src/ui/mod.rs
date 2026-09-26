@@ -6,6 +6,7 @@ pub mod dead;
 pub mod deeds;
 pub mod diary;
 pub mod economy;
+pub mod help;
 pub mod house;
 pub mod journal;
 pub mod letters;
@@ -215,10 +216,7 @@ fn search(ui: &mut Ui, m: &Model, st: &mut State, page: &mut Page) {
 /// An empty page, said the way the game would: a faded icon in a brass
 /// frame, a line in the display font and a sentence under it.
 pub fn empty(ui: &mut Ui, art: &mut Art, icon: i64, title: &str, line: &str) {
-    let room = ui.available_height();
-    ui.add_space((room * 0.14).clamp(24.0, 120.0));
-    ui.vertical_centered(|ui| {
-        ui.set_max_width(540.0);
+    empty_with(ui, title, line, |ui| {
         let size = 76.0;
         let (rect, _) = ui.allocate_exact_size(Vec2::splat(size), egui::Sense::hover());
         let p = ui.painter();
@@ -236,6 +234,16 @@ pub fn empty(ui: &mut Ui, art: &mut Art, icon: i64, title: &str, line: &str) {
             );
         }
         p.rect_stroke(inner, 8.0, Stroke::new(1.5, Color32::from_rgb(0x8a, 0x6d, 0x2c)), egui::StrokeKind::Outside);
+    });
+}
+
+/// `empty` with an emblem of the page's own (the Book of the Dead's stone).
+pub fn empty_with(ui: &mut Ui, title: &str, line: &str, emblem: impl FnOnce(&mut Ui)) {
+    let room = ui.available_height();
+    ui.add_space((room * 0.14).clamp(24.0, 120.0));
+    ui.vertical_centered(|ui| {
+        ui.set_max_width(540.0);
+        emblem(ui);
         ui.add_space(18.0);
         ui.label(RichText::new(title).font(theme::display_font(27.0)).color(INK));
         ui.add_space(6.0);
@@ -253,6 +261,30 @@ pub fn empty(ui: &mut Ui, art: &mut Art, icon: i64, title: &str, line: &str) {
         ui.add_space(8.0);
         ui.label(RichText::new(line).family(theme::italic()).size(17.5).color(MUTED));
     });
+}
+
+/// An empty card or list: a small dimmed game icon and one line, in the same
+/// voice as the page-sized `empty`.
+pub fn quiet(ui: &mut Ui, art: &mut Art, icon: i64, line: &str) {
+    ui.add_space(4.0);
+    ui.horizontal(|ui| {
+        let size = 30.0;
+        let (rect, _) = ui.allocate_exact_size(Vec2::splat(size), egui::Sense::hover());
+        let p = ui.painter();
+        p.rect_filled(rect, 5.0, Color32::from_rgb(5, 7, 15));
+        if let Some(t) = art.icon(ui.ctx(), Some(icon)) {
+            p.image(
+                t.id(),
+                rect.shrink(1.5),
+                egui::Rect::from_min_max(egui::pos2(0.07, 0.07), egui::pos2(0.93, 0.93)),
+                Color32::from_gray(110),
+            );
+        }
+        p.rect_stroke(rect, 5.0, Stroke::new(1.0, Color32::from_rgb(0x5c, 0x49, 0x1f)), egui::StrokeKind::Outside);
+        ui.add_space(6.0);
+        ui.add(egui::Label::new(RichText::new(line).family(theme::italic()).size(15.5).color(MUTED)).wrap());
+    });
+    ui.add_space(4.0);
 }
 
 /// A quiet pointer where a choice is still to be made ("pick one on the left").

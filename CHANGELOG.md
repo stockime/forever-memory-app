@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.1
+
+- Help: what Forever Memory is, how it records, and where to find what.
+  It opens on the first start, and stays next to Settings.
+- Every page and card that has nothing to show yet says what will appear
+  there, with the game's own icons, instead of empty charts and tables.
+- The House's emblem sits on the banner's cloth instead of running off it.
+
 ## 0.4.0
 
 - The House: the account as a household, with a banner, a name you can
