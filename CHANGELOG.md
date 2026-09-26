@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.2
+
+- The Journal reads as a timeline: a chapter for each zone entered, the
+  game's icons on a rule, and runs folded into one line (a hunt's kills,
+  experience and loot; gear put on; a trainer's lessons and fee; skill-ups).
+  Quests open in Quests, NPCs in Conversations, deaths in the Book of the
+  Dead. The session's figures sit in a card with a way to the session
+  before and after.
+
 ## 0.4.1
 
 - Help: what Forever Memory is, how it records, and where to find what.

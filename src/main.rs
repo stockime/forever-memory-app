@@ -460,6 +460,10 @@ impl App {
         if let Ok(f) = std::env::var("FM_FACTION") {
             app.state.faction = Some(f);
         }
+        // FM_SESSION=<n> opens the journal on that session (0 is the first).
+        if let Some(n) = std::env::var("FM_SESSION").ok().and_then(|n| n.parse().ok()) {
+            app.state.session = Some(n);
+        }
         // FM_DIARY_DAY=YYYY-MM-DD opens the diary on that day.
         if let Ok(day) = std::env::var("FM_DIARY_DAY") {
             app.state.diary_day = Some(day);
@@ -687,7 +691,7 @@ impl eframe::App for App {
                 match self.page {
                     Page::Overview => ui::overview::show(ui, &model, st, art, &mut self.page),
                     Page::Armory => ui::armory::show(ui, &model, st, art),
-                    Page::Journal => ui::journal::show(ui, &model, st, art),
+                    Page::Journal => ui::journal::show(ui, &model, st, art, &mut self.page),
                     Page::Diary => ui::diary::show(ui, &model, st, art),
                     Page::Quests => ui::quests::show(ui, &model, st, art),
                     Page::Map => ui::map::show(ui, &model, st, art),

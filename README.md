@@ -43,8 +43,9 @@ The app speaks English, Deutsch, Français, Español, Português (Brasil) and
   item was first acquired, the character sheet, both talent specs on their
   Classic backgrounds, Legacy trees.
 - **Journal**: sessions sortable by date, length, experience, leveling speed,
-  loot or deaths; each one as a feed of loot, money, XP, quests, places,
-  deaths, NPCs and the chat going on at the time, with filters.
+  loot or deaths; each one as a timeline in chapters by zone, with quests,
+  hunts and their loot, gear, money, deaths, NPCs and the chat going on at
+  the time, with filters.
 - **Diary**: a personality note per character, and for each day played an
   entry the character writes themselves: a first-person look back on the day's
   journey, from inside the world, written from that day's recorded facts by

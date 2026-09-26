@@ -915,5 +915,12 @@
  "Your character remembers.": "Votre personnage se souvient.",
  "Your characters write to each other about what they share.": "Vos personnages s'écrivent au sujet de ce qu'ils partagent.",
  "Your data stays yours": "Vos données restent les vôtres",
- "{name} hasn't fought yet. Every fight is read from the game's combat log after the session.": "{name} n'a encore livré aucun combat. Chaque combat est lu dans le journal de combat du jeu après la session."
+ "{name} hasn't fought yet. Every fight is read from the game's combat log after the session.": "{name} n'a encore livré aucun combat. Chaque combat est lu dans le journal de combat du jeu après la session.",
+ "1 kill": "1 victime",
+ "{n} kills": "{n} victimes",
+ "Learned {n} new spells": "{n} nouveaux sorts appris",
+ "for": "pour",
+ "Nothing of that kind in this session.": "Rien de tel pendant cette session.",
+ "The session after": "La session suivante",
+ "The session before": "La session précédente"
 }

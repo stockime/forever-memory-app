@@ -152,7 +152,7 @@ fn list(ui: &mut Ui, npcs: &[Npc], st: &mut State) {
 
 /// A face for someone the game shows no portrait of: their initial on a
 /// dark medallion with a brass rim.
-fn portrait(ui: &mut Ui, name: &str, size: f32) {
+pub fn portrait(ui: &mut Ui, name: &str, size: f32) {
     let (rect, _) = ui.allocate_exact_size(vec2(size, size), Sense::hover());
     let p = ui.painter();
     let c = rect.center();

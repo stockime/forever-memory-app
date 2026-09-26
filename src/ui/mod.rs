@@ -435,6 +435,23 @@ pub fn item_link(ui: &mut Ui, m: &Model, art: &mut Art, link: &str, size: f32) -
     .response
 }
 
+/// `item_link` without its own row, so a wrapping line can break between items.
+pub fn item_inline(ui: &mut Ui, m: &Model, art: &mut Art, link: &str, size: f32) {
+    let l = parse_link(link).unwrap_or_default();
+    let info = m.memory.items.get(&l.id);
+    let name = if l.name.is_empty() {
+        info.map(|i| i.name.clone())
+            .unwrap_or_else(|| tr!("Item {id}", id = l.id))
+    } else {
+        l.name.clone()
+    };
+    let q = l.quality.or(info.and_then(|i| i.quality));
+    if let Some(i) = info.and_then(|i| i.icon) {
+        icon(ui, art, Some(i), theme::quality(q), size);
+    }
+    ui.label(RichText::new(name).color(theme::quality(q)));
+}
+
 /// Charts share one quiet style: no dragging or zooming, recessive grid.
 pub fn plot(id: &str) -> egui_plot::Plot<'static> {
     egui_plot::Plot::new(id.to_string())
