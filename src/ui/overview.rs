@@ -289,7 +289,7 @@ fn gold(ui: &mut Ui, c: &Character) {
     plot("gold")
         .height(220.0)
         .x_axis_formatter(|g, _| tr!("{n}h", n = format!("{:.1}", g.value)))
-        .y_axis_formatter(|g, _| theme::money(g.value as i64))
+        .y_axis_formatter(|g, _| theme::money_short(g.value as i64))
         .label_formatter(|h| {
             let p = super::hover(h);
             Some(tr!(

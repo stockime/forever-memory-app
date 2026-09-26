@@ -292,6 +292,24 @@ pub fn money(copper: i64) -> String {
     if neg { format!("−{out}") } else { out }
 }
 
+/// Money without the parts that are zero, for chart axes: "2g", "1g 50s", "40c".
+pub fn money_short(copper: i64) -> String {
+    let c = copper.abs();
+    let (g, s, cu) = (c / 10000, c / 100 % 100, c % 100);
+    let mut parts = vec![];
+    if g > 0 {
+        parts.push(tr!("{n}g", n = g));
+    }
+    if s > 0 {
+        parts.push(tr!("{n}s", n = s));
+    }
+    if cu > 0 || parts.is_empty() {
+        parts.push(tr!("{n}c", n = cu));
+    }
+    let out = parts.join(" ");
+    if copper < 0 { format!("−{out}") } else { out }
+}
+
 pub fn local(t: f64) -> chrono::DateTime<chrono::Local> {
     chrono::DateTime::from_timestamp(t as i64, 0)
         .unwrap_or_default()

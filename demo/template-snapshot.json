@@ -1,0 +1,6181 @@
+{
+ "class": "Paladin",
+ "classFile": "PALADIN",
+ "classID": 2,
+ "client": {
+  "build": "70009",
+  "toc": 16001,
+  "version": "1.60.1"
+ },
+ "faction": "Horde",
+ "legacy": {
+  "names": [
+   "Professions",
+   "Adventure",
+   "Resourcefulness"
+  ],
+  "trees": [
+   {
+    "configID": 2594976,
+    "currency": [
+     {
+      "maxQuantity": 0,
+      "quantity": 0,
+      "spent": 0,
+      "spentInTree": 0,
+      "traitCurrencyID": 4225
+     }
+    ],
+    "nodes": [
+     {
+      "activeEntry": 136844,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 141607,
+        "icon": 133740,
+        "id": 136844,
+        "maxRanks": 1,
+        "name": "Dedicated Study",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "25 sec cast",
+           "lc": "ffffff",
+           "r": "23 hour cooldown",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Increases your skill by 1 in your lowest tradeskill among your Primary and Secondary tradeskills. If you have already reached 300 skill in your two current Primary Tradeskills and all three Secondary Tradeskills, you will gain 2 to 4 of a random Elemental Essence.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225469
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12442,
+       12440
+      ],
+      "id": 110284,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 3900,
+      "y": 1800
+     },
+     {
+      "activeEntry": 136843,
+      "activeRank": 0,
+      "edges": [
+       {
+        "to": 110284,
+        "type": 2,
+        "visualStyle": 1
+       }
+      ],
+      "entries": [
+       {
+        "definitionID": 141606,
+        "icon": 133789,
+        "id": 136843,
+        "maxRanks": 2,
+        "name": "Bartering",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the gold price of items from all vendors by 5%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the gold price of items from all vendors by 10%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225459
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12441,
+       12440
+      ],
+      "id": 110286,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 3150,
+      "y": 1800
+     },
+     {
+      "activeEntry": 136850,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 141613,
+        "icon": 236571,
+        "id": 136850,
+        "maxRanks": 5,
+        "name": "Master Chef",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Your cooking recipes have a 10% chance to create an extra result.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Your cooking recipes have a 20% chance to create an extra result.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Your cooking recipes have a 30% chance to create an extra result.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Your cooking recipes have a 40% chance to create an extra result.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Your cooking recipes have a 50% chance to create an extra result.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225457
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12441,
+       12440
+      ],
+      "id": 110289,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 3900,
+      "y": 1050
+     },
+     {
+      "activeEntry": 136841,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 141604,
+        "icon": 134378,
+        "id": 136841,
+        "maxRanks": 5,
+        "name": "Working Overtime",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your chance to gain a skill increase from using any primary, secondary, or class-based tradeskill by 4%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your chance to gain a skill increase from using any primary, secondary, or class-based tradeskill by 8%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your chance to gain a skill increase from using any primary, secondary, or class-based tradeskill by 12%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your chance to gain a skill increase from using any primary, secondary, or class-based tradeskill by 16%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your chance to gain a skill increase from using any primary, secondary, or class-based tradeskill by 20%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225451
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12440
+      ],
+      "id": 110290,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 2400,
+      "y": 1800
+     },
+     {
+      "activeEntry": 136848,
+      "activeRank": 0,
+      "edges": [
+       {
+        "to": 110292,
+        "type": 2,
+        "visualStyle": 1
+       }
+      ],
+      "entries": [
+       {
+        "definitionID": 141611,
+        "icon": 133651,
+        "id": 136848,
+        "maxRanks": 5,
+        "name": "Bountiful Harvest",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You discover 20% more Scarce materials from Mining, Herbalism, and Skinning.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You discover 40% more Scarce materials from Mining, Herbalism, and Skinning.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You discover 60% more Scarce materials from Mining, Herbalism, and Skinning.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You discover 80% more Scarce materials from Mining, Herbalism, and Skinning.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You discover 100% more Scarce materials from Mining, Herbalism, and Skinning.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225435
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12440
+      ],
+      "id": 110291,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 2400,
+      "y": 2550
+     },
+     {
+      "activeEntry": 136842,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 141605,
+        "icon": 135725,
+        "id": 136842,
+        "maxRanks": 3,
+        "name": "Performance Bonus",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You have a 5% chance to receive 100% increased Merchant's Favor when you turn in a crate to the Azeroth Commerce Authority or Durotar Supply and Logistics.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You have a 10% chance to receive 100% increased Merchant's Favor when you turn in a crate to the Azeroth Commerce Authority or Durotar Supply and Logistics.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You have a 15% chance to receive 100% increased Merchant's Favor when you turn in a crate to the Azeroth Commerce Authority or Durotar Supply and Logistics.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225456
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12441,
+       12440
+      ],
+      "id": 110292,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 3150,
+      "y": 2550
+     },
+     {
+      "activeEntry": 136849,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 141612,
+        "icon": 237270,
+        "id": 136849,
+        "maxRanks": 2,
+        "name": "Luremaster",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "While fishing with a Lure active, you have a 25% chance to catch an extra fish.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "While fishing with a Lure active, you have a 50% chance to catch an extra fish.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225455
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12441,
+       12440
+      ],
+      "id": 110293,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 3900,
+      "y": 3300
+     },
+     {
+      "activeEntry": 140812,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 145485,
+        "icon": 134400,
+        "id": 140812,
+        "maxRanks": 1,
+        "name": "Unknown",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "To be added in a future update.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1317256
+       }
+      ],
+      "flags": 10,
+      "id": 113506,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 4650,
+      "y": 2550
+     },
+     {
+      "activeEntry": 140814,
+      "activeRank": 0,
+      "edges": [
+       {
+        "to": 113506,
+        "type": 2,
+        "visualStyle": 1
+       }
+      ],
+      "entries": [
+       {
+        "definitionID": 145487,
+        "icon": 134400,
+        "id": 140814,
+        "maxRanks": 1,
+        "name": "Unknown",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "To be added in a future update.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1317256
+       }
+      ],
+      "flags": 10,
+      "id": 113508,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 3900,
+      "y": 2550
+     }
+    ],
+    "treeID": 1187
+   },
+   {
+    "configID": 2594976,
+    "currency": [
+     {
+      "maxQuantity": 0,
+      "quantity": 0,
+      "spent": 0,
+      "spentInTree": 0,
+      "traitCurrencyID": 4225
+     }
+    ],
+    "nodes": [
+     {
+      "activeEntry": 136864,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 141627,
+        "icon": 236180,
+        "id": 136864,
+        "maxRanks": 5,
+        "name": "Thrill of Adventure",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You gain 1% of your maximum Health and Mana over 10 sec each time you deliver the killing blow to a non-trivial enemy. Ineffective in dungeons, raids, and battlegrounds.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You gain 2% of your maximum Health and Mana over 10 sec each time you deliver the killing blow to a non-trivial enemy. Ineffective in dungeons, raids, and battlegrounds.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You gain 3% of your maximum Health and Mana over 10 sec each time you deliver the killing blow to a non-trivial enemy. Ineffective in dungeons, raids, and battlegrounds.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You gain 4% of your maximum Health and Mana over 10 sec each time you deliver the killing blow to a non-trivial enemy. Ineffective in dungeons, raids, and battlegrounds.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You gain 5% of your maximum Health and Mana over 10 sec each time you deliver the killing blow to a non-trivial enemy. Ineffective in dungeons, raids, and battlegrounds.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225472
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12449
+      ],
+      "id": 110296,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 2400,
+      "y": 2550
+     },
+     {
+      "activeEntry": 136852,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 141615,
+        "icon": 132222,
+        "id": 136852,
+        "maxRanks": 1,
+        "name": "Talented",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You gain talent points every level starting at level 9 instead of starting at level 10, but you still may not have more than 51 total talent points.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225474
+       },
+       {
+        "definitionID": 142134,
+        "icon": 132222,
+        "id": 137374,
+        "maxRanks": 1,
+        "name": "Talented",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You gain talent points every level starting at level 8 instead of starting at level 10, but you still may not have more than 51 total talent points.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225474
+       },
+       {
+        "definitionID": 142133,
+        "icon": 132222,
+        "id": 137373,
+        "maxRanks": 1,
+        "name": "Talented",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You gain talent points every level starting at level 7 instead of starting at level 10, but you still may not have more than 51 total talent points.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225474
+       },
+       {
+        "definitionID": 142132,
+        "icon": 132222,
+        "id": 137372,
+        "maxRanks": 1,
+        "name": "Talented",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You gain talent points every level starting at level 6 instead of starting at level 10, but you still may not have more than 51 total talent points.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225474
+       },
+       {
+        "definitionID": 142131,
+        "icon": 132222,
+        "id": 137371,
+        "maxRanks": 1,
+        "name": "Talented",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You gain talent points every level starting at level 5 instead of starting at level 10, but you still may not have more than 51 total talent points.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225474
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12445,
+       12449
+      ],
+      "id": 110298,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 1,
+      "x": 3150,
+      "y": 1800
+     },
+     {
+      "activeEntry": 136853,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 141616,
+        "icon": 648840,
+        "id": 136853,
+        "maxRanks": 1,
+        "name": "Frequent Flier",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You receive a 50% discount on all flight paths, and your flight path mount flies 20% faster.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225490
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12446,
+       12449
+      ],
+      "id": 110300,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 3900,
+      "y": 2550
+     },
+     {
+      "activeEntry": 136855,
+      "activeRank": 0,
+      "edges": [
+       {
+        "to": 110298,
+        "type": 2,
+        "visualStyle": 1
+       }
+      ],
+      "entries": [
+       {
+        "definitionID": 141618,
+        "icon": 136090,
+        "id": 136855,
+        "maxRanks": 5,
+        "name": "Well Rested",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Your rested experience accumulates 4% faster and your rested experience cap is increased by 4%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Your rested experience accumulates 8% faster and your rested experience cap is increased by 8%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Your rested experience accumulates 12% faster and your rested experience cap is increased by 12%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Your rested experience accumulates 16% faster and your rested experience cap is increased by 16%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Your rested experience accumulates 20% faster and your rested experience cap is increased by 20%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225478
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12449
+      ],
+      "id": 110301,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 2400,
+      "y": 1800
+     },
+     {
+      "activeEntry": 136858,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 141621,
+        "icon": 133675,
+        "id": 136858,
+        "maxRanks": 2,
+        "name": "Field Medicine",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the duration of the Recently Bandaged effect by 5 sec when you use a bandage. Ineffective in dungeons, raids, and battlegrounds.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the duration of the Recently Bandaged effect by 10 sec when you use a bandage. Ineffective in dungeons, raids, and battlegrounds.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225475
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12445,
+       12449
+      ],
+      "id": 110303,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 3150,
+      "y": 3300
+     },
+     {
+      "activeEntry": 136856,
+      "activeRank": 0,
+      "edges": [
+       {
+        "to": 110300,
+        "type": 2,
+        "visualStyle": 1
+       }
+      ],
+      "entries": [
+       {
+        "definitionID": 141619,
+        "icon": 132930,
+        "id": 136856,
+        "maxRanks": 3,
+        "name": "Field Guide",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces your cooldown on adding Camp features by 8%",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces your cooldown on adding Camp features by 17%",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces your cooldown on adding Camp features by 25%",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225479
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12445,
+       12449
+      ],
+      "id": 110304,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 3150,
+      "y": 2550
+     },
+     {
+      "activeEntry": 136861,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 141624,
+        "icon": 136153,
+        "id": 136861,
+        "maxRanks": 2,
+        "name": "High Alert",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your ability to detect nearby targets with Stealth as if your level were increased by 1. Ineffective in Battlegrounds.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your ability to detect nearby targets with Stealth as if your level were increased by 2. Ineffective in Battlegrounds.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225477
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12445,
+       12449
+      ],
+      "id": 110305,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 3150,
+      "y": 1050
+     },
+     {
+      "activeEntry": 140816,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 145489,
+        "icon": 134400,
+        "id": 140816,
+        "maxRanks": 1,
+        "name": "Unknown",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "To be added in a future update.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1317256
+       }
+      ],
+      "flags": 10,
+      "id": 113510,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 4650,
+      "y": 1800
+     },
+     {
+      "activeEntry": 140817,
+      "activeRank": 0,
+      "edges": [
+       {
+        "to": 113510,
+        "type": 2,
+        "visualStyle": 1
+       }
+      ],
+      "entries": [
+       {
+        "definitionID": 145490,
+        "icon": 134400,
+        "id": 140817,
+        "maxRanks": 1,
+        "name": "Unknown",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "To be added in a future update.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1317256
+       }
+      ],
+      "flags": 10,
+      "id": 113511,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 3900,
+      "y": 1800
+     }
+    ],
+    "treeID": 1188
+   },
+   {
+    "configID": 2594976,
+    "currency": [
+     {
+      "maxQuantity": 0,
+      "quantity": 0,
+      "spent": 0,
+      "spentInTree": 0,
+      "traitCurrencyID": 4225
+     }
+    ],
+    "nodes": [
+     {
+      "activeEntry": 136871,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 141634,
+        "icon": 133751,
+        "id": 136871,
+        "maxRanks": 1,
+        "name": "Reagent Economy",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Your class abilities no longer require reagents purchaseable from vendors.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225503
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12451,
+       12450
+      ],
+      "id": 110309,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 3900,
+      "y": 2550
+     },
+     {
+      "activeEntry": 136867,
+      "activeRank": 0,
+      "edges": [
+       {
+        "to": 110316,
+        "type": 2,
+        "visualStyle": 1
+       }
+      ],
+      "entries": [
+       {
+        "definitionID": 141630,
+        "icon": 134020,
+        "id": 136867,
+        "maxRanks": 3,
+        "name": "Gourmand",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the duration of beneficial effects from eating food by 33%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the duration of beneficial effects from eating food by 67%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the duration of beneficial effects from eating food by 100%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225499
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12450
+      ],
+      "id": 110313,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 2400,
+      "y": 1800
+     },
+     {
+      "activeEntry": 136868,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 141631,
+        "icon": 134939,
+        "id": 136868,
+        "maxRanks": 5,
+        "name": "Diplomat",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your reputation gains by 2%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your reputation gains by 4%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your reputation gains by 6%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your reputation gains by 8%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your reputation gains by 10%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225485
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12453,
+       12450
+      ],
+      "id": 110314,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 3150,
+      "y": 3300
+     },
+     {
+      "activeEntry": 136866,
+      "activeRank": 0,
+      "edges": [
+       {
+        "to": 110309,
+        "type": 2,
+        "visualStyle": 1
+       }
+      ],
+      "entries": [
+       {
+        "definitionID": 141629,
+        "icon": 136143,
+        "id": 136866,
+        "maxRanks": 2,
+        "name": "The Quick and the Dead",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases movement speed while dead by 5% and your helpful spells and abilities cost no resources for 1 min after being resurrected or until you enter combat.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases movement speed while dead by 10% and your helpful spells and abilities cost no resources for 2 min after being resurrected or until you enter combat.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225500
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12450
+      ],
+      "id": 110315,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 2400,
+      "y": 2550
+     },
+     {
+      "activeEntry": 136870,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 141633,
+        "icon": 237554,
+        "id": 136870,
+        "maxRanks": 2,
+        "name": "Permanence",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Your class abilities which grant long-duration stat or attribute benefits to all party or raid members last 50% longer, and the benefits you gain from resting at a camp last 50% longer.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Your class abilities which grant long-duration stat or attribute benefits to all party or raid members last 100% longer, and the benefits you gain from resting at a camp last 100% longer.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225502
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12453,
+       12450
+      ],
+      "id": 110316,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 3150,
+      "y": 1800
+     },
+     {
+      "activeEntry": 136865,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 141628,
+        "icon": 133611,
+        "id": 136865,
+        "maxRanks": 5,
+        "name": "Reinforce",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You take 8% less durability loss when you die.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You take 16% less durability loss when you die.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You take 24% less durability loss when you die.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You take 32% less durability loss when you die.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "You take 40% less durability loss when you die.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225497
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12450
+      ],
+      "id": 110318,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 2400,
+      "y": 3300
+     },
+     {
+      "activeEntry": 136869,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 141632,
+        "icon": 236396,
+        "id": 136869,
+        "maxRanks": 5,
+        "name": "For Great Honor",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases Honor Points gained by 2%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases Honor Points gained by 4%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases Honor Points gained by 6%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases Honor Points gained by 8%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases Honor Points gained by 10%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1225501
+       }
+      ],
+      "flags": 8,
+      "groups": [
+       12453,
+       12450
+      ],
+      "id": 110319,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 3150,
+      "y": 1050
+     },
+     {
+      "activeEntry": 140818,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 145491,
+        "icon": 134400,
+        "id": 140818,
+        "maxRanks": 1,
+        "name": "Unknown",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "To be added in a future update.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1317256
+       }
+      ],
+      "flags": 10,
+      "id": 113512,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 4650,
+      "y": 1800
+     },
+     {
+      "activeEntry": 140819,
+      "activeRank": 0,
+      "edges": [
+       {
+        "to": 113512,
+        "type": 2,
+        "visualStyle": 1
+       }
+      ],
+      "entries": [
+       {
+        "definitionID": 145492,
+        "icon": 134400,
+        "id": 140819,
+        "maxRanks": 1,
+        "name": "Unknown",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "To be added in a future update.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1317256
+       }
+      ],
+      "flags": 10,
+      "id": 113513,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 3900,
+      "y": 1800
+     }
+    ],
+    "treeID": 1189
+   }
+  ]
+ },
+ "race": "Undead",
+ "raceFile": "Scourge",
+ "raceID": 5,
+ "skills": [
+  {
+   "costType": 0,
+   "description": "",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": true,
+   "maxRank": 0,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Class Skills",
+   "parentSkillLineID": 0,
+   "rank": 0,
+   "rankCost": 0,
+   "skillID": 7,
+   "skillLineCategoryID": 0,
+   "stepCost": 0,
+   "tempPoints": 0
+  },
+  {
+   "costType": 0,
+   "description": "",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": false,
+   "maxRank": 1,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Holy",
+   "parentSkillLineID": 0,
+   "rank": 1,
+   "rankCost": 0,
+   "skillID": 594,
+   "skillLineCategoryID": 7,
+   "stepCost": 0,
+   "tempPoints": 0
+  },
+  {
+   "costType": 0,
+   "description": "",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": false,
+   "maxRank": 1,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Protection",
+   "parentSkillLineID": 0,
+   "rank": 1,
+   "rankCost": 0,
+   "skillID": 267,
+   "skillLineCategoryID": 7,
+   "stepCost": 0,
+   "tempPoints": 0
+  },
+  {
+   "costType": 0,
+   "description": "",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": false,
+   "maxRank": 1,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Retribution",
+   "parentSkillLineID": 0,
+   "rank": 1,
+   "rankCost": 0,
+   "skillID": 184,
+   "skillLineCategoryID": 7,
+   "stepCost": 0,
+   "tempPoints": 0
+  },
+  {
+   "costType": 0,
+   "description": "",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": true,
+   "maxRank": 0,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Weapon Skills",
+   "parentSkillLineID": 0,
+   "rank": 0,
+   "rankCost": 0,
+   "skillID": 6,
+   "skillLineCategoryID": 0,
+   "stepCost": 0,
+   "tempPoints": 0
+  },
+  {
+   "costType": 0,
+   "description": "Higher defense makes you harder to hit and makes monsters less likely to land a crushing blow.",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": false,
+   "maxRank": 20,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Defense",
+   "parentSkillLineID": 0,
+   "rank": 16,
+   "rankCost": 0,
+   "skillID": 95,
+   "skillLineCategoryID": 6,
+   "stepCost": 0,
+   "tempPoints": 0
+  },
+  {
+   "costType": 0,
+   "description": "Higher weapon skill increases your chance to hit.",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": false,
+   "maxRank": 20,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Maces",
+   "parentSkillLineID": 0,
+   "rank": 1,
+   "rankCost": 0,
+   "skillID": 54,
+   "skillLineCategoryID": 6,
+   "stepCost": 0,
+   "tempPoints": 0
+  },
+  {
+   "costType": 0,
+   "description": "Higher weapon skill increases your chance to hit.",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": false,
+   "maxRank": 20,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Two-Handed Maces",
+   "parentSkillLineID": 0,
+   "rank": 16,
+   "rankCost": 0,
+   "skillID": 160,
+   "skillLineCategoryID": 6,
+   "stepCost": 0,
+   "tempPoints": 0
+  },
+  {
+   "costType": 0,
+   "description": "Higher skill increases your chance to hit.",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": false,
+   "maxRank": 20,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Unarmed",
+   "parentSkillLineID": 0,
+   "rank": 1,
+   "rankCost": 0,
+   "skillID": 162,
+   "skillLineCategoryID": 6,
+   "stepCost": 0,
+   "tempPoints": 0
+  },
+  {
+   "costType": 0,
+   "description": "",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": true,
+   "maxRank": 0,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Armor Proficiencies",
+   "parentSkillLineID": 0,
+   "rank": 0,
+   "rankCost": 0,
+   "skillID": 8,
+   "skillLineCategoryID": 0,
+   "stepCost": 0,
+   "tempPoints": 0
+  },
+  {
+   "costType": 0,
+   "description": "Allows the wearing of cloth armor.",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": false,
+   "maxRank": 1,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Cloth",
+   "parentSkillLineID": 0,
+   "rank": 1,
+   "rankCost": 0,
+   "skillID": 415,
+   "skillLineCategoryID": 8,
+   "stepCost": 0,
+   "tempPoints": 0
+  },
+  {
+   "costType": 0,
+   "description": "Allows the wearing of leather armor.",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": false,
+   "maxRank": 1,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Leather",
+   "parentSkillLineID": 0,
+   "rank": 1,
+   "rankCost": 0,
+   "skillID": 414,
+   "skillLineCategoryID": 8,
+   "stepCost": 0,
+   "tempPoints": 0
+  },
+  {
+   "costType": 0,
+   "description": "Allows the wearing of mail armor.",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": false,
+   "maxRank": 1,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Mail",
+   "parentSkillLineID": 0,
+   "rank": 1,
+   "rankCost": 0,
+   "skillID": 413,
+   "skillLineCategoryID": 8,
+   "stepCost": 0,
+   "tempPoints": 0
+  },
+  {
+   "costType": 0,
+   "description": "Allows the use of shields.",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": false,
+   "maxRank": 1,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Shield",
+   "parentSkillLineID": 0,
+   "rank": 1,
+   "rankCost": 0,
+   "skillID": 433,
+   "skillLineCategoryID": 8,
+   "stepCost": 0,
+   "tempPoints": 0
+  },
+  {
+   "costType": 0,
+   "description": "",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": true,
+   "maxRank": 0,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Languages",
+   "parentSkillLineID": 0,
+   "rank": 0,
+   "rankCost": 0,
+   "skillID": 10,
+   "skillLineCategoryID": 0,
+   "stepCost": 0,
+   "tempPoints": 0
+  },
+  {
+   "costType": 0,
+   "description": "",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": false,
+   "maxRank": 300,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Language: Gutterspeak",
+   "parentSkillLineID": 0,
+   "rank": 300,
+   "rankCost": 0,
+   "skillID": 673,
+   "skillLineCategoryID": 10,
+   "stepCost": 0,
+   "tempPoints": 0
+  },
+  {
+   "costType": 0,
+   "description": "",
+   "isAbandonable": false,
+   "isCollapsed": false,
+   "isHeader": false,
+   "maxRank": 300,
+   "minLevel": 0,
+   "modifier": 0,
+   "name": "Language: Orcish",
+   "parentSkillLineID": 0,
+   "rank": 300,
+   "rankCost": 0,
+   "skillID": 109,
+   "skillLineCategoryID": 10,
+   "stepCost": 0,
+   "tempPoints": 0
+  }
+ ],
+ "talents": {
+  "active": 1,
+  "specs": [
+   {
+    "configID": 2594969,
+    "currency": [
+     {
+      "maxQuantity": 0,
+      "quantity": 0,
+      "spent": 0,
+      "spentInTree": 0,
+      "traitCurrencyID": 3820
+     }
+    ],
+    "groups": [
+     {
+      "icon": 135920,
+      "id": 11486,
+      "name": "Holy",
+      "order": 0
+     },
+     {
+      "icon": 135893,
+      "id": 11541,
+      "name": "Protection",
+      "order": 1
+     },
+     {
+      "icon": 135873,
+      "id": 11559,
+      "name": "Retribution",
+      "order": 2
+     }
+    ],
+    "nodes": [
+     {
+      "activeEntry": 130014,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 134815,
+        "icon": 236256,
+        "id": 130014,
+        "maxRanks": 1,
+        "name": "Light's Vigil",
+        "ranks": [
+         [
+          {
+           "l": " ",
+           "lc": "ffffff",
+           "r": "Enemy: 20 yd range",
+           "rc": "ffffff"
+          },
+          {
+           "l": "730 Mana",
+           "lc": "ffffff",
+           "r": "Friendly: 40 yd range",
+           "rc": "ffffff"
+          },
+          {
+           "l": "1.5 sec cast",
+           "lc": "ffffff",
+           "r": "6 sec cooldown",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Applies Light's Vigil to the target for 30 sec. Your next Holy Shock cast on them triggers no cooldown and causes enemy targets to suffer 175 to 189 Holy damage and refund 75% of Light's Vigil's Mana cost, or allied targets to heal their party for 315 to 333.  The Paladin may only have one Light's Vigil active per party.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1310911
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11480,
+       11486
+      ],
+      "id": 105320,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 1620,
+      "y": 5730
+     },
+     {
+      "activeEntry": 130015,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 134816,
+        "icon": 135938,
+        "id": 130015,
+        "maxRanks": 5,
+        "name": "Holy Power",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the critical strike chance of your Holy Shock and Holy Strike spells by 3%, and all other spells by 1%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the critical strike chance of your Holy Shock and Holy Strike spells by 6%, and all other spells by 2%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the critical strike chance of your Holy Shock and Holy Strike spells by 9%, and all other spells by 3%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the critical strike chance of your Holy Shock and Holy Strike spells by 12%, and all other spells by 4%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the critical strike chance of your Holy Shock and Holy Strike spells by 15%, and all other spells by 5%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 5923
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11481,
+       11486
+      ],
+      "id": 105321,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 2220,
+      "y": 5130
+     },
+     {
+      "activeEntry": 130017,
+      "activeRank": 0,
+      "edges": [
+       {
+        "to": 105320,
+        "type": 2,
+        "visualStyle": 1
+       },
+       {
+        "to": 105324,
+        "type": 2,
+        "visualStyle": 1
+       }
+      ],
+      "entries": [
+       {
+        "definitionID": 134818,
+        "icon": 135972,
+        "id": 130017,
+        "maxRanks": 1,
+        "name": "Holy Shock",
+        "ranks": [
+         [
+          {
+           "l": " ",
+           "lc": "ffffff",
+           "r": "Enemy: 20 yd range",
+           "rc": "ffffff"
+          },
+          {
+           "l": "160 Mana",
+           "lc": "ffffff",
+           "r": "Friendly: 40 yd range",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Instant",
+           "lc": "ffffff",
+           "r": "10 sec cooldown",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Blasts the target with Holy energy, causing 129 to 139 Holy damage to an enemy, or 110 to 118 healing to an ally.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1311606
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11482,
+       11486,
+       12745
+      ],
+      "id": 105323,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 1620,
+      "y": 4530
+     },
+     {
+      "activeEntry": 130018,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 134819,
+        "icon": 135918,
+        "id": 130018,
+        "maxRanks": 3,
+        "name": "Divine Precision",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Improves your chance to hit with Holy spells by 6%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Improves your chance to hit with Holy spells by 12%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Improves your chance to hit with Holy spells by 18%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1310904
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11482,
+       11486,
+       12745
+      ],
+      "id": 105324,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 1020,
+      "y": 4530
+     },
+     {
+      "activeEntry": 130019,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 134820,
+        "icon": 135915,
+        "id": 130019,
+        "maxRanks": 1,
+        "name": "Divine Favor",
+        "ranks": [
+         [
+          {
+           "l": "4 Mana",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Instant",
+           "lc": "ffffff",
+           "r": "2 min cooldown",
+           "rc": "ffffff"
+          },
+          {
+           "l": "When activated, gives your next Flash of Light, Holy Light, or Holy Shock spell a 100% critical effect chance.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20216
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11483,
+       11486,
+       12745,
+       12746
+      ],
+      "id": 105325,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 2220,
+      "y": 3930
+     },
+     {
+      "activeEntry": 130021,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 134822,
+        "icon": 135950,
+        "id": 130021,
+        "maxRanks": 2,
+        "name": "Purifying Power",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the mana cost of your Cleanse and Purify spells by 10% and reduces the cooldown of your Exorcism and Holy Wrath spells by 17%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the mana cost of your Cleanse and Purify spells by 20% and reduces the cooldown of your Exorcism and Holy Wrath spells by 33%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 429144
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11484,
+       11486,
+       12745,
+       12746,
+       12747
+      ],
+      "id": 105327,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 2220,
+      "y": 3330
+     },
+     {
+      "activeEntry": 130023,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 134824,
+        "icon": 135913,
+        "id": 130023,
+        "maxRanks": 5,
+        "name": "Illumination",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "After getting a critical effect from your Flash of Light, Holy Light, Light's Vigil, or Holy Shock heal spell you have a 20% chance to gain Mana equal to 50% of the base cost of the spell.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "After getting a critical effect from your Flash of Light, Holy Light, Light's Vigil, or Holy Shock heal spell you have a 40% chance to gain Mana equal to 50% of the base cost of the spell.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "After getting a critical effect from your Flash of Light, Holy Light, Light's Vigil, or Holy Shock heal spell you have a 60% chance to gain Mana equal to 50% of the base cost of the spell.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "After getting a critical effect from your Flash of Light, Holy Light, Light's Vigil, or Holy Shock heal spell you have a 80% chance to gain Mana equal to 50% of the base cost of the spell.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "After getting a critical effect from your Flash of Light, Holy Light, Light's Vigil, or Holy Shock heal spell you have a 100% chance to gain Mana equal to 50% of the base cost of the spell.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20210
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11483,
+       11486,
+       12745,
+       12746
+      ],
+      "id": 105329,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 1620,
+      "y": 3930
+     },
+     {
+      "activeEntry": 130024,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 134825,
+        "icon": 134229,
+        "id": 130024,
+        "maxRanks": 1,
+        "name": "Voice of Truth",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Instant",
+           "lc": "ffffff",
+           "r": "3 min cooldown",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Grants you immunity to Silence and Interrupt effects.  Lasts 6 sec.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1310897
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11484,
+       11486,
+       12745,
+       12746,
+       12747
+      ],
+      "id": 105330,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 1020,
+      "y": 3330
+     },
+     {
+      "activeEntry": 130025,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 134826,
+        "icon": 135984,
+        "id": 130025,
+        "maxRanks": 2,
+        "name": "Unyielding Faith",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the duration of  Fear and Disorient effects on you by 15%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the duration of  Fear and Disorient effects on you by 30%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 9453
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11485,
+       11486,
+       12745,
+       12746,
+       12747,
+       12748
+      ],
+      "id": 105331,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 2820,
+      "y": 2730
+     },
+     {
+      "activeEntry": 130026,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 134827,
+        "icon": 136090,
+        "id": 130026,
+        "maxRanks": 5,
+        "name": "Divine Intellect",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your total Intellect by 2%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your total Intellect by 4%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your total Intellect by 6%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your total Intellect by 8%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your total Intellect by 10%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20257
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       12745,
+       12746,
+       12747,
+       12748,
+       12749,
+       11486
+      ],
+      "id": 105332,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 2220,
+      "y": 2130
+     },
+     {
+      "activeEntry": 130027,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 134828,
+        "icon": 135920,
+        "id": 130027,
+        "maxRanks": 3,
+        "name": "Healing Light",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the amount healed by your Holy Light, Flash of Light, and Holy Shock spells by 4%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the amount healed by your Holy Light, Flash of Light, and Holy Shock spells by 8%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the amount healed by your Holy Light, Flash of Light, and Holy Shock spells by 12%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20237
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11485,
+       11486,
+       12745,
+       12746,
+       12747,
+       12748
+      ],
+      "id": 105333,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 1020,
+      "y": 2730
+     },
+     {
+      "activeEntry": 130028,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 134829,
+        "icon": 132325,
+        "id": 130028,
+        "maxRanks": 3,
+        "name": "Improved Seals",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the damage done by your Seals and Judgements by 5%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the damage done by your Seals and Judgements by 10%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the damage done by your Seals and Judgements by 15%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20224
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11486,
+       11485,
+       12745,
+       12746,
+       12747,
+       12748
+      ],
+      "id": 105334,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 2220,
+      "y": 2730
+     },
+     {
+      "activeEntry": 130029,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 134830,
+        "icon": 135736,
+        "id": 130029,
+        "maxRanks": 2,
+        "name": "Spiritual Focus",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Gives your Flash of Light, Holy Light, and Light's Vigil spells a 35% chance to not lose casting time when you take damage.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Gives your Flash of Light, Holy Light, and Light's Vigil spells a 70% chance to not lose casting time when you take damage.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20205
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11486,
+       11485,
+       12745,
+       12746,
+       12747,
+       12748
+      ],
+      "id": 105335,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 1620,
+      "y": 2730
+     },
+     {
+      "activeEntry": 130349,
+      "activeRank": 0,
+      "edges": [
+       {
+        "to": 105628,
+        "type": 2,
+        "visualStyle": 1
+       }
+      ],
+      "entries": [
+       {
+        "definitionID": 135150,
+        "icon": 236264,
+        "id": 130349,
+        "maxRanks": 1,
+        "name": "Templar's Bulwark",
+        "ranks": [
+         [
+          {
+           "l": "110 Mana",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Instant",
+           "lc": "ffffff",
+           "r": "5 min cooldown",
+           "rc": "ffffff"
+          },
+          {
+           "l": "When activated, this ability grants you an absorb shield equal to 100% of your maximum health for 8 sec.  Applies Forbearance for 1 min. Cannot be cast while Forbearance is active.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1311015
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11537,
+       12750,
+       11541
+      ],
+      "id": 105625,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 5620,
+      "y": 4530
+     },
+     {
+      "activeEntry": 130350,
+      "activeRank": 0,
+      "edges": [
+       {
+        "to": 110874,
+        "type": 2,
+        "visualStyle": 1
+       }
+      ],
+      "entries": [
+       {
+        "definitionID": 135151,
+        "icon": 132110,
+        "id": 130350,
+        "maxRanks": 5,
+        "name": "Redoubt",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Damaging melee attacks against you have a 10% chance to increase your chance to block by 6%.  Lasts 10 sec or 5 blocks.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Damaging melee attacks against you have a 10% chance to increase your chance to block by 12%.  Lasts 10 sec or 5 blocks.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Damaging melee attacks against you have a 10% chance to increase your chance to block by 18%.  Lasts 10 sec or 5 blocks.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Damaging melee attacks against you have a 10% chance to increase your chance to block by 24%.  Lasts 10 sec or 5 blocks.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Damaging melee attacks against you have a 10% chance to increase your chance to block by 30%.  Lasts 10 sec or 5 blocks.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20127
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11536,
+       12750,
+       12751,
+       12752,
+       12753,
+       12754,
+       11541
+      ],
+      "id": 105626,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 6220,
+      "y": 2130
+     },
+     {
+      "activeEntry": 130351,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135152,
+        "icon": 135882,
+        "id": 130351,
+        "maxRanks": 5,
+        "name": "Reckoning",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Gives you a 8% chance to gain an extra attack after Blocking a melee attack and a 20% chance to gain an extra attack after being the victim of a non-periodic critical strike.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Gives you a 16% chance to gain an extra attack after Blocking a melee attack and a 40% chance to gain an extra attack after being the victim of a non-periodic critical strike.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Gives you a 24% chance to gain an extra attack after Blocking a melee attack and a 60% chance to gain an extra attack after being the victim of a non-periodic critical strike.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Gives you a 32% chance to gain an extra attack after Blocking a melee attack and a 80% chance to gain an extra attack after being the victim of a non-periodic critical strike.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Gives you a 40% chance to gain an extra attack after Blocking a melee attack and a 100% chance to gain an extra attack after being the victim of a non-periodic critical strike.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20177
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11537,
+       11541,
+       12750
+      ],
+      "id": 105627,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 6220,
+      "y": 4530
+     },
+     {
+      "activeEntry": 130352,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135153,
+        "icon": 135880,
+        "id": 130352,
+        "maxRanks": 1,
+        "name": "Holy Shield",
+        "ranks": [
+         [
+          {
+           "l": "150 Mana",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Instant",
+           "lc": "ffffff",
+           "r": "10 sec cooldown",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Requires Shields",
+           "lc": "ff2020"
+          },
+          {
+           "l": "Increases chance to block by 20% for 10 sec, and deals 110 Holy damage for each attack blocked while active.  Damage caused by Holy Shield causes 20% additional threat. Each block expends a charge. 4 charges.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20925
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       12482,
+       11535,
+       11541
+      ],
+      "id": 105628,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 5620,
+      "y": 5730
+     },
+     {
+      "activeEntry": 130353,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135154,
+        "icon": 135321,
+        "id": 130353,
+        "maxRanks": 3,
+        "name": "One-Handed Weapon Specialization",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the damage you deal with one-handed melee weapons by 3%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the damage you deal with one-handed melee weapons by 7%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the damage you deal with one-handed melee weapons by 10%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20196
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11538,
+       12750,
+       12751,
+       11541
+      ],
+      "id": 105629,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 5620,
+      "y": 3930
+     },
+     {
+      "activeEntry": 130354,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135155,
+        "icon": 135892,
+        "id": 130354,
+        "maxRanks": 5,
+        "name": "Toughness",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your armor value from items by 2%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your armor value from items by 4%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your armor value from items by 6%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your armor value from items by 8%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your armor value from items by 10%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20143
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       12750,
+       12751,
+       12752,
+       12753,
+       12754,
+       11541
+      ],
+      "id": 105630,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 5620,
+      "y": 2130
+     },
+     {
+      "activeEntry": 130356,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135157,
+        "icon": 135896,
+        "id": 130356,
+        "maxRanks": 2,
+        "name": "Sacred Duty",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your total Stamina by 2% and reduces the cooldown of your Divine Shield, Divine Protection, and Templar's Bulwark spells by 30 sec.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your total Stamina by 4% and reduces the cooldown of your Divine Shield, Divine Protection, and Templar's Bulwark spells by 60 sec.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1224697
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11539,
+       11541,
+       12750,
+       12751,
+       12752
+      ],
+      "id": 105632,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 6820,
+      "y": 3330
+     },
+     {
+      "activeEntry": 130357,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135158,
+        "icon": 135963,
+        "id": 130357,
+        "maxRanks": 3,
+        "name": "Improved Hammer of Justice",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Decreases the cooldown of your Hammer of Justice spell by 5 sec.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Decreases the cooldown of your Hammer of Justice spell by 10 sec.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Decreases the cooldown of your Hammer of Justice spell by 15 sec.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20487
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11538,
+       11541,
+       12750,
+       12751
+      ],
+      "id": 105633,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 6220,
+      "y": 3930
+     },
+     {
+      "activeEntry": 130358,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135159,
+        "icon": 135962,
+        "id": 130358,
+        "maxRanks": 3,
+        "name": "Improved Righteous Fury",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "While Righteous Fury is active, all damage taken is reduced by 2%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "While Righteous Fury is active, all damage taken is reduced by 4%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "While Righteous Fury is active, all damage taken is reduced by 6%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20468
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11539,
+       11541,
+       12750,
+       12751,
+       12752
+      ],
+      "id": 105634,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 5620,
+      "y": 3330
+     },
+     {
+      "activeEntry": 130360,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135161,
+        "icon": 135994,
+        "id": 130360,
+        "maxRanks": 5,
+        "name": "Anticipation",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Defense Skill by 4.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Defense Skill by 8.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Defense Skill by 12.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Defense Skill by 16.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Defense Skill by 20.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20096
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11540,
+       11541,
+       12750,
+       12751,
+       12752,
+       12753
+      ],
+      "id": 105636,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 6820,
+      "y": 2730
+     },
+     {
+      "activeEntry": 130361,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135162,
+        "icon": 135964,
+        "id": 130361,
+        "maxRanks": 2,
+        "name": "Guardian's Favor",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the cooldown of your Blessing of Protection by 1 min and increases the duration of your Blessing of Freedom by 3 sec.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the cooldown of your Blessing of Protection by 2 min and increases the duration of your Blessing of Freedom by 6 sec.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20174
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11540,
+       11541,
+       12750,
+       12751,
+       12752,
+       12753
+      ],
+      "id": 105637,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 5620,
+      "y": 2730
+     },
+     {
+      "activeEntry": 130362,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135163,
+        "icon": 132282,
+        "id": 130362,
+        "maxRanks": 3,
+        "name": "Precision",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Improves your chance to hit by 1%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Improves your chance to hit by 2%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Improves your chance to hit by 3%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20189
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11540,
+       11541,
+       12750,
+       12751,
+       12752,
+       12753
+      ],
+      "id": 105638,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 5020,
+      "y": 2730
+     },
+     {
+      "activeEntry": 130363,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135164,
+        "icon": 132154,
+        "id": 130363,
+        "maxRanks": 5,
+        "name": "Divine Strength",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Strength by 2%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Strength by 4%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Strength by 6%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Strength by 8%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Strength by 10%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20262
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       12745,
+       12746,
+       12747,
+       12748,
+       12749,
+       11486
+      ],
+      "id": 105639,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 1620,
+      "y": 2130
+     },
+     {
+      "activeEntry": 130421,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135222,
+        "icon": 135878,
+        "id": 130421,
+        "maxRanks": 1,
+        "name": "Twist of Light",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the Mana cost of your Seal spells by 20%, and when you replace your Seal of Command, Seal of Righteousness, Seal of Fury, or Seal of Justice with a different Seal, gain an Echo of that Seal. Your next melee attack applies the replaced Seal's effects, consuming the Echo.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1310735
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11553,
+       11559
+      ],
+      "id": 105692,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 9680,
+      "y": 5730
+     },
+     {
+      "activeEntry": 130422,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135223,
+        "icon": 132275,
+        "id": 130422,
+        "maxRanks": 3,
+        "name": "Vengeance",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Physical and Holy damage dealt by 1% for 30 sec after landing a non-periodic critical strike.  Stacks up to 3 times.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Physical and Holy damage dealt by 2% for 30 sec after landing a non-periodic critical strike.  Stacks up to 3 times.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Physical and Holy damage dealt by 3% for 30 sec after landing a non-periodic critical strike.  Stacks up to 3 times.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20049
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11555,
+       12755,
+       11559
+      ],
+      "id": 105693,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 9680,
+      "y": 4530
+     },
+     {
+      "activeEntry": 130423,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135224,
+        "icon": 135942,
+        "id": 130423,
+        "maxRanks": 1,
+        "name": "Repentance",
+        "ranks": [
+         [
+          {
+           "l": "60 Mana",
+           "lc": "ffffff",
+           "r": "20 yd range",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Instant",
+           "lc": "ffffff",
+           "r": "1 min cooldown",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Puts the enemy target in a state of meditation, incapacitating them for up to 6 sec. Any damage caused will awaken the target. Only works against Humanoids.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20066
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11555,
+       11559,
+       12755
+      ],
+      "id": 105694,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 10280,
+      "y": 4530
+     },
+     {
+      "activeEntry": 130425,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135226,
+        "icon": 132347,
+        "id": 130425,
+        "maxRanks": 1,
+        "name": "Seal of Command",
+        "ranks": [
+         [
+          {
+           "l": "65 Mana",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Instant",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Gives the Paladin a chance to deal additional Holy damage equal to 70% of normal weapon damage.  Only one Seal can be active on the Paladin at any one time.  Lasts 30 sec.\r\n\r\nUnleashing this Seal's energy will judge an enemy, instantly causing 46 to 51 Holy damage, 93 to 101 if the target is stunned or incapacitated.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20375
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11557,
+       12755,
+       12756,
+       12757,
+       11559
+      ],
+      "id": 105696,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 10280,
+      "y": 3330
+     },
+     {
+      "activeEntry": 130426,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135227,
+        "icon": 133041,
+        "id": 130426,
+        "maxRanks": 3,
+        "name": "Two-Handed Weapon Specialization",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the damage you deal with two-handed melee weapons by 2%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the damage you deal with two-handed melee weapons by 4%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the damage you deal with two-handed melee weapons by 6%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20111
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11555,
+       11559,
+       12755
+      ],
+      "id": 105697,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 9080,
+      "y": 4530
+     },
+     {
+      "activeEntry": 130427,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135228,
+        "icon": 135904,
+        "id": 130427,
+        "maxRanks": 2,
+        "name": "Eye for an Eye",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "All critical strikes against you cause 5% of the damage taken to the attacker as well. The damage caused by Eye for an Eye will not exceed 50% of the Paladin's total health.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "All critical strikes against you cause 10% of the damage taken to the attacker as well. The damage caused by Eye for an Eye will not exceed 50% of the Paladin's total health.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 9799
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11556,
+       11559,
+       12755,
+       12756
+      ],
+      "id": 105698,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 9080,
+      "y": 3930
+     },
+     {
+      "activeEntry": 130428,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135229,
+        "icon": 135937,
+        "id": 130428,
+        "maxRanks": 2,
+        "name": "Pursuit of Justice",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases movement speed and mounted movement speed by 8%.  This does not stack with other movement speed increasing effects.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases movement speed and mounted movement speed by 15%.  This does not stack with other movement speed increasing effects.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 26022
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11557,
+       11559,
+       12755,
+       12756,
+       12757
+      ],
+      "id": 105699,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 10880,
+      "y": 3330
+     },
+     {
+      "activeEntry": 130429,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135230,
+        "icon": 135278,
+        "id": 130429,
+        "maxRanks": 1,
+        "name": "Sacred Arbiter",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the damage of your Holy Strike ability by 20% and causes it to refresh all Judgement effects on the target.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1311087
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11556,
+       11559,
+       12755,
+       12756
+      ],
+      "id": 105700,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 10280,
+      "y": 3930
+     },
+     {
+      "activeEntry": 130430,
+      "activeRank": 0,
+      "edges": [
+       {
+        "to": 105693,
+        "type": 2,
+        "visualStyle": 1
+       }
+      ],
+      "entries": [
+       {
+        "definitionID": 135231,
+        "icon": 236255,
+        "id": 130430,
+        "maxRanks": 3,
+        "name": "Sanctified Judgement",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Gives your Judgement ability a 33% chance to return 20% of the Mana cost of the judged seal.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Gives your Judgement ability a 66% chance to return 40% of the Mana cost of the judged seal.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Gives your Judgement ability a 100% chance to return 60% of the Mana cost of the judged seal.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1311074
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11557,
+       11559,
+       12755,
+       12756,
+       12757
+      ],
+      "id": 105701,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 9680,
+      "y": 3330
+     },
+     {
+      "activeEntry": 130431,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135232,
+        "icon": 135985,
+        "id": 130431,
+        "maxRanks": 3,
+        "name": "Vindication",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Gives your damaging melee attacks a chance to reduce the target's Attack Power by 3, and increase your Attack Power by 1% for 30 sec.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Gives your damaging melee attacks a chance to reduce the target's Attack Power by 5, and increase your Attack Power by 2% for 30 sec.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Gives your damaging melee attacks a chance to reduce the target's Attack Power by 8, and increase your Attack Power by 3% for 30 sec.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 9452
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11557,
+       11559,
+       12755,
+       12756,
+       12757
+      ],
+      "id": 105702,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 9080,
+      "y": 3330
+     },
+     {
+      "activeEntry": 130432,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135233,
+        "icon": 135957,
+        "id": 130432,
+        "maxRanks": 5,
+        "name": "Conviction",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Improves your chance to get a critical strike with melee attacks by 1%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Improves your chance to get a critical strike with melee attacks by 2%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Improves your chance to get a critical strike with melee attacks by 3%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Improves your chance to get a critical strike with melee attacks by 4%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Improves your chance to get a critical strike with melee attacks by 5%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20117
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11558,
+       11559,
+       12755,
+       12756,
+       12757,
+       12758
+      ],
+      "id": 105703,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 10280,
+      "y": 2730
+     },
+     {
+      "activeEntry": 130433,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135234,
+        "icon": 237539,
+        "id": 130433,
+        "maxRanks": 2,
+        "name": "Holy Conduit",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the mana cost of your Consecration, Holy Wrath, Exorcism, and Hammer of Wrath spells by 20%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the mana cost of your Consecration, Holy Wrath, Exorcism, and Hammer of Wrath spells by 40%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1237268
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11558,
+       11559,
+       12755,
+       12756,
+       12757,
+       12758
+      ],
+      "id": 105704,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 9680,
+      "y": 2730
+     },
+     {
+      "activeEntry": 130434,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135235,
+        "icon": 135959,
+        "id": 130434,
+        "maxRanks": 2,
+        "name": "Improved Judgement",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Decreases the cooldown of your Judgement ability by 1 sec.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Decreases the cooldown of your Judgement ability by 2 sec.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 25956
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11558,
+       11559,
+       12755,
+       12756,
+       12757,
+       12758
+      ],
+      "id": 105705,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 9080,
+      "y": 2730
+     },
+     {
+      "activeEntry": 130435,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135236,
+        "icon": 135863,
+        "id": 130435,
+        "maxRanks": 5,
+        "name": "Benediction",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the Mana cost of all instant cast spells and abilities by 2%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the Mana cost of all instant cast spells and abilities by 4%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the Mana cost of all instant cast spells and abilities by 6%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the Mana cost of all instant cast spells and abilities by 8%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the Mana cost of all instant cast spells and abilities by 10%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20101
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11559,
+       12755,
+       12756,
+       12757,
+       12758,
+       12759
+      ],
+      "id": 105706,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 10280,
+      "y": 2130
+     },
+     {
+      "activeEntry": 130436,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 135237,
+        "icon": 132269,
+        "id": 130436,
+        "maxRanks": 5,
+        "name": "Deflection",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Parry chance by 1%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Parry chance by 2%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Parry chance by 3%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Parry chance by 4%.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your Parry chance by 5%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20060
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11559,
+       12755,
+       12756,
+       12757,
+       12758,
+       12759
+      ],
+      "id": 105707,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 9680,
+      "y": 2130
+     },
+     {
+      "activeEntry": 137869,
+      "activeRank": 0,
+      "edges": [
+       {
+        "to": 105329,
+        "type": 2,
+        "visualStyle": 1
+       }
+      ],
+      "entries": [
+       {
+        "definitionID": 142623,
+        "icon": 135895,
+        "id": 137869,
+        "maxRanks": 3,
+        "name": "Reverence",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Allows 10% of your Mana regeneration to continue while casting.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Allows 20% of your Mana regeneration to continue while casting.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Allows 30% of your Mana regeneration to continue while casting.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1310899
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11484,
+       12745,
+       12746,
+       12747,
+       11486
+      ],
+      "id": 110871,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 1620,
+      "y": 3330
+     },
+     {
+      "activeEntry": 137870,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 142624,
+        "icon": 135926,
+        "id": 137870,
+        "maxRanks": 2,
+        "name": "Consecrated Ground",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Gives your Holy spells 5% increased damage against the first 4 enemies that enter your Consecration.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Gives your Holy spells 10% increased damage against the first 4 enemies that enter your Consecration.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1310905
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11482,
+       12745,
+       11486
+      ],
+      "id": 110872,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 2220,
+      "y": 4530
+     },
+     {
+      "activeEntry": 137871,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 142625,
+        "icon": 236254,
+        "id": 137871,
+        "maxRanks": 2,
+        "name": "Infusion of Light",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Your Holy Shock and Flash of Light critical hits reduce the cast time of your next Holy Light cast within 15 sec by 0.5 sec.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Your Holy Shock and Flash of Light critical hits reduce the cast time of your next Holy Light cast within 15 sec by 1.0 sec.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 426065
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11483,
+       12745,
+       12746,
+       11486
+      ],
+      "id": 110873,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 1020,
+      "y": 3930
+     },
+     {
+      "activeEntry": 137872,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 142626,
+        "icon": 134952,
+        "id": 137872,
+        "maxRanks": 3,
+        "name": "Shield Specialization",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the amount of damage absorbed by your shield by 10%, and gives your blocks a 33% chance to restore 6% of your maximum Mana.  May only occur once every 3 sec.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the amount of damage absorbed by your shield by 20%, and gives your blocks a 66% chance to restore 6% of your maximum Mana.  May only occur once every 3 sec.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the amount of damage absorbed by your shield by 30%, and gives your blocks a 100% chance to restore 6% of your maximum Mana.  May only occur once every 3 sec.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 20150
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11539,
+       12750,
+       12751,
+       12752,
+       11541
+      ],
+      "id": 110874,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 6220,
+      "y": 3330
+     },
+     {
+      "activeEntry": 137873,
+      "activeRank": 0,
+      "edges": [
+       {
+        "to": 110878,
+        "type": 2,
+        "visualStyle": 1
+       }
+      ],
+      "entries": [
+       {
+        "definitionID": 142627,
+        "icon": 135960,
+        "id": 137873,
+        "maxRanks": 1,
+        "name": "Improved Seal of Fury",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "When Seal of Fury's shield is fully absorbed, restore 4 Mana, increased by 15% per level the attacker is above you, up to 45%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1314103
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11539,
+       12750,
+       12751,
+       12752,
+       11541
+      ],
+      "id": 110875,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 5030,
+      "y": 3330
+     },
+     {
+      "activeEntry": 137876,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 142630,
+        "icon": 236258,
+        "id": 137876,
+        "maxRanks": 1,
+        "name": "Swift Judgement",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Instant",
+           "lc": "ffffff",
+           "r": "1 min cooldown",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Finishes the remaining cooldown on your Judgement ability and reduces the Mana cost of your next Judgement by 100%.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1310994
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11538,
+       12750,
+       12751,
+       11541
+      ],
+      "id": 110878,
+      "maxRanks": 1,
+      "ranks": 0,
+      "type": 0,
+      "x": 5030,
+      "y": 3930
+     },
+     {
+      "activeEntry": 137877,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 142631,
+        "icon": 135925,
+        "id": 137877,
+        "maxRanks": 5,
+        "name": "Iron Creed",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the threat generated by your Holy Strike ability 5%. While Righteous Fury is active, Holy Strike also reduces your damage taken by 2% for 6 sec.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the threat generated by your Holy Strike ability 10%. While Righteous Fury is active, Holy Strike also reduces your damage taken by 4% for 6 sec.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the threat generated by your Holy Strike ability 15%. While Righteous Fury is active, Holy Strike also reduces your damage taken by 6% for 6 sec.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the threat generated by your Holy Strike ability 20%. While Righteous Fury is active, Holy Strike also reduces your damage taken by 8% for 6 sec.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases the threat generated by your Holy Strike ability 25%. While Righteous Fury is active, Holy Strike also reduces your damage taken by 10% for 6 sec.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1311034
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       12481,
+       11541
+      ],
+      "id": 110879,
+      "maxRanks": 5,
+      "ranks": 0,
+      "type": 0,
+      "x": 6220,
+      "y": 5130
+     },
+     {
+      "activeEntry": 137878,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 142632,
+        "icon": 135897,
+        "id": 137878,
+        "maxRanks": 2,
+        "name": "Instrument of Law",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the cast time of your Hammer of Wrath by 0.5 sec, and reduces all threat you generate by 10% while Righteous Fury is not active.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Reduces the cast time of your Hammer of Wrath by 1.0 sec, and reduces all threat you generate by 20% while Righteous Fury is not active.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1311085
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11554,
+       11559
+      ],
+      "id": 110880,
+      "maxRanks": 2,
+      "ranks": 0,
+      "type": 0,
+      "x": 10280,
+      "y": 5130
+     },
+     {
+      "activeEntry": 137880,
+      "activeRank": 0,
+      "entries": [
+       {
+        "definitionID": 142634,
+        "icon": 236251,
+        "id": 137880,
+        "maxRanks": 3,
+        "name": "Champion of the Light",
+        "ranks": [
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your spell damage and healing by up to 33% of your Intellect.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your spell damage and healing by up to 66% of your Intellect.",
+           "lc": "ffd200"
+          }
+         ],
+         [
+          {
+           "l": "",
+           "lc": "ffffff",
+           "r": "",
+           "rc": "ffffff"
+          },
+          {
+           "l": "Passive",
+           "lc": "ffffff"
+          },
+          {
+           "l": "Increases your spell damage and healing by up to 100% of your Intellect.",
+           "lc": "ffd200"
+          }
+         ]
+        ],
+        "spellID": 1311084
+       }
+      ],
+      "flags": 0,
+      "groups": [
+       11554,
+       11559
+      ],
+      "id": 110882,
+      "maxRanks": 3,
+      "ranks": 0,
+      "type": 0,
+      "x": 9680,
+      "y": 5130
+     }
+    ],
+    "treeID": 1100
+   }
+  ]
+ }
+}

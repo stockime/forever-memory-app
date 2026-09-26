@@ -297,6 +297,8 @@ pub struct State {
     pub sync_status: sync::SharedStatus,
     /// The game or archive folder changed: find everything again.
     pub paths_changed: bool,
+    /// A character to select once the archive is read.
+    pub select_slug: Option<String>,
 }
 
 pub struct App {
@@ -352,6 +354,14 @@ impl App {
         };
         if !settings.onboarded {
             app.page = Page::Settings;
+        }
+        // FM_CHARACTER=<slug> picks the character (with FM_SHOT, for screenshots).
+        if let Ok(slug) = std::env::var("FM_CHARACTER") {
+            app.state.select_slug = Some(slug);
+        }
+        // FM_DIARY_DAY=YYYY-MM-DD opens the diary on that day.
+        if let Ok(day) = std::env::var("FM_DIARY_DAY") {
+            app.state.diary_day = Some(day);
         }
         if let Ok(p) = std::env::var("FM_PAGE") {
             app.page = Page::ALL
@@ -468,6 +478,11 @@ impl eframe::App for App {
             ctx.request_repaint_after(Duration::from_millis(50));
             return;
         };
+        if let Some(slug) = self.state.select_slug.take() {
+            if let Some(i) = model.memory.characters.iter().position(|c| c.slug == slug) {
+                self.state.character = i;
+            }
+        }
         if self.state.character >= model.memory.characters.len() {
             self.state.character = 0;
         }

@@ -5,7 +5,7 @@ use super::{card, character, label};
 use crate::State;
 use crate::art::Art;
 use crate::data::{Model, diary};
-use crate::theme::{self, EDGE, GOLD, INK, MUTED, RAISED};
+use crate::theme::{self, GOLD, INK, MUTED, RAISED};
 use crate::tr;
 use egui::{Color32, RichText, Ui};
 
@@ -150,10 +150,10 @@ fn entry(ui: &mut Ui, m: &Model, st: &mut State, day: &str, art: &mut Art) {
             None => {
                 ui.label(RichText::new(tr!("No entry yet. {name} can write one from what was recorded that day:", name = c.name.split(' ').next().unwrap_or(&c.name))).color(MUTED));
                 ui.add_space(6.0);
-                egui::Frame::new().stroke(egui::Stroke::new(1.0, EDGE)).corner_radius(6).inner_margin(egui::Margin::same(12)).show(ui, |ui| {
-                    ui.set_width(ui.available_width());
+                // A blank page: the day's facts, waiting to be written up.
+                super::widgets::parchment(ui, art, 720.0, |ui| {
                     for f in &facts {
-                        ui.label(RichText::new(f).small().color(MUTED));
+                        ui.label(RichText::new(f).size(15.0).color(super::widgets::INK_BROWN));
                     }
                 });
                 ui.add_space(10.0);

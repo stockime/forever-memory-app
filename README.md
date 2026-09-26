@@ -106,6 +106,8 @@ on macOS, `%APPDATA%\forever-memory` on Windows), readable only by you.
 
 ## Screenshots
 
+Tom Crusader, a level 20 Undead Protection Paladin, and his alts are made-up demo characters (see `demo/`); no real account or player is shown.
+
 **Overview**
 
 ![Overview](docs/screenshots/overview.png)
@@ -113,6 +115,10 @@ on macOS, `%APPDATA%\forever-memory` on Windows), readable only by you.
 **Armory**
 
 ![Armory](docs/screenshots/armory.png)
+
+**Journal**
+
+![Journal](docs/screenshots/journal.png)
 
 **Diary**
 
@@ -133,6 +139,10 @@ on macOS, `%APPDATA%\forever-memory` on Windows), readable only by you.
 **Gold & loot**
 
 ![Gold & loot](docs/screenshots/gold.png)
+
+**Players**
+
+![Players](docs/screenshots/players.png)
 
 ## Data
 
