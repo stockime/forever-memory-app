@@ -29,7 +29,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     match st.players_tab {
         1 => fellowship(ui, m, c, art),
         2 => nemeses(ui, m, c, art),
-        _ => everyone(ui, m, st, art),
+        _ => everyone(ui, m, st, art, super::rp::realm(c)),
     }
 }
 
@@ -48,11 +48,22 @@ fn fellowship(ui: &mut Ui, m: &Model, c: &crate::data::memory::Character, art: &
                 ui.horizontal(|ui| {
                     class_icon(ui, art, comp.class, 40.0);
                     ui.vertical(|ui| {
-                        ui.label(
-                            RichText::new(&comp.name)
-                                .font(theme::display_font(24.0))
-                                .color(comp.class.map(theme::class_color).unwrap_or(INK)),
-                        );
+                        let rp = m.rp.other(&comp.name, super::rp::realm(c)).filter(|r| !r.name.is_empty());
+                        ui.horizontal_wrapped(|ui| {
+                            ui.label(
+                                RichText::new(rp.map(|r| r.full_name()).unwrap_or_else(|| comp.name.clone()))
+                                    .font(theme::display_font(24.0))
+                                    .color(comp.class.map(theme::class_color).unwrap_or(INK)),
+                            );
+                            if let Some(r) = rp {
+                                if !r.full_title.is_empty() {
+                                    ui.label(RichText::new(&r.full_title).family(theme::italic()).size(17.0).color(INK));
+                                }
+                                if r.full_name() != comp.name {
+                                    ui.label(RichText::new(format!("({})", comp.name)).color(MUTED));
+                                }
+                            }
+                        });
                         ui.label(
                             RichText::new(if comp.days == 1 {
                                 tr!("Travelled together for {time}, since {day}", time = theme::duration(comp.together as f64), day = theme::day(comp.since as f64))
@@ -138,7 +149,7 @@ fn first_name(c: &crate::data::memory::Character) -> &str {
     c.name.split(' ').next().unwrap_or(&c.name)
 }
 
-fn everyone(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
+fn everyone(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art, realm: &str) {
     if m.players.is_empty() {
         super::empty(
             ui,
@@ -166,6 +177,7 @@ fn everyone(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 .filter(|p| {
                     needle.is_empty()
                         || p.name.to_lowercase().contains(&needle)
+                        || m.rp.other(&p.name, realm).is_some_and(|r| r.full_name().to_lowercase().contains(&needle))
                         || p.class
                             .map(theme::class_name)
                             .unwrap_or("")
@@ -223,6 +235,12 @@ fn everyone(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                                         tr!("{n} lines", n = n)
                                     });
                                 }
+                                if let Some(r) = m.rp.other(&p.name, realm) {
+                                    let called = if r.name.is_empty() || r.full_name() == p.name { r.full_title.clone() } else { r.full_name() };
+                                    if !called.is_empty() {
+                                        ui.label(RichText::new(called).family(theme::italic()).color(INK));
+                                    }
+                                }
                                 ui.label(RichText::new(bits.join(", ")).small().color(MUTED));
                             })
                             .response
@@ -242,7 +260,7 @@ fn everyone(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 .as_ref()
                 .and_then(|n| m.players.iter().find(|p| &p.name == n))
             {
-                Some(p) => profile(ui, m, p, art),
+                Some(p) => profile(ui, m, p, art, realm),
                 None => super::hint(ui, tr!("Pick someone on the left.")),
             }
         });
@@ -278,7 +296,7 @@ fn class_icon(ui: &mut Ui, art: &mut Art, class: Option<&str>, size: f32) {
     }
 }
 
-fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
+fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art, realm: &str) {
     let seen = p.unit.and_then(|u| m.combat.players.get(&u));
     egui::ScrollArea::vertical()
         .id_salt("profile")
@@ -335,6 +353,10 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
                 });
             });
             ui.add_space(10.0);
+            if let Some(r) = m.rp.other(&p.name, realm) {
+                card(ui, |ui| super::rp::other(ui, r, p.class.map(theme::class_color).unwrap_or(INK)));
+                ui.add_space(12.0);
+            }
             card(ui, |ui| {
                 ui.set_width(ui.available_width());
                 super::widgets::figure_row(ui, |ui| {

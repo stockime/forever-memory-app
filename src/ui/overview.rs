@@ -15,6 +15,10 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art, page: &mut Pa
         .show(ui, |ui| {
             hero(ui, c, art);
             ui.add_space(14.0);
+            if let Some(p) = &c.rp {
+                card(ui, |ui| super::rp::card(ui, p, theme::class_color(&c.class_file)));
+                ui.add_space(14.0);
+            }
             card(ui, |ui| figures(ui, m, c, art));
             ui.add_space(14.0);
             super::pair(

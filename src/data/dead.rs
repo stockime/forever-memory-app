@@ -246,14 +246,11 @@ Plain text, 40 to 120 words in all: first a single line of at most twelve words 
 
 pub fn prompt(c: &Character, facts: &[String]) -> String {
     let mut p = format!("The writer: {}, a {} {}.\n\n", c.name, c.race, c.class);
-    let note = c.personality.trim();
+    let note = super::rp::who(c);
     p += &format!(
         "<personality>\n{}\n</personality>\n\n",
-        if note.is_empty() {
-            "(No note yet: find a voice that fits their race and class.)"
-        } else {
-            note
-        }
+        note.as_deref()
+            .unwrap_or("(No note yet: find a voice that fits their race and class.)")
     );
     p += "The death:\n<facts>\n";
     for f in facts {

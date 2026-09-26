@@ -338,7 +338,7 @@ Write from inside the world. Nobody has heard of levels, experience, quests, loo
 120 to 300 words of Markdown: no title, only the letter, with the signature on its own line. No preamble and no notes about how you wrote it.";
 
 fn personality(c: &Character) -> String {
-    super::presets::note_or_preset(c)
+    super::rp::who(c)
         .unwrap_or_else(|| "(No note yet: find a voice that fits their race and class.)".into())
 }
 

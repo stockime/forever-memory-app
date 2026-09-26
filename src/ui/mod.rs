@@ -12,6 +12,7 @@ pub mod map;
 pub mod overview;
 pub mod players;
 pub mod quests;
+pub mod rp;
 pub mod settings;
 pub mod standing;
 pub mod story;

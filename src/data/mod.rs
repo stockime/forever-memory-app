@@ -10,6 +10,7 @@ pub mod letters;
 pub mod memory;
 pub mod players;
 pub mod presets;
+pub mod rp;
 
 #[cfg(test)]
 mod bench;
@@ -51,6 +52,8 @@ pub struct Model {
     pub fights: Vec<combat::Fight>,
     pub chat: Vec<chat::Line>,
     pub players: Vec<players::Player>,
+    /// Roleplay profiles from Total RP 3, MyRolePlay and XRP.
+    pub rp: std::sync::Arc<rp::Roleplay>,
     pub loaded_at: SystemTime,
     pub stamp: u64,
 }
@@ -82,7 +85,15 @@ fn report(p: Option<&Shared>, frac: f32, stage: &str) {
 /// native logs as parsed before (see `cache`).
 pub fn load(p: &Paths, progress: Option<&Shared>) -> Model {
     report(progress, 0.02, crate::tr!("Opening the archive"));
-    let memory = archive(&p.repo);
+    let mut memory = archive(&p.repo);
+    let rp = p
+        .game
+        .as_ref()
+        .map(|g| rp::load(&g.install, &g.flavor))
+        .unwrap_or_default();
+    for c in &mut memory.characters {
+        c.rp = rp.own_for(c);
+    }
     if let (Some(pr), Some(c)) = (progress, memory.characters.first())
         && let Ok(mut g) = pr.lock() {
             let race = c.snapshot.get("raceFile").and_then(serde_json::Value::as_str);
@@ -129,6 +140,7 @@ pub fn load(p: &Paths, progress: Option<&Shared>) -> Model {
         fights,
         chat,
         players,
+        rp,
         loaded_at: SystemTime::now(),
         stamp: stamp(p),
     };

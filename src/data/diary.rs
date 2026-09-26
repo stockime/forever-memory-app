@@ -366,6 +366,12 @@ pub fn facts(m: &Model, c: &Character, day: &str) -> Vec<String> {
                         .into_iter()
                         .filter_map(|(_, v)| v.as_str().map(str::to_string))
                         .filter(|n| !n.starts_with(me))
+                        .map(|n| match m.rp.other(&n, "") {
+                            Some(p) if !p.name.is_empty() => {
+                                format!("{n} (who goes by {})", p.full_name())
+                            }
+                            _ => n,
+                        })
                         .collect();
                 say(if names.is_empty() {
                     "went on alone again".into()
@@ -574,7 +580,7 @@ pub fn prompt(
     previous: Option<(&str, &str)>,
 ) -> String {
     let mut p = format!("The writer: {}, a {} {}.\n\n", c.name, c.race, c.class);
-    let note = super::presets::note_or_preset(c);
+    let note = super::rp::who(c);
     p += &format!(
         "<personality>\n{}\n</personality>\n\n",
         note.as_deref()

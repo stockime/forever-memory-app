@@ -58,7 +58,7 @@ fn job(
     (name, rx)
 }
 
-pub fn show(ui: &mut Ui, st: &mut State, characters: usize) {
+pub fn show(ui: &mut Ui, st: &mut State, characters: usize, rp: &[crate::data::rp::Source]) {
     let page = &mut st.settings_page;
     let saved = crate::config::get();
     let draft = page.draft.get_or_insert_with(|| saved.clone());
@@ -105,6 +105,10 @@ pub fn show(ui: &mut Ui, st: &mut State, characters: usize) {
             }
             game(ui, draft, &found, page.finding.is_some());
             ui.add_space(12.0);
+            if !rp.is_empty() {
+                roleplay(ui, rp);
+                ui.add_space(12.0);
+            }
             language(ui, draft);
             ui.add_space(12.0);
             writer_card(
@@ -426,6 +430,34 @@ fn game(ui: &mut Ui, s: &mut Settings, found: &Found, finding: bool) {
         {
             warn(ui, &e);
         }
+    });
+}
+
+/// The roleplay addons found in the game folder; read, never written.
+fn roleplay(ui: &mut Ui, sources: &[crate::data::rp::Source]) {
+    card(ui, |ui| {
+        ui.set_width(ui.available_width());
+        label(ui, tr!("Roleplay profiles"));
+        for s in sources {
+            let mut parts = vec![];
+            match s.own {
+                0 => {}
+                1 => parts.push(tr!("the profile of one of your characters").to_string()),
+                n => parts.push(tr!("the profiles of {n} of your characters", n = n)),
+            }
+            match s.others {
+                0 => {}
+                1 => parts.push(tr!("one other roleplayer").to_string()),
+                n => parts.push(tr!("{n} other roleplayers", n = n)),
+            }
+            ok(ui, &format!("{}: {}", s.addon, parts.join(", ")));
+        }
+        note(
+            ui,
+            tr!(
+                "Read from the game's saved variables, never changed. Your characters' profiles show on their Overview and shape the diary, letters and epitaphs; everyone else's show on the Players page."
+            ),
+        );
     });
 }
 
