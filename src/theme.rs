@@ -1,7 +1,10 @@
 //! Colours, fonts and small formatting helpers, shared with wow.stru.ci's look:
 //! tooltip navy, the client's label gold, item quality and class colours.
 
+use crate::i18n::{self, Lang};
+use crate::tr;
 use egui::{Color32, FontData, FontDefinitions, FontFamily, FontId, TextStyle};
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 pub const NIGHT: Color32 = Color32::from_rgb(0x0a, 0x0e, 0x1f);
@@ -51,15 +54,15 @@ pub fn class_color(class_file: &str) -> Color32 {
 
 pub fn class_name(class_file: &str) -> &'static str {
     match class_file {
-        "WARRIOR" => "Warrior",
-        "PALADIN" => "Paladin",
-        "HUNTER" => "Hunter",
-        "ROGUE" => "Rogue",
-        "PRIEST" => "Priest",
-        "SHAMAN" => "Shaman",
-        "MAGE" => "Mage",
-        "WARLOCK" => "Warlock",
-        "DRUID" => "Druid",
+        "WARRIOR" => tr!("Warrior"),
+        "PALADIN" => tr!("Paladin"),
+        "HUNTER" => tr!("Hunter"),
+        "ROGUE" => tr!("Rogue"),
+        "PRIEST" => tr!("Priest"),
+        "SHAMAN" => tr!("Shaman"),
+        "MAGE" => tr!("Mage"),
+        "WARLOCK" => tr!("Warlock"),
+        "DRUID" => tr!("Druid"),
         _ => "",
     }
 }
@@ -78,6 +81,10 @@ pub fn display_font(size: f32) -> FontId {
 }
 
 pub fn install(ctx: &egui::Context) {
+    // FM_LANG=de picks the language for a run (screenshots, testing).
+    if let Some(l) = i18n::env_override() {
+        i18n::set(l);
+    }
     let mut fonts = FontDefinitions::default();
     for (name, bytes) in [
         (
@@ -117,6 +124,13 @@ pub fn install(ctx: &egui::Context) {
     fonts.families.insert(display(), with("marcellus"));
     fonts.families.insert(bold(), with("alegreya-bold"));
     fonts.families.insert(italic(), with("alegreya-italic"));
+    // Chinese text, and CJK player names in any language, from a system font.
+    if let Some(cjk) = cjk_font() {
+        fonts.font_data.insert("cjk".into(), Arc::new(cjk));
+        for family in fonts.families.values_mut() {
+            family.push("cjk".into());
+        }
+    }
     ctx.set_fonts(fonts);
 
     ctx.set_theme(egui::Theme::Dark);
@@ -176,17 +190,92 @@ pub fn install(ctx: &egui::Context) {
     });
 }
 
+/// A system font with Chinese glyphs (Simplified forms where the file holds
+/// several), or None; Marcellus and Alegreya are Latin only.
+fn cjk_font() -> Option<FontData> {
+    const KNOWN: [&str; 20] = [
+        // Windows
+        r"C:\Windows\Fonts\msyh.ttc",
+        r"C:\Windows\Fonts\msyh.ttf",
+        r"C:\Windows\Fonts\simhei.ttf",
+        r"C:\Windows\Fonts\simsun.ttc",
+        // macOS
+        "/System/Library/Fonts/PingFang.ttc",
+        "/System/Library/Fonts/STHeiti Light.ttc",
+        "/System/Library/Fonts/Hiragino Sans GB.ttc",
+        "/Library/Fonts/Arial Unicode.ttf",
+        // Linux
+        "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
+        "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+        "/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc",
+        "/usr/share/fonts/noto-cjk/NotoSansCJKsc-Regular.otf",
+        "/usr/share/fonts/opentype/noto/NotoSansCJKsc-Regular.otf",
+        "/usr/share/fonts/adobe-source-han-sans/SourceHanSansCN-Regular.otf",
+        "/usr/share/fonts/adobe-source-han-sans/SourceHanSans-Regular.ttc",
+        "/usr/share/fonts/wenquanyi/wqy-microhei/wqy-microhei.ttc",
+        "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+        "/usr/share/fonts/wenquanyi/wqy-zenhei/wqy-zenhei.ttc",
+        "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+        "/usr/share/fonts/truetype/arphic/uming.ttc",
+    ];
+    if let Some(f) = KNOWN.iter().find_map(|p| load_cjk(Path::new(p), None)) {
+        return Some(f);
+    }
+    // Whatever fontconfig knows, for other distributions and user fonts.
+    let out = std::process::Command::new("fc-match")
+        .args([
+            "-f",
+            "%{file}\n%{index}",
+            "sans-serif:lang=zh-cn:charset=4e2d",
+        ])
+        .stderr(std::process::Stdio::null())
+        .output()
+        .ok()?;
+    let text = String::from_utf8_lossy(&out.stdout).to_string();
+    let mut lines = text.lines();
+    let file = PathBuf::from(lines.next().filter(|f| !f.is_empty())?);
+    load_cjk(&file, lines.next().and_then(|i| i.trim().parse().ok()))
+}
+
+/// The font at `path` if one of its faces has Han glyphs, preferring the
+/// given face, then a Simplified Chinese one.
+fn load_cjk(path: &Path, index: Option<u32>) -> Option<FontData> {
+    let bytes = std::fs::read(path).ok()?;
+    let faces = ttf_parser::fonts_in_collection(&bytes).unwrap_or(1);
+    let has_han =
+        |i: u32| ttf_parser::Face::parse(&bytes, i).is_ok_and(|f| f.glyph_index('中').is_some());
+    let simplified = |i: u32| {
+        ttf_parser::Face::parse(&bytes, i).is_ok_and(|f| {
+            f.names().into_iter().any(|n| {
+                n.name_id == ttf_parser::name_id::FAMILY
+                    && n.to_string().is_some_and(|s| {
+                        let s = s.to_lowercase();
+                        (s.ends_with(" sc") || s.contains(" sc ") || s.contains("gb"))
+                            && !s.contains("mono")
+                    })
+            })
+        })
+    };
+    let index = index
+        .filter(|i| has_han(*i))
+        .or_else(|| (0..faces).find(|i| simplified(*i) && has_han(*i)))
+        .or_else(|| (0..faces).find(|i| has_han(*i)))?;
+    let mut data = FontData::from_owned(bytes);
+    data.index = index;
+    Some(data)
+}
+
 // ---- formatting ----
 
 pub fn duration(secs: f64) -> String {
     let s = secs.max(0.0) as i64;
     let (h, m) = (s / 3600, s % 3600 / 60);
     if h > 0 {
-        format!("{h}h {m:02}m")
+        tr!("{h}h {m}m", h = h, m = format!("{m:02}"))
     } else if m > 0 {
-        format!("{m}m {:02}s", s % 60)
+        tr!("{m}m {s}s", m = m, s = format!("{:02}", s % 60))
     } else {
-        format!("{}s", s % 60)
+        tr!("{s}s", s = s % 60)
     }
 }
 
@@ -196,12 +285,14 @@ pub fn money(copper: i64) -> String {
     let (g, s, cu) = (c / 10000, c / 100 % 100, c % 100);
     let mut out = String::new();
     if g > 0 {
-        out += &format!("{g}g ");
+        out += &tr!("{n}g", n = g);
+        out += " ";
     }
     if g > 0 || s > 0 {
-        out += &format!("{s}s ");
+        out += &tr!("{n}s", n = s);
+        out += " ";
     }
-    out += &format!("{cu}c");
+    out += &tr!("{n}c", n = cu);
     if neg { format!("−{out}") } else { out }
 }
 
@@ -210,36 +301,96 @@ pub fn local(t: f64) -> chrono::DateTime<chrono::Local> {
         .unwrap_or_default()
         .with_timezone(&chrono::Local)
 }
+
+fn chrono_locale(lang: Lang) -> chrono::Locale {
+    match lang {
+        Lang::En => chrono::Locale::en_US,
+        Lang::De => chrono::Locale::de_DE,
+        Lang::Fr => chrono::Locale::fr_FR,
+        Lang::Es => chrono::Locale::es_ES,
+        Lang::Pt => chrono::Locale::pt_BR,
+        Lang::Zh => chrono::Locale::zh_CN,
+    }
+}
+
+/// A date (and time) in the current language's own order and names.
+fn date(t: f64, with_time: bool) -> String {
+    let lang = i18n::current();
+    let pattern = match lang {
+        Lang::En | Lang::Fr | Lang::Es => "%a %-d %b",
+        Lang::De => "%a, %-d. %b",
+        Lang::Pt => "%a, %-d %b",
+        Lang::Zh => "%-m月%-d日 周%a",
+    };
+    let mut out = local(t)
+        .format_localized(pattern, chrono_locale(lang))
+        .to_string();
+    if with_time {
+        out += if lang == Lang::Zh { " " } else { ", " };
+        out += &clock(t);
+    }
+    out
+}
+
 pub fn clock(t: f64) -> String {
     local(t).format("%H:%M").to_string()
 }
 pub fn day(t: f64) -> String {
-    local(t).format("%a %-d %b").to_string()
+    date(t, false)
 }
 pub fn when(t: f64) -> String {
-    local(t).format("%a %-d %b, %H:%M").to_string()
+    date(t, true)
 }
 pub fn ago(t: f64) -> String {
     let d = chrono::Local::now().timestamp() as f64 - t;
     if d < 60.0 {
-        "just now".into()
+        tr!("just now").into()
     } else if d < 3600.0 {
-        format!("{} min ago", (d / 60.0) as i64)
+        tr!("{n} min ago", n = (d / 60.0) as i64)
     } else if d < 86400.0 * 2.0 {
-        format!("{} h ago", (d / 3600.0) as i64)
+        tr!("{n} h ago", n = (d / 3600.0) as i64)
     } else {
         day(t)
     }
 }
 
 pub fn thousands(n: i64) -> String {
+    let sep = match i18n::current() {
+        Lang::De | Lang::Es | Lang::Pt => '.',
+        Lang::Fr => '\u{a0}',
+        Lang::En | Lang::Zh => ',',
+    };
     let s = n.abs().to_string();
     let mut out = String::new();
     for (i, c) in s.chars().enumerate() {
-        if i > 0 && (s.len() - i) % 3 == 0 {
-            out.push(',');
+        if i > 0 && (s.len() - i).is_multiple_of(3) {
+            out.push(sep);
         }
         out.push(c);
     }
     if n < 0 { format!("−{out}") } else { out }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dates_in_each_language() {
+        let t = 1790000000.0; // Monday 21 September 2026
+        for l in Lang::ALL {
+            i18n::set(l);
+            println!(
+                "{l:?}: {} | {} | {} | {}",
+                day(t),
+                when(t),
+                duration(3725.0),
+                money(123456)
+            );
+        }
+        i18n::set(Lang::Zh);
+        let zh = day(t);
+        i18n::set(Lang::En);
+        assert!(zh.contains('月') && zh.contains('周'), "{zh}");
+    }
 }

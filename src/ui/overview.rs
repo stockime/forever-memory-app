@@ -3,6 +3,7 @@ use crate::art::Art;
 use crate::data::Model;
 use crate::data::memory::{Character, QuestStatus};
 use crate::theme::{self, INK, MUTED, NIGHT, SERIES};
+use crate::tr;
 use crate::{Page, State};
 use egui::{Color32, Rect, RichText, Ui};
 use egui_plot::{Bar, BarChart, Line, PlotPoints};
@@ -86,10 +87,10 @@ fn hero(ui: &mut Ui, c: &Character, art: &mut Art) {
         color,
     );
     let pct = if c.xp.1 > 0 {
-        format!(
-            ", {:.0}% to {}",
-            c.xp.0 as f64 / c.xp.1 as f64 * 100.0,
-            c.level + 1
+        tr!(
+            ", {pct}% to {next}",
+            pct = format!("{:.0}", c.xp.0 as f64 / c.xp.1 as f64 * 100.0),
+            next = c.level + 1
         )
     } else {
         String::new()
@@ -97,24 +98,36 @@ fn hero(ui: &mut Ui, c: &Character, art: &mut Art) {
     p.text(
         egui::pos2(x + 2.0, rect.bottom() - 62.0),
         egui::Align2::LEFT_BOTTOM,
-        format!("Level {} {} {}{pct}", c.level, c.race, c.class),
+        tr!(
+            "Level {level} {race} {class}",
+            level = c.level,
+            race = c.race,
+            class = c.class
+        ) + &pct,
         egui::FontId::proportional(20.0),
         INK,
     );
     let played = c.total_play() as f64;
     let last = c.sessions.last().map(|s| s.end as f64).unwrap_or(0.0);
-    let line = format!(
-        "{}{} played over {} session{}, last seen {}",
-        if c.zone.is_empty() {
-            String::new()
-        } else {
-            format!("In {}. ", c.zone)
-        },
-        theme::duration(played),
-        c.sessions.len(),
-        if c.sessions.len() == 1 { "" } else { "s" },
-        theme::ago(last)
-    );
+    let (time, n, when) = (theme::duration(played), c.sessions.len(), theme::ago(last));
+    let mut line = if n == 1 {
+        tr!(
+            "{time} played over {n} session, last seen {when}",
+            time = time,
+            n = n,
+            when = when
+        )
+    } else {
+        tr!(
+            "{time} played over {n} sessions, last seen {when}",
+            time = time,
+            n = n,
+            when = when
+        )
+    };
+    if !c.zone.is_empty() {
+        line = tr!("In {zone}.", zone = c.zone) + " " + &line;
+    }
     p.text(
         egui::pos2(x + 2.0, rect.bottom() - 34.0),
         egui::Align2::LEFT_BOTTOM,
@@ -154,7 +167,13 @@ fn figures(ui: &mut Ui, m: &Model, c: &Character, art: &mut Art) {
     ui.set_width(ui.available_width());
     super::widgets::figure_row(ui, |ui| {
         ui.spacing_mut().item_spacing = egui::vec2(34.0, 12.0);
-        widgets::figure_text(ui, art, icons::WATCH, &theme::duration(played), "played");
+        widgets::figure_text(
+            ui,
+            art,
+            icons::WATCH,
+            &theme::duration(played),
+            tr!("played"),
+        );
         widgets::figure_text(
             ui,
             art,
@@ -164,13 +183,19 @@ fn figures(ui: &mut Ui, m: &Model, c: &Character, art: &mut Art) {
             } else {
                 "–".into()
             },
-            "experience per hour",
+            tr!("experience per hour"),
         );
-        widgets::figure_money(ui, art, icons::COIN, c.money, "carried");
-        widgets::figure_text(ui, art, icons::NOTE, &quests.to_string(), "quests done");
-        widgets::figure_text(ui, art, icons::SKULL, &kills.to_string(), "kills");
-        widgets::figure_text(ui, art, icons::FEIGN, &deaths.to_string(), "deaths");
-        widgets::figure_text(ui, art, icons::GROUP, &met.to_string(), "players met");
+        widgets::figure_money(ui, art, icons::COIN, c.money, tr!("carried"));
+        widgets::figure_text(
+            ui,
+            art,
+            icons::NOTE,
+            &quests.to_string(),
+            tr!("quests done"),
+        );
+        widgets::figure_text(ui, art, icons::SKULL, &kills.to_string(), tr!("kills"));
+        widgets::figure_text(ui, art, icons::FEIGN, &deaths.to_string(), tr!("deaths"));
+        widgets::figure_text(ui, art, icons::GROUP, &met.to_string(), tr!("players met"));
     });
 }
 
@@ -206,26 +231,26 @@ pub fn level_series(c: &Character) -> Vec<[f64; 2]> {
 }
 
 fn leveling(ui: &mut Ui, c: &Character) {
-    label(ui, "Leveling");
+    label(ui, tr!("Leveling"));
     ui.label(
-        RichText::new("Level against hours played")
+        RichText::new(tr!("Level against hours played"))
             .small()
             .color(MUTED),
     );
     let pts = level_series(c);
     if pts.len() < 2 {
-        ui.label(RichText::new("Needs a little more play to draw.").color(MUTED));
+        ui.label(RichText::new(tr!("Needs a little more play to draw.")).color(MUTED));
         return;
     }
     plot("leveling")
         .height(220.0)
-        .x_axis_formatter(|g, _| format!("{:.1}h", g.value))
+        .x_axis_formatter(|g, _| tr!("{n}h", n = format!("{:.1}", g.value)))
         .label_formatter(|h| {
             let p = super::hover(h);
-            Some(format!(
-                "level {:.2}\n{} played",
-                p.y,
-                theme::duration(p.x * 3600.0)
+            Some(tr!(
+                "level {level}\n{time} played",
+                level = format!("{:.2}", p.y),
+                time = theme::duration(p.x * 3600.0)
             ))
         })
         .show(ui, |pu| {
@@ -240,9 +265,9 @@ fn leveling(ui: &mut Ui, c: &Character) {
 }
 
 fn gold(ui: &mut Ui, c: &Character) {
-    label(ui, "Gold");
+    label(ui, tr!("Gold"));
     ui.label(
-        RichText::new("Money carried against hours played")
+        RichText::new(tr!("Money carried against hours played"))
             .small()
             .color(MUTED),
     );
@@ -258,19 +283,19 @@ fn gold(ui: &mut Ui, c: &Character) {
         }
     }
     if pts.len() < 2 {
-        ui.label(RichText::new("No money changes yet.").color(MUTED));
+        ui.label(RichText::new(tr!("No money changes yet.")).color(MUTED));
         return;
     }
     plot("gold")
         .height(220.0)
-        .x_axis_formatter(|g, _| format!("{:.1}h", g.value))
+        .x_axis_formatter(|g, _| tr!("{n}h", n = format!("{:.1}", g.value)))
         .y_axis_formatter(|g, _| theme::money(g.value as i64))
         .label_formatter(|h| {
             let p = super::hover(h);
-            Some(format!(
-                "{}\n{} played",
-                theme::money(p.y as i64),
-                theme::duration(p.x * 3600.0)
+            Some(tr!(
+                "{money}\n{time} played",
+                money = theme::money(p.y as i64),
+                time = theme::duration(p.x * 3600.0)
             ))
         })
         .show(ui, |pu| {
@@ -312,15 +337,15 @@ pub fn zone_time(c: &Character) -> Vec<(String, f64)> {
 }
 
 fn zones(ui: &mut Ui, c: &Character) {
-    label(ui, "Where the time goes");
+    label(ui, tr!("Where the time goes"));
     ui.label(
-        RichText::new("Minutes played per zone")
+        RichText::new(tr!("Minutes played per zone"))
             .small()
             .color(MUTED),
     );
     let z = zone_time(c);
     if z.is_empty() {
-        ui.label(RichText::new("No zones recorded yet.").color(MUTED));
+        ui.label(RichText::new(tr!("No zones recorded yet.")).color(MUTED));
         return;
     }
     let names: Vec<String> = z.iter().map(|(n, _)| n.clone()).collect();
@@ -347,21 +372,27 @@ fn zones(ui: &mut Ui, c: &Character) {
                 .unwrap_or_default()
         })
         .y_axis_min_width(120.0)
-        .x_axis_formatter(|g, _| format!("{:.0} min", g.value))
+        .x_axis_formatter(|g, _| tr!("{n} min", n = format!("{:.0}", g.value)))
         .show(ui, |pu| {
             pu.bar_chart(
                 BarChart::new("Minutes", bars)
                     .horizontal()
                     .color(SERIES[0])
-                    .element_formatter(Box::new(|b, _| format!("{}: {:.0} min", b.name, b.value))),
+                    .element_formatter(Box::new(|b, _| {
+                        format!(
+                            "{}: {}",
+                            b.name,
+                            tr!("{n} min", n = format!("{:.0}", b.value))
+                        )
+                    })),
             );
         });
 }
 
 fn sessions(ui: &mut Ui, c: &Character) {
-    label(ui, "Sessions");
+    label(ui, tr!("Sessions"));
     ui.label(
-        RichText::new("Experience per hour, each session")
+        RichText::new(tr!("Experience per hour, each session"))
             .small()
             .color(MUTED),
     );
@@ -374,18 +405,18 @@ fn sessions(ui: &mut Ui, c: &Character) {
             let rate = s.xp as f64 / s.seconds() as f64 * 3600.0;
             Bar::new(i as f64 + 1.0, rate)
                 .width(0.6)
-                .name(format!(
-                    "{}, {}: {} XP in {}",
-                    theme::day(s.start as f64),
-                    theme::clock(s.start as f64),
-                    theme::thousands(s.xp),
-                    theme::duration(s.seconds() as f64)
+                .name(tr!(
+                    "{day}, {time}: {xp} XP in {duration}",
+                    day = theme::day(s.start as f64),
+                    time = theme::clock(s.start as f64),
+                    xp = theme::thousands(s.xp),
+                    duration = theme::duration(s.seconds() as f64)
                 ))
                 .fill(SERIES[0])
         })
         .collect();
     if bars.is_empty() {
-        ui.label(RichText::new("No sessions longer than a minute yet.").color(MUTED));
+        ui.label(RichText::new(tr!("No sessions longer than a minute yet.")).color(MUTED));
         return;
     }
     plot("sessions")
@@ -403,10 +434,10 @@ fn sessions(ui: &mut Ui, c: &Character) {
                 BarChart::new("XP per hour", bars)
                     .color(SERIES[0])
                     .element_formatter(Box::new(|b, _| {
-                        format!(
-                            "{}\n{} XP per hour",
-                            b.name,
-                            theme::thousands(b.value as i64)
+                        tr!(
+                            "{session}\n{xp} XP per hour",
+                            session = b.name,
+                            xp = theme::thousands(b.value as i64)
                         )
                     })),
             );
@@ -415,14 +446,14 @@ fn sessions(ui: &mut Ui, c: &Character) {
 
 /// What's open right now: active quests nearest to done first.
 fn up_next(ui: &mut Ui, c: &Character, st: &mut State, page: &mut Page) {
-    label(ui, "Up next");
+    label(ui, tr!("Up next"));
     let mut active: Vec<_> = c
         .quests
         .iter()
         .filter(|q| q.status == QuestStatus::Active)
         .collect();
     if active.is_empty() {
-        ui.label(RichText::new("No open quests.").color(MUTED));
+        ui.label(RichText::new(tr!("No open quests.")).color(MUTED));
         return;
     }
     let share = |q: &crate::data::memory::Quest| {
@@ -449,7 +480,7 @@ fn up_next(ui: &mut Ui, c: &Character, st: &mut State, page: &mut Page) {
                     }),
             );
             let text = if q.complete {
-                format!("{}  (ready to turn in)", q.title)
+                tr!("{quest}  (ready to turn in)", quest = q.title)
             } else {
                 q.title.clone()
             };

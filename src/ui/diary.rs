@@ -6,6 +6,7 @@ use crate::State;
 use crate::art::Art;
 use crate::data::{Model, diary};
 use crate::theme::{self, EDGE, GOLD, INK, MUTED, RAISED};
+use crate::tr;
 use egui::{Color32, RichText, Ui};
 
 pub struct Job {
@@ -20,7 +21,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     finish_job(m, st);
     let days = diary::days(c);
     if days.is_empty() {
-        super::empty(ui, "No days played yet.");
+        super::empty(ui, tr!("No days played yet."));
         return;
     }
     if !st
@@ -43,30 +44,30 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
             ui.set_width(340.0);
             card(ui, |ui| {
                 ui.set_width(ui.available_width());
-                label(ui, &format!("Who {} is", c.name.split(' ').next().unwrap_or(&c.name)));
-                ui.label(RichText::new("Voice, history, what they care about. The diary is written in this voice.").small().color(MUTED));
+                label(ui, &tr!("Who {name} is", name = c.name.split(' ').next().unwrap_or(&c.name)));
+                ui.label(RichText::new(tr!("Voice, history, what they care about. The diary is written in this voice.")).small().color(MUTED));
                 let (_, text) = st.note_edit.as_mut().unwrap();
-                ui.add(egui::TextEdit::multiline(text).desired_rows(8).desired_width(f32::INFINITY).hint_text("Died of the plague in Brill and came back wrong. Dry, gallows humour; still loves the Light, which does not love him back…"));
+                ui.add(egui::TextEdit::multiline(text).desired_rows(8).desired_width(f32::INFINITY).hint_text(tr!("Died of the plague in Brill and came back wrong. Dry, gallows humour; still loves the Light, which does not love him back…")));
                 let changed = *text != c.personality;
                 ui.horizontal(|ui| {
-                    if ui.add_enabled(changed, egui::Button::new("Save note")).clicked() {
+                    if ui.add_enabled(changed, egui::Button::new(tr!("Save note"))).clicked() {
                         st.diary_status = Some(match diary::save_personality(&st.repo, c, text) {
-                            Ok(()) => "Note saved and committed.".into(),
-                            Err(e) => format!("Could not save: {e}"),
+                            Ok(()) => tr!("Note saved and committed.").into(),
+                            Err(e) => tr!("Could not save: {error}", error = e),
                         });
                         st.reload_now = true;
                     }
                     if changed {
-                        ui.label(RichText::new("unsaved").small().color(MUTED));
+                        ui.label(RichText::new(tr!("unsaved")).small().color(MUTED));
                     }
                 });
             });
             ui.add_space(12.0);
             ui.horizontal(|ui| {
-                super::heading(ui, "Days");
+                super::heading(ui, tr!("Days"));
                 let missing: Vec<String> = days.iter().filter(|(d, _)| !c.diary.contains_key(d)).map(|(d, _)| d.clone()).collect();
                 if !missing.is_empty() && st.diary_job.is_none() {
-                    if ui.button(format!("Write {} missing", missing.len())).on_hover_text("Writes every day without an entry, oldest first").clicked() {
+                    if ui.button(tr!("Write {n} missing", n = missing.len())).on_hover_text(tr!("Writes every day without an entry, oldest first")).clicked() {
                         st.diary_queue = missing.into_iter().rev().collect();
                         start_next(m, st);
                     }
@@ -84,8 +85,8 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                         .show(ui, |ui| {
                             ui.set_width(ui.available_width());
                             ui.label(RichText::new(diary::pretty_day(d)).color(if selected { GOLD } else { INK }));
-                            let state = if busy { "being written…" } else if written { "written" } else { "not written yet" };
-                            ui.label(RichText::new(format!("{} played, {state}", theme::duration(*secs as f64))).small().color(MUTED));
+                            let state = if busy { tr!("being written…") } else if written { tr!("written") } else { tr!("not written yet") };
+                            ui.label(RichText::new(tr!("{time} played, {state}", time = theme::duration(*secs as f64), state = state)).small().color(MUTED));
                         })
                         .response
                         .interact(egui::Sense::click());
@@ -124,7 +125,7 @@ fn entry(ui: &mut Ui, m: &Model, st: &mut State, day: &str, art: &mut Art) {
         if busy {
             ui.horizontal(|ui| {
                 ui.spinner();
-                ui.label(RichText::new(format!("{} is writing…", c.name.split(' ').next().unwrap_or(&c.name))).color(MUTED));
+                ui.label(RichText::new(tr!("{name} is writing…", name = c.name.split(' ').next().unwrap_or(&c.name))).color(MUTED));
             });
         }
         ui.add_space(8.0);
@@ -137,17 +138,17 @@ fn entry(ui: &mut Ui, m: &Model, st: &mut State, day: &str, art: &mut Art) {
                 super::widgets::parchment(ui, art, 720.0, |ui| render(ui, prose));
                 ui.add_space(14.0);
                 ui.horizontal(|ui| {
-                    if ui.add_enabled(st.diary_job.is_none(), egui::Button::new("Rewrite")).on_hover_text("Writes this day again from the facts as they are now").clicked() {
+                    if ui.add_enabled(st.diary_job.is_none(), egui::Button::new(tr!("Rewrite"))).on_hover_text(tr!("Writes this day again from the facts as they are now")).clicked() {
                         start(m, st, day.to_string());
                     }
                 });
                 ui.add_space(8.0);
-                egui::CollapsingHeader::new(RichText::new("The facts behind this entry").color(MUTED)).id_salt(("facts", day)).show(ui, |ui| {
+                egui::CollapsingHeader::new(RichText::new(tr!("The facts behind this entry")).color(MUTED)).id_salt(("facts", day)).show(ui, |ui| {
                     ui.label(RichText::new(stored_facts).small().color(MUTED));
                 });
             }
             None => {
-                ui.label(RichText::new(format!("No entry yet. {} can write one from what was recorded that day:", c.name.split(' ').next().unwrap_or(&c.name))).color(MUTED));
+                ui.label(RichText::new(tr!("No entry yet. {name} can write one from what was recorded that day:", name = c.name.split(' ').next().unwrap_or(&c.name))).color(MUTED));
                 ui.add_space(6.0);
                 egui::Frame::new().stroke(egui::Stroke::new(1.0, EDGE)).corner_radius(6).inner_margin(egui::Margin::same(12)).show(ui, |ui| {
                     ui.set_width(ui.available_width());
@@ -158,13 +159,13 @@ fn entry(ui: &mut Ui, m: &Model, st: &mut State, day: &str, art: &mut Art) {
                 ui.add_space(10.0);
                 ui.horizontal(|ui| {
                     if !crate::claude::available() {
-                        ui.label(RichText::new("Claude Code (claude) isn't installed or can't run, so entries can't be written.").color(theme::DANGER));
+                        ui.label(RichText::new(tr!("Claude Code (claude) isn't installed or can't run, so entries can't be written.")).color(theme::DANGER));
                         return;
                     }
-                    if ui.add_enabled(st.diary_job.is_none() && !facts.is_empty(), egui::Button::new(RichText::new("Write this day's entry").color(GOLD))).clicked() {
+                    if ui.add_enabled(st.diary_job.is_none() && !facts.is_empty(), egui::Button::new(RichText::new(tr!("Write this day's entry")).color(GOLD))).clicked() {
                         start(m, st, day.to_string());
                     }
-                    ui.label(RichText::new(format!("Written by {} (claude -p) from these facts and the note. Other players' chat stays out.", crate::claude::WRITER)).small().color(MUTED));
+                    ui.label(RichText::new(tr!("Written by {writer} (claude -p) from these facts and the note. Other players' chat stays out.", writer = crate::claude::WRITER)).small().color(MUTED));
                 });
             }
         }
@@ -245,7 +246,7 @@ fn finish_job(m: &Model, st: &mut State) {
     };
     match result.and_then(|entry| diary::store(&st.repo, c, &job.day, &entry, &job.facts)) {
         Ok(()) => {
-            st.diary_status = Some("Written and committed to the archive.".into());
+            st.diary_status = Some(tr!("Written and committed to the archive.").into());
             st.reload_now = true;
             start_next(m, st);
         }
@@ -318,19 +319,19 @@ fn narration(
             return;
         }
         let Some(key) = voice::api_key() else {
-            label(ui, "Hear it read aloud");
-            ui.label(RichText::new(format!("Narration uses ElevenLabs. Paste an API key (kept in {}, readable only by you) or set ELEVENLABS_API_KEY.", voice::key_file().display())).small().color(MUTED));
+            label(ui, tr!("Hear it read aloud"));
+            ui.label(RichText::new(tr!("Narration uses ElevenLabs. Paste an API key (kept in {path}, readable only by you) or set ELEVENLABS_API_KEY.", path = voice::key_file().display())).small().color(MUTED));
             ui.horizontal(|ui| {
                 ui.add(
                     egui::TextEdit::singleline(&mut st.el_key_input)
                         .password(true)
-                        .hint_text("ElevenLabs API key")
+                        .hint_text(tr!("ElevenLabs API key"))
                         .desired_width(320.0),
                 );
                 if ui
                     .add_enabled(
                         st.el_key_input.trim().len() > 10,
-                        egui::Button::new("Save key"),
+                        egui::Button::new(tr!("Save key")),
                     )
                     .clicked()
                 {
@@ -341,10 +342,24 @@ fn narration(
             return;
         };
         let Some(v) = voice::load_voice(&st.repo, c) else {
-            label(ui, &format!("{first}'s voice"));
-            ui.label(RichText::new(format!("{first} doesn't have a voice yet. It's made once, in the style of a{} {} {} in the game and shaped by the note above, then kept for every entry.", if c.race.starts_with(['A', 'E', 'I', 'O', 'U']) { "n" } else { "" }, c.race, if c.snapshot.get("sex").and_then(serde_json::Value::as_i64) == Some(3) { "woman" } else { "man" })).small().color(MUTED));
+            label(ui, &tr!("{name}'s voice", name = first));
+            let woman = c.snapshot.get("sex").and_then(serde_json::Value::as_i64) == Some(3);
+            let about = if woman {
+                tr!(
+                    "{name} doesn't have a voice yet. It's made once, in the style of the game's {race} women and shaped by the note above, then kept for every entry.",
+                    name = first,
+                    race = c.race
+                )
+            } else {
+                tr!(
+                    "{name} doesn't have a voice yet. It's made once, in the style of the game's {race} men and shaped by the note above, then kept for every entry.",
+                    name = first,
+                    race = c.race
+                )
+            };
+            ui.label(RichText::new(about).small().color(MUTED));
             if ui
-                .button(RichText::new(format!("Give {first} a voice")).color(GOLD))
+                .button(RichText::new(tr!("Give {name} a voice", name = first)).color(GOLD))
                 .clicked()
             {
                 let (desc, seed, name, repo, ch) = (
@@ -354,26 +369,30 @@ fn narration(
                     st.repo.clone(),
                     c.clone(),
                 );
-                run(st, &format!("Finding {first}'s voice…"), move || {
-                    // One step: design in the race's in-game style and keep the first voice.
-                    let made = voice::design(&key, &desc, seed).and_then(|previews| {
-                        let (gid, _) = previews.into_iter().next().ok_or("no voice")?;
-                        let voice_id = voice::create(&key, &name, &desc, &gid)?;
-                        voice::save_voice(
-                            &repo,
-                            &ch,
-                            &voice::Voice {
-                                voice_id,
-                                name,
-                                description: desc,
-                            },
-                        )
-                    });
-                    match made {
-                        Ok(()) => VoiceMsg::Created,
-                        Err(e) => VoiceMsg::Failed(e),
-                    }
-                });
+                run(
+                    st,
+                    &tr!("Finding {name}'s voice…", name = first),
+                    move || {
+                        // One step: design in the race's in-game style and keep the first voice.
+                        let made = voice::design(&key, &desc, seed).and_then(|previews| {
+                            let (gid, _) = previews.into_iter().next().ok_or("no voice")?;
+                            let voice_id = voice::create(&key, &name, &desc, &gid)?;
+                            voice::save_voice(
+                                &repo,
+                                &ch,
+                                &voice::Voice {
+                                    voice_id,
+                                    name,
+                                    description: desc,
+                                },
+                            )
+                        });
+                        match made {
+                            Ok(()) => VoiceMsg::Created,
+                            Err(e) => VoiceMsg::Failed(e),
+                        }
+                    },
+                );
             }
             return;
         };
@@ -387,12 +406,16 @@ fn narration(
                 let mut stop = false;
                 ui.horizontal(|ui| {
                     if ui
-                        .button(if paused { "▶ Resume" } else { "⏸ Pause" })
+                        .button(if paused {
+                            format!("▶ {}", tr!("Resume"))
+                        } else {
+                            format!("⏸ {}", tr!("Pause"))
+                        })
                         .clicked()
                     {
                         p.toggle();
                     }
-                    if ui.button("■ Stop").clicked() {
+                    if ui.button(format!("■ {}", tr!("Stop"))).clicked() {
                         stop = true;
                     }
                     let w = (ui.available_width() - 110.0).max(80.0);
@@ -417,7 +440,10 @@ fn narration(
                 }
                 ui.horizontal(|ui| {
                     if ui
-                        .button(RichText::new(format!("▶ Listen to {first}")).color(GOLD))
+                        .button(
+                            RichText::new(format!("▶ {}", tr!("Listen to {name}", name = first)))
+                                .color(GOLD),
+                        )
                         .clicked()
                     {
                         if path.exists() {
@@ -434,7 +460,7 @@ fn narration(
                             );
                             run(
                                 st,
-                                &format!("{first} is clearing their throat…"),
+                                &tr!("{name} is clearing their throat…", name = first),
                                 move || match crate::voice::speak(&key, &vid, &t) {
                                     Ok(mp3) => {
                                         let _ = std::fs::create_dir_all(p2.parent().unwrap());
@@ -450,9 +476,9 @@ fn narration(
                     }
                     ui.label(
                         RichText::new(if path.exists() {
-                            "read aloud before; plays from the cache"
+                            tr!("read aloud before; plays from the cache")
                         } else {
-                            "read aloud by ElevenLabs in their voice"
+                            tr!("read aloud by ElevenLabs in their voice")
                         })
                         .small()
                         .color(MUTED),

@@ -4,6 +4,7 @@ pub mod diary;
 pub mod memory;
 pub mod players;
 
+use crate::tr;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
@@ -66,7 +67,7 @@ fn report(p: Option<&Shared>, frac: f32, stage: &str) {
 /// Reads everything. With `progress`, also renders all game art the pages
 /// will need, so the first frame shows the finished picture.
 pub fn load(p: &Paths, progress: Option<&Shared>) -> Model {
-    report(progress, 0.02, "Opening the archive");
+    report(progress, 0.02, tr!("Opening the archive"));
     let memory = memory::load(&p.repo);
     if let (Some(pr), Some(c)) = (progress, memory.characters.first()) {
         if let Ok(mut g) = pr.lock() {
@@ -87,13 +88,13 @@ pub fn load(p: &Paths, progress: Option<&Shared>) -> Model {
         report(
             progress,
             0.08 + 0.52 * done as f32 / total.max(1) as f32,
-            "Reading the combat logs",
+            tr!("Reading the combat logs"),
         );
     });
     let fights = combat::fights(&combat);
-    report(progress, 0.62, "Reading what was said");
+    report(progress, 0.62, tr!("Reading what was said"));
     let chat = chat::load(&chat_files);
-    report(progress, 0.68, "Remembering faces");
+    report(progress, 0.68, tr!("Remembering faces"));
     let players = players::build(&combat, &chat, &names, &memory.players);
     let model = Model {
         memory,
@@ -107,7 +108,7 @@ pub fn load(p: &Paths, progress: Option<&Shared>) -> Model {
     if progress.is_some() {
         prefetch_art(p, &model, progress);
     }
-    report(progress, 1.0, "Ready");
+    report(progress, 1.0, tr!("Ready"));
     model
 }
 
@@ -122,45 +123,48 @@ fn tips(m: &memory::Memory) -> Vec<String> {
             .count();
         let deaths = c.events.iter().filter(|e| e.e == "death").count();
         let played: i64 = c.sessions.iter().map(|s| s.seconds()).sum();
-        out.push(format!(
-            "{} has spent {} in the world.",
-            c.name,
-            crate::theme::duration(played as f64)
+        let name = &c.name;
+        out.push(tr!(
+            "{name} has spent {time} in the world.",
+            name = name,
+            time = crate::theme::duration(played as f64)
         ));
-        if done > 0 {
-            out.push(format!(
-                "{} has seen {done} task{} through.",
-                c.name,
-                if done == 1 { "" } else { "s" }
+        if done == 1 {
+            out.push(tr!(
+                "{name} has seen {n} task through.",
+                name = name,
+                n = done
+            ));
+        } else if done > 1 {
+            out.push(tr!(
+                "{name} has seen {n} tasks through.",
+                name = name,
+                n = done
             ));
         }
-        out.push(if deaths == 0 {
-            format!("{} has not died. Yet.", c.name)
-        } else {
-            format!(
-                "{} has died {deaths} time{}.",
-                c.name,
-                if deaths == 1 { "" } else { "s" }
-            )
+        out.push(match deaths {
+            0 => tr!("{name} has not died. Yet.", name = name),
+            1 => tr!("{name} has died {n} time.", name = name, n = deaths),
+            _ => tr!("{name} has died {n} times.", name = name, n = deaths),
         });
         if let Some(q) = c
             .quests
             .iter()
             .find(|q| q.status == memory::QuestStatus::Active)
         {
-            out.push(format!(
-                "Still waiting on {}: \"{}\".",
-                c.name.split(' ').next().unwrap_or(""),
-                q.title
+            out.push(tr!(
+                "Still waiting on {name}: \"{quest}\".",
+                name = c.name.split(' ').next().unwrap_or(""),
+                quest = q.title
             ));
         }
         if !c.diary.is_empty() {
-            out.push(format!(
-                "{} has written {} diary entr{}.",
-                c.name,
-                c.diary.len(),
-                if c.diary.len() == 1 { "y" } else { "ies" }
-            ));
+            let n = c.diary.len();
+            out.push(if n == 1 {
+                tr!("{name} has written {n} diary entry.", name = name, n = n)
+            } else {
+                tr!("{name} has written {n} diary entries.", name = name, n = n)
+            });
         }
     }
     out
@@ -257,10 +261,10 @@ fn prefetch_art(p: &Paths, m: &Model, progress: Option<&Shared>) {
         report(
             progress,
             0.7 + 0.29 * (n * 40) as f32 / missing.len().max(1) as f32,
-            &format!(
-                "Painting icons ({} of {})",
-                (n * 40).min(missing.len()),
-                missing.len()
+            &tr!(
+                "Painting icons ({done} of {total})",
+                done = (n * 40).min(missing.len()),
+                total = missing.len()
             ),
         );
         let _ = std::process::Command::new(&p.wowdata)

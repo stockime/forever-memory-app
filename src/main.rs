@@ -4,6 +4,7 @@
 mod art;
 mod claude;
 mod data;
+mod i18n;
 mod theme;
 mod ui;
 mod voice;

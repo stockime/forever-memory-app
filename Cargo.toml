@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 base64 = "0.23.1"
-chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
+chrono = { version = "0.4.45", default-features = false, features = ["clock", "unstable-locales"] }
 eframe = "0.36.2"
 egui = "0.36.2"
 egui_extras = "0.36.2"
@@ -14,4 +14,6 @@ image = { version = "0.25.10", default-features = false, features = ["png", "jpe
 rodio = { version = "0.22.2", default-features = false, features = ["playback", "mp3"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = { version = "1.0.151", default-features = false, features = ["std"] }
+sys-locale = "0.3.2"
+ttf-parser = "0.25"
 ureq = { version = "3.4.2", features = ["json"] }

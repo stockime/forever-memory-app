@@ -83,47 +83,72 @@ pub fn bar(ui: &mut Ui, share: f32, color: Color32, width: f32) {
     ui.painter().rect_filled(fill, 3.0, color);
 }
 
-/// A number with a caption, and a game icon to its left.
+/// Width of text as it will be drawn, for sizing before drawing.
+fn text_width(ui: &Ui, text: &str, font: egui::FontId) -> f32 {
+    ui.painter()
+        .layout_no_wrap(text.to_string(), font, INK)
+        .size()
+        .x
+}
+
+/// A number with a caption, and a game icon to its left. `value_w` is the
+/// value's drawn width, so the figure claims its real size up front and a
+/// wrapping row can move it to the next line when it doesn't fit.
 pub fn figure(
     ui: &mut Ui,
     art: &mut Art,
     icon: i64,
+    value_w: f32,
     value: impl FnOnce(&mut Ui, &mut Art),
     caption: &str,
 ) {
     // A fixed-height row, everything centred in it, so figures line up
     // whatever their value (text or coins) and caption look like.
     const H: f32 = 44.0;
-    ui.horizontal(|ui| {
-        ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Extend);
-        ui.set_min_height(H);
-        let (rect, _) = ui.allocate_exact_size(Vec2::splat(38.0), Sense::hover());
-        let p = ui.painter();
-        p.rect_filled(rect, 6.0, Color32::from_rgb(5, 7, 15));
-        if let Some(t) = art.icon(ui.ctx(), Some(icon)) {
-            p.image(
-                t.id(),
-                rect.shrink(2.0),
-                egui::Rect::from_min_max(egui::pos2(0.07, 0.07), egui::pos2(0.93, 0.93)),
-                Color32::WHITE,
+    let small = ui
+        .style()
+        .text_styles
+        .get(&egui::TextStyle::Small)
+        .cloned()
+        .unwrap_or_else(|| egui::FontId::proportional(13.5));
+    let width = 38.0
+        + ui.spacing().item_spacing.x.min(8.0)
+        + 4.0
+        + value_w.max(text_width(ui, caption, small));
+    ui.allocate_ui_with_layout(
+        Vec2::new(width, H),
+        Layout::left_to_right(Align::Center),
+        |ui| {
+            ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Extend);
+            ui.set_min_height(H);
+            let (rect, _) = ui.allocate_exact_size(Vec2::splat(38.0), Sense::hover());
+            let p = ui.painter();
+            p.rect_filled(rect, 6.0, Color32::from_rgb(5, 7, 15));
+            if let Some(t) = art.icon(ui.ctx(), Some(icon)) {
+                p.image(
+                    t.id(),
+                    rect.shrink(2.0),
+                    egui::Rect::from_min_max(egui::pos2(0.07, 0.07), egui::pos2(0.93, 0.93)),
+                    Color32::WHITE,
+                );
+            }
+            p.rect_stroke(
+                rect,
+                6.0,
+                Stroke::new(1.0, Color32::from_rgb(0x6b, 0x5a, 0x2e)),
+                egui::StrokeKind::Inside,
             );
-        }
-        p.rect_stroke(
-            rect,
-            6.0,
-            Stroke::new(1.0, Color32::from_rgb(0x6b, 0x5a, 0x2e)),
-            egui::StrokeKind::Inside,
-        );
-        ui.add_space(4.0);
-        ui.vertical(|ui| {
-            ui.spacing_mut().item_spacing.y = 0.0;
-            ui.horizontal(|ui| {
-                ui.set_min_height(26.0);
-                value(ui, art)
+            ui.add_space(4.0);
+            ui.vertical(|ui| {
+                ui.spacing_mut().item_spacing.y = 0.0;
+                ui.horizontal(|ui| {
+                    ui.set_min_height(26.0);
+                    value(ui, art)
+                });
+                ui.label(RichText::new(caption).small().color(MUTED));
             });
-            ui.label(RichText::new(caption).small().color(MUTED));
-        });
-    });
+        },
+    );
 }
 
 /// A wrapping row of figures. Items are top-aligned: all figures are the
@@ -140,10 +165,12 @@ pub fn figure_row(ui: &mut Ui, add: impl FnOnce(&mut Ui)) {
 }
 
 pub fn figure_text(ui: &mut Ui, art: &mut Art, icon: i64, value: &str, caption: &str) {
+    let w = text_width(ui, value, theme::display_font(24.0));
     figure(
         ui,
         art,
         icon,
+        w,
         |ui, _| {
             ui.label(
                 RichText::new(value)
@@ -156,10 +183,21 @@ pub fn figure_text(ui: &mut Ui, art: &mut Art, icon: i64, value: &str, caption: 
 }
 
 pub fn figure_money(ui: &mut Ui, art: &mut Art, icon: i64, copper: i64, caption: &str) {
+    // As `coins` draws it: each part is a number, a coin and some air.
+    let c = copper.abs();
+    let parts = [c / 10000, c / 100 % 100, c % 100];
+    let first = parts.iter().position(|v| *v > 0).unwrap_or(2);
+    let font = egui::FontId::proportional(20.0);
+    let w: f32 = parts[first..]
+        .iter()
+        .map(|v| text_width(ui, &v.to_string(), font.clone()) + 3.0 + 16.0 + 5.0 + 3.0)
+        .sum::<f32>()
+        + if copper < 0 { 14.0 } else { 0.0 };
     figure(
         ui,
         art,
         icon,
+        w,
         |ui, art| {
             coins(ui, art, copper, 20.0);
         },

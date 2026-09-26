@@ -8,23 +8,24 @@ use crate::art::Art;
 use crate::data::Model;
 use crate::data::players::Player;
 use crate::theme::{self, EDGE, GOLD, INK, MUTED, RAISED, SERIES};
+use crate::tr;
 use egui::{Color32, RichText, Ui};
 
 pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     if m.players.is_empty() {
         super::empty(
             ui,
-            "Nobody met yet. Players show up from the combat and chat logs.",
+            tr!("Nobody met yet. Players show up from the combat and chat logs."),
         );
         return;
     }
     ui.horizontal_top(|ui| {
         ui.vertical(|ui| {
             ui.set_width(330.0);
-            super::heading(ui, "Players");
+            super::heading(ui, tr!("Players"));
             ui.add(
                 egui::TextEdit::singleline(&mut st.player_search)
-                    .hint_text("Search by name or class")
+                    .hint_text(tr!("Search by name or class"))
                     .desired_width(f32::INFINITY),
             );
             ui.add_space(4.0);
@@ -50,9 +51,13 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 st.player = list.first().map(|p| p.name.clone());
             }
             ui.label(
-                RichText::new(format!("{} of {}", list.len(), m.players.len()))
-                    .small()
-                    .color(MUTED),
+                RichText::new(tr!(
+                    "{shown} of {total}",
+                    shown = list.len(),
+                    total = m.players.len()
+                ))
+                .small()
+                .color(MUTED),
             );
             egui::ScrollArea::vertical()
                 .id_salt("players")
@@ -78,13 +83,15 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                                             .size(16.0),
                                     );
                                 });
-                                let mut bits = vec![format!("seen {}", theme::ago(p.last_seen))];
+                                let mut bits =
+                                    vec![tr!("seen {when}", when = theme::ago(p.last_seen))];
                                 if !p.chat.is_empty() {
-                                    bits.push(format!(
-                                        "{} line{}",
-                                        p.chat.len(),
-                                        if p.chat.len() == 1 { "" } else { "s" }
-                                    ));
+                                    let n = p.chat.len();
+                                    bits.push(if n == 1 {
+                                        tr!("{n} line", n = n)
+                                    } else {
+                                        tr!("{n} lines", n = n)
+                                    });
                                 }
                                 ui.label(RichText::new(bits.join(", ")).small().color(MUTED));
                             })
@@ -106,7 +113,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 .and_then(|n| m.players.iter().find(|p| &p.name == n))
             {
                 Some(p) => profile(ui, m, p, art),
-                None => super::empty(ui, "Pick someone on the left."),
+                None => super::empty(ui, tr!("Pick someone on the left.")),
             }
         });
     });
@@ -164,10 +171,10 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
                                 .collect::<Vec<_>>()
                                 .join(" ");
                             if p.level > 0 {
-                                line = format!("Level {} {line}", p.level);
+                                line = tr!("Level {level} {who}", level = p.level, who = line);
                             }
                             if !p.guild.is_empty() {
-                                line += &format!(" of <{}>", p.guild);
+                                line = tr!("{who} of <{guild}>", who = line, guild = p.guild);
                             }
                             line
                         }
@@ -183,15 +190,16 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
                                 })
                                 .max_by_key(|(_, n)| **n);
                             match top {
-                                Some((sp, n)) => format!(
-                                    "Probably a {}, from {n} casts of {}",
-                                    theme::class_name(c),
-                                    m.combat.spell_name(*sp)
+                                Some((sp, n)) => tr!(
+                                    "Probably a {class}, from {n} casts of {spell}",
+                                    class = theme::class_name(c),
+                                    n = n,
+                                    spell = m.combat.spell_name(*sp)
                                 ),
-                                None => format!("Probably a {}", theme::class_name(c)),
+                                None => tr!("Probably a {class}", class = theme::class_name(c)),
                             }
                         }
-                        _ => "Class unknown: never seen casting".to_string(),
+                        _ => tr!("Class unknown: never seen casting").to_string(),
                     };
                     ui.label(RichText::new(class).color(MUTED));
                 });
@@ -206,14 +214,14 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
                         art,
                         icons::MAP,
                         &theme::day(p.first_seen),
-                        "first seen",
+                        tr!("first seen"),
                     );
                     widgets::figure_text(
                         ui,
                         art,
                         icons::WATCH,
                         &theme::ago(p.last_seen),
-                        "last seen",
+                        tr!("last seen"),
                     );
                     widgets::figure_text(
                         ui,
@@ -221,9 +229,9 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
                         icons::BOOK,
                         &p.days.len().to_string(),
                         if p.days.len() == 1 {
-                            "day seen"
+                            tr!("day seen")
                         } else {
-                            "days seen"
+                            tr!("days seen")
                         },
                     );
                     widgets::figure_text(
@@ -231,14 +239,14 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
                         art,
                         icons::SWORDS,
                         &theme::thousands(p.combat_lines as i64),
-                        "times in your combat log",
+                        tr!("times in your combat log"),
                     );
                     widgets::figure_text(
                         ui,
                         art,
                         icons::SCROLL,
                         &p.chat.len().to_string(),
-                        "things said",
+                        tr!("things said"),
                     );
                 });
             });
@@ -248,18 +256,18 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
                     if col == 0 {
                         card(ui, |ui| {
                             ui.set_width(ui.available_width());
-                            label(ui, "Between you");
+                            label(ui, tr!("Between you"));
                             let rows = [
-                                ("Damage to you", s.damage_to_me, theme::DANGER),
-                                ("Your damage to them", s.damage_from_me, SERIES[0]),
-                                ("Healing you got", s.heal_to_me, SERIES[2]),
-                                ("Healing you gave", s.heal_from_me, SERIES[2]),
+                                (tr!("Damage to you"), s.damage_to_me, theme::DANGER),
+                                (tr!("Your damage to them"), s.damage_from_me, SERIES[0]),
+                                (tr!("Healing you got"), s.heal_to_me, SERIES[2]),
+                                (tr!("Healing you gave"), s.heal_from_me, SERIES[2]),
                             ];
                             if rows.iter().all(|r| r.1 == 0) {
                                 ui.label(
-                                    RichText::new(
-                                        "Just passing by: no damage or healing between you.",
-                                    )
+                                    RichText::new(tr!(
+                                        "Just passing by: no damage or healing between you."
+                                    ))
                                     .color(MUTED),
                                 );
                             }
@@ -267,7 +275,7 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
                             for (l, v, color) in rows.into_iter().filter(|r| r.1 > 0) {
                                 ui.horizontal(|ui| {
                                     ui.add_sized(
-                                        [150.0, 22.0],
+                                        [190.0, 22.0],
                                         egui::Label::new(RichText::new(l).color(MUTED)),
                                     );
                                     widgets::bar(
@@ -281,9 +289,9 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
                             }
                             if s.max_hp > 0 {
                                 ui.label(
-                                    RichText::new(format!(
-                                        "Most health seen: {}",
-                                        theme::thousands(s.max_hp)
+                                    RichText::new(tr!(
+                                        "Most health seen: {hp}",
+                                        hp = theme::thousands(s.max_hp)
                                     ))
                                     .small()
                                     .color(MUTED),
@@ -293,21 +301,21 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
                     } else {
                         card(ui, |ui| {
                             ui.set_width(ui.available_width());
-                            label(ui, "What they cast");
+                            label(ui, tr!("What they cast"));
                             let rows: Vec<(String, u32)> = s
                                 .spells
                                 .iter()
                                 .map(|(sp, n)| (m.combat.spell_name(*sp).to_string(), *n))
                                 .collect();
                             if rows.is_empty() {
-                                ui.label(RichText::new("Nothing seen.").color(MUTED));
+                                ui.label(RichText::new(tr!("Nothing seen.")).color(MUTED));
                                 return;
                             }
                             let max = rows.iter().map(|r| r.1).max().unwrap_or(1) as f32;
                             let cols = [
-                                Col::grow("Spell"),
+                                Col::grow(tr!("Spell")),
                                 Col::fit("", 110.0),
-                                Col::num("Casts", 44.0),
+                                Col::num(tr!("Casts"), 80.0),
                             ];
                             widgets::table(
                                 ui,
@@ -340,9 +348,9 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
             }
             card(ui, |ui| {
                 ui.set_width(ui.available_width());
-                label(ui, "What they said");
+                label(ui, tr!("What they said"));
                 if p.chat.is_empty() {
-                    ui.label(RichText::new("Not a word in your chat log.").color(MUTED));
+                    ui.label(RichText::new(tr!("Not a word in your chat log.")).color(MUTED));
                 }
                 for &i in p.chat.iter().rev().take(200) {
                     let l = &m.chat[i];

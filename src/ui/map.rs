@@ -7,6 +7,7 @@ use crate::art::Art;
 use crate::data::Model;
 use crate::data::memory::Character;
 use crate::theme::{self, DANGER, EDGE, GOLD, INK, MUTED, PANEL, RAISED};
+use crate::tr;
 use egui::{Color32, Pos2, Rect, RichText, Stroke, Ui, Vec2};
 use std::collections::BTreeMap;
 
@@ -43,8 +44,9 @@ fn map_names(c: &Character) -> BTreeMap<i64, String> {
             }
         }
     }
-    out.entry(1415).or_insert_with(|| "Eastern Kingdoms".into());
-    out.entry(1414).or_insert_with(|| "Kalimdor".into());
+    out.entry(1415)
+        .or_insert_with(|| tr!("Eastern Kingdoms").into());
+    out.entry(1414).or_insert_with(|| tr!("Kalimdor").into());
     out
 }
 
@@ -54,7 +56,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     if all.is_empty() {
         super::empty(
             ui,
-            "No positions recorded yet. The addon samples them while you move.",
+            tr!("No positions recorded yet. The addon samples them while you move."),
         );
         return;
     }
@@ -78,13 +80,13 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
             let name = names
                 .get(id)
                 .cloned()
-                .unwrap_or_else(|| format!("Map {id}"));
+                .unwrap_or_else(|| tr!("Map {id}", id = id));
             let selected = *id == zone;
-            let text = RichText::new(format!("{name}  {:.0} min", mins)).color(if selected {
-                GOLD
-            } else {
-                INK
-            });
+            let text = RichText::new(format!(
+                "{name}  {}",
+                tr!("{n} min", n = format!("{:.0}", mins))
+            ))
+            .color(if selected { GOLD } else { INK });
             if ui
                 .add(egui::Button::new(text).fill(if selected {
                     RAISED
@@ -99,9 +101,9 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
         }
     });
     ui.horizontal(|ui| {
-        ui.label(RichText::new("Session").color(MUTED));
+        ui.label(RichText::new(tr!("Session")).color(MUTED));
         let label = |i: Option<usize>| match i {
-            None => "All sessions".to_string(),
+            None => tr!("All sessions").to_string(),
             Some(i) => c
                 .sessions
                 .get(i)
@@ -133,7 +135,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
         .filter(|s| s.map == zone && range.is_none_or(|(a, b)| s.t >= a && s.t <= b))
         .collect();
     if pts.is_empty() {
-        super::empty(ui, "No movement on this map in that session.");
+        super::empty(ui, tr!("No movement on this map in that session."));
         return;
     }
     let (t0, t1) = (pts[0].t as f64, pts[pts.len() - 1].t as f64);
@@ -145,9 +147,9 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     ui.horizontal(|ui| {
         if ui
             .button(if st.map_playing {
-                "⏸  Pause"
+                format!("⏸  {}", tr!("Pause"))
             } else {
-                "▶  Replay"
+                format!("▶  {}", tr!("Replay"))
             })
             .clicked()
         {
@@ -159,7 +161,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
         ui.spacing_mut().slider_width = (ui.available_width() - 340.0).max(200.0);
         ui.add(egui::Slider::new(&mut st.map_time, t0..=t1).show_value(false));
         ui.label(RichText::new(theme::when(st.map_time)).color(MUTED));
-        ui.checkbox(&mut st.map_whole, "Whole zone");
+        ui.checkbox(&mut st.map_whole, tr!("Whole zone"));
     });
     if st.map_playing {
         let dt = ui.input(|i| i.stable_dt) as f64;
@@ -268,28 +270,30 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
             ("quest", Some("accept")) => (
                 "!",
                 GOLD,
-                format!(
-                    "Accepted {}",
-                    e.i("id")
+                tr!(
+                    "Accepted {quest}",
+                    quest = e
+                        .i("id")
                         .and_then(|i| titles.get(&i).copied())
-                        .unwrap_or("a quest")
+                        .unwrap_or(tr!("a quest"))
                 ),
             ),
             ("quest", Some("turnin")) => (
                 "?",
                 GOLD,
-                format!(
-                    "Completed {}",
-                    e.i("id")
+                tr!(
+                    "Completed {quest}",
+                    quest = e
+                        .i("id")
                         .and_then(|i| titles.get(&i).copied())
-                        .unwrap_or("a quest")
+                        .unwrap_or(tr!("a quest"))
                 ),
             ),
-            ("death", _) => ("☠", DANGER, "Died here".to_string()),
+            ("death", _) => ("☠", DANGER, tr!("Died here").to_string()),
             ("level", _) => (
                 "★",
                 GOLD,
-                format!("Reached level {}", e.i("level").unwrap_or(0)),
+                tr!("Reached level {level}", level = e.i("level").unwrap_or(0)),
             ),
             _ => continue,
         };
@@ -325,15 +329,19 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     ui.add_space(6.0);
     ui.horizontal(|ui| {
         for (g, c, l) in [
-            ("!", GOLD, "quest accepted"),
-            ("?", GOLD, "quest done"),
-            ("☠", DANGER, "death"),
-            ("★", GOLD, "level up"),
+            ("!", GOLD, tr!("quest accepted")),
+            ("?", GOLD, tr!("quest done")),
+            ("☠", DANGER, tr!("death")),
+            ("★", GOLD, tr!("level up")),
         ] {
             ui.label(RichText::new(g).color(c));
             ui.label(RichText::new(l).small().color(MUTED));
             ui.add_space(10.0);
         }
-        ui.label(RichText::new("Path fades with age").small().color(MUTED));
+        ui.label(
+            RichText::new(tr!("Path fades with age"))
+                .small()
+                .color(MUTED),
+        );
     });
 }

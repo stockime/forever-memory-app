@@ -7,6 +7,7 @@ use crate::art::Art;
 use crate::data::Model;
 use crate::data::memory::{Character, entries};
 use crate::theme::{self, EDGE, GOLD, INK, MUTED, RAISED};
+use crate::tr;
 use egui::{Color32, Pos2, Rect, RichText, Stroke, Ui, Vec2};
 use serde_json::Value;
 
@@ -16,23 +17,23 @@ const WEAPONS: [i64; 3] = [16, 17, 18];
 
 fn slot_name(slot: i64) -> &'static str {
     match slot {
-        1 => "Head",
-        2 => "Neck",
-        3 => "Shoulder",
-        4 => "Shirt",
-        5 => "Chest",
-        6 => "Waist",
-        7 => "Legs",
-        8 => "Feet",
-        9 => "Wrist",
-        10 => "Hands",
-        11 | 12 => "Finger",
-        13 | 14 => "Trinket",
-        15 => "Back",
-        16 => "Main Hand",
-        17 => "Off Hand",
-        18 => "Ranged",
-        19 => "Tabard",
+        1 => tr!("Head"),
+        2 => tr!("Neck"),
+        3 => tr!("Shoulder"),
+        4 => tr!("Shirt"),
+        5 => tr!("Chest"),
+        6 => tr!("Waist"),
+        7 => tr!("Legs"),
+        8 => tr!("Feet"),
+        9 => tr!("Wrist"),
+        10 => tr!("Hands"),
+        11 | 12 => tr!("Finger"),
+        13 | 14 => tr!("Trinket"),
+        15 => tr!("Back"),
+        16 => tr!("Main Hand"),
+        17 => tr!("Off Hand"),
+        18 => tr!("Ranged"),
+        19 => tr!("Tabard"),
         _ => "",
     }
 }
@@ -239,7 +240,7 @@ fn slot(ui: &mut Ui, c: &Character, art: &mut Art, s: i64, item: Option<&Value>,
             if let Some(t) = first {
                 ui.separator();
                 ui.label(
-                    RichText::new(format!("First acquired {}", theme::when(t as f64)))
+                    RichText::new(tr!("First acquired {when}", when = theme::when(t as f64)))
                         .small()
                         .color(MUTED),
                 );
@@ -347,7 +348,7 @@ fn stats(ui: &mut Ui, c: &Character, art: &mut Art) {
         }
         ui.add_space(10.0);
     }
-    label(ui, "Purse");
+    label(ui, tr!("Purse"));
     super::widgets::coins(ui, art, c.money, 17.0);
 }
 
@@ -562,7 +563,9 @@ fn tree(ui: &mut Ui, art: &mut Art, head: TreeHead, nodes: &[&Value], width: f32
         resp.on_hover_ui(|ui| {
             ui.set_max_width(300.0);
             ui.label(RichText::new(name).size(17.0));
-            ui.label(RichText::new(format!("Rank {ranks}/{max}")).color(MUTED));
+            ui.label(
+                RichText::new(tr!("Rank {ranks}/{max}", ranks = ranks, max = max)).color(MUTED),
+            );
             let rank_text = |k: i64| {
                 let v = entry
                     .get("ranks")
@@ -584,7 +587,7 @@ fn tree(ui: &mut Ui, art: &mut Art, head: TreeHead, nodes: &[&Value], width: f32
             if ranks > 0 && ranks < max {
                 if let Some(t) = rank_text(ranks + 1) {
                     ui.add_space(6.0);
-                    ui.label("Next rank:");
+                    ui.label(tr!("Next rank:"));
                     ui.label(RichText::new(t).color(GOLD));
                 }
             }
@@ -625,16 +628,21 @@ fn talents(ui: &mut Ui, c: &Character, st: &mut State, art: &mut Art) {
         })
         .collect();
     ui.horizontal(|ui| {
-        super::heading(ui, "Talents");
+        super::heading(ui, tr!("Talents"));
         ui.label(RichText::new(spent.join("/")).color(MUTED));
         if specs.len() > 1 {
             ui.add_space(16.0);
             for (i, (n, _)) in specs.iter().enumerate() {
-                let label = format!(
-                    "{}{}",
-                    if *n == 1 { "Primary" } else { "Secondary" },
-                    if *n == active { " (active)" } else { "" }
-                );
+                let name = if *n == 1 {
+                    tr!("Primary")
+                } else {
+                    tr!("Secondary")
+                };
+                let label = if *n == active {
+                    tr!("{spec} (active)", spec = name)
+                } else {
+                    name.to_string()
+                };
                 if ui
                     .add(egui::Button::new(label).fill(if st.spec == i {
                         RAISED
@@ -705,7 +713,7 @@ fn legacy(ui: &mut Ui, c: &Character, art: &mut Art) {
         .and_then(|(_, t)| t.get("currency"))
         .and_then(|cur| entries(cur).into_iter().next().map(|(_, v)| v.clone()));
     ui.horizontal(|ui| {
-        super::heading(ui, "Legacy");
+        super::heading(ui, tr!("Legacy"));
         if let Some(cur) = currency {
             let (spent, have) = (
                 cur.get("spent").and_then(Value::as_i64).unwrap_or(0),
@@ -713,9 +721,13 @@ fn legacy(ui: &mut Ui, c: &Character, art: &mut Art) {
             );
             ui.label(
                 RichText::new(if spent + have > 0 {
-                    format!("{spent} of {} points spent", spent + have)
+                    tr!(
+                        "{spent} of {total} points spent",
+                        spent = spent,
+                        total = spent + have
+                    )
                 } else {
-                    "No points earned yet".into()
+                    tr!("No points earned yet").into()
                 })
                 .color(MUTED),
             );
@@ -737,10 +749,9 @@ fn legacy(ui: &mut Ui, c: &Character, art: &mut Art) {
                 .iter()
                 .map(|n| n.get("ranks").and_then(Value::as_i64).unwrap_or(0))
                 .sum();
-            let name = names
-                .get(i)
-                .cloned()
-                .unwrap_or_else(|| ["Professions", "Adventure", "Progression"][i.min(2)].into());
+            let name = names.get(i).cloned().unwrap_or_else(|| {
+                [tr!("Professions"), tr!("Adventure"), tr!("Progression")][i.min(2)].into()
+            });
             tree(
                 ui,
                 art,
