@@ -52,11 +52,6 @@ pub fn render(s: &Storage, key: &str) -> Result<Vec<u8>, String> {
         let id: i64 = id.parse().map_err(|_| format!("bad key {key}"))?;
         return png(texture(s, &id.to_string())?);
     }
-    // char-scourge-m.png: the race's model in its default look.
-    if let Some(rest) = key.strip_prefix("char-").and_then(|k| k.strip_suffix(".png")) {
-        let (race, sex) = rest.rsplit_once('-').ok_or_else(|| format!("bad key {key}"))?;
-        return super::character::render(s, race, sex == "f", 600, 900);
-    }
     let name = key.strip_suffix(".png").unwrap_or(key);
     let name = name.strip_suffix(".jpg").unwrap_or(name);
     let (kind, rest) = name

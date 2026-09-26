@@ -9,12 +9,9 @@ mod blte;
 mod casc;
 mod cdn;
 mod hash;
-mod m2;
-mod character;
 mod render;
 
 pub use casc::{Storage, products};
-pub use character::supported as character_supported;
 pub use render::render;
 
 /// Bounds-checked little- and big-endian reads over game files, so damaged
