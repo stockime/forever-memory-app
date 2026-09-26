@@ -151,14 +151,11 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 (tr!("Deeds for everyone").to_string(), pick(false)),
             ];
             if sections.iter().all(|(_, v)| v.is_empty()) {
-                super::empty(
-                    ui,
-                    if tab == Tab::Earned {
-                        tr!("No deeds yet. They come with time.")
-                    } else {
-                        tr!("Every deed here is done.")
-                    },
-                );
+                if tab == Tab::Earned {
+                    super::empty(ui, art, 134411, tr!("No deeds yet"), tr!("They come with time, and with trouble."));
+                } else {
+                    super::empty(ui, art, 134411, tr!("Every deed here is done"), tr!("Nothing left on this list. For now."));
+                }
             }
             for (title, v) in sections {
                 if v.is_empty() {

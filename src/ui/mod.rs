@@ -205,9 +205,55 @@ fn search(ui: &mut Ui, m: &Model, st: &mut State, page: &mut Page) {
     });
 }
 
-pub fn empty(ui: &mut Ui, text: &str) {
-    ui.add_space(40.0);
-    ui.label(RichText::new(text).color(MUTED).size(17.0));
+/// An empty page, said the way the game would: a faded icon in a brass
+/// frame, a line in the display font and a sentence under it.
+pub fn empty(ui: &mut Ui, art: &mut Art, icon: i64, title: &str, line: &str) {
+    let room = ui.available_height();
+    ui.add_space((room * 0.14).clamp(24.0, 120.0));
+    ui.vertical_centered(|ui| {
+        ui.set_max_width(540.0);
+        let size = 76.0;
+        let (rect, _) = ui.allocate_exact_size(Vec2::splat(size), egui::Sense::hover());
+        let p = ui.painter();
+        for (r, a) in [(1.25, 6), (0.95, 10), (0.7, 14)] {
+            p.circle_filled(rect.center(), size * r, Color32::from_rgba_unmultiplied(0xff, 0xd1, 0x00, a));
+        }
+        let inner = rect.shrink(5.0);
+        p.rect_filled(inner, 8.0, Color32::from_rgb(5, 7, 15));
+        if let Some(t) = art.icon(ui.ctx(), Some(icon)) {
+            p.image(
+                t.id(),
+                inner.shrink(2.0),
+                egui::Rect::from_min_max(egui::pos2(0.07, 0.07), egui::pos2(0.93, 0.93)),
+                Color32::from_gray(140),
+            );
+        }
+        p.rect_stroke(inner, 8.0, Stroke::new(1.5, Color32::from_rgb(0x8a, 0x6d, 0x2c)), egui::StrokeKind::Outside);
+        ui.add_space(18.0);
+        ui.label(RichText::new(title).font(theme::display_font(27.0)).color(INK));
+        ui.add_space(6.0);
+        // A small ornament between the line and the sentence.
+        let (orn, _) = ui.allocate_exact_size(egui::vec2(140.0, 10.0), egui::Sense::hover());
+        let c = orn.center();
+        let brass = Color32::from_rgb(0x8a, 0x6d, 0x2c);
+        ui.painter().line_segment([c - egui::vec2(64.0, 0.0), c - egui::vec2(8.0, 0.0)], Stroke::new(1.0, brass));
+        ui.painter().line_segment([c + egui::vec2(8.0, 0.0), c + egui::vec2(64.0, 0.0)], Stroke::new(1.0, brass));
+        ui.painter().add(egui::Shape::convex_polygon(
+            vec![c - egui::vec2(0.0, 4.0), c + egui::vec2(4.0, 0.0), c + egui::vec2(0.0, 4.0), c - egui::vec2(4.0, 0.0)],
+            GOLD,
+            Stroke::NONE,
+        ));
+        ui.add_space(8.0);
+        ui.label(RichText::new(line).family(theme::italic()).size(17.5).color(MUTED));
+    });
+}
+
+/// A quiet pointer where a choice is still to be made ("pick one on the left").
+pub fn hint(ui: &mut Ui, text: &str) {
+    ui.add_space(48.0);
+    ui.vertical_centered(|ui| {
+        ui.label(RichText::new(text).family(theme::italic()).size(17.0).color(MUTED));
+    });
 }
 
 pub fn heading(ui: &mut Ui, text: &str) {

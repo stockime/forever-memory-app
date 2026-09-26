@@ -21,7 +21,13 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     finish_job(m, st);
     let days = diary::days(c);
     if days.is_empty() {
-        super::empty(ui, tr!("No days played yet."));
+        super::empty(
+            ui,
+            art,
+            super::widgets::icons::SCROLL,
+            tr!("Not a day to remember yet"),
+            &tr!("Once {name} has spent a day in the world, it can be written down here, in their own words.", name = c.name.split(' ').next().unwrap_or(&c.name)),
+        );
         return;
     }
     if !st

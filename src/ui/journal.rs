@@ -35,7 +35,7 @@ const CATEGORIES: [&str; 9] = [
 pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     let c = character(m, st);
     if c.sessions.is_empty() {
-        super::empty(ui, tr!("No sessions recorded yet."));
+        super::empty(ui, art, super::widgets::icons::BOOK, tr!("The road is still unwritten"), tr!("Every time you set out, the journey is written down here, one session at a time."));
         return;
     }
     let sel = st

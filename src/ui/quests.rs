@@ -32,7 +32,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
             let sel = st.quest.and_then(|id| c.quests.iter().find(|q| q.id == id));
             match sel {
                 Some(q) => detail(ui, m, c, q, art),
-                None => super::empty(ui, tr!("Pick a quest on the left.")),
+                None => super::hint(ui, tr!("Pick a quest on the left.")),
             }
         });
     });

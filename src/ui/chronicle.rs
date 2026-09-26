@@ -101,7 +101,10 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     if c.diary.is_empty() {
         super::empty(
             ui,
-            tr!("Nothing to bind yet. The entries written in the Diary become this book."),
+            art,
+            133741,
+            tr!("Nothing to bind yet"),
+            tr!("The entries written in the Diary become the pages of this book."),
         );
         return;
     }

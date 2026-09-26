@@ -55,7 +55,10 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     if all.is_empty() {
         super::empty(
             ui,
-            tr!("No positions recorded yet. The addon samples them while you move."),
+            art,
+            super::widgets::icons::MAP,
+            tr!("No footsteps yet"),
+            &tr!("The addon notes where {name} walks. Wander a little, and the path appears here.", name = c.name.split(' ').next().unwrap_or(&c.name)),
         );
         return;
     }
@@ -134,7 +137,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
         .filter(|s| s.map == zone && range.is_none_or(|(a, b)| s.t >= a && s.t <= b))
         .collect();
     if pts.is_empty() {
-        super::empty(ui, tr!("No movement on this map in that session."));
+        super::hint(ui, tr!("No movement on this map in that session."));
         return;
     }
     let (t0, t1) = (pts[0].t as f64, pts[pts.len() - 1].t as f64);

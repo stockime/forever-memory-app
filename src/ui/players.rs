@@ -37,7 +37,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
 fn fellowship(ui: &mut Ui, m: &Model, c: &crate::data::memory::Character, art: &mut Art) {
     let list = crate::data::bonds::fellowship(m, c);
     if list.is_empty() {
-        super::empty(ui, &tr!("No fellowship yet. Everyone {name} groups with shows up here.", name = first_name(c)));
+        super::empty(ui, art, icons::GROUP, tr!("No fellowship yet"), tr!("Travel in company, and every mile shared is remembered here."));
         return;
     }
     let most = list.iter().map(|x| x.together).max().unwrap_or(1).max(1) as f32;
@@ -87,7 +87,7 @@ fn fellowship(ui: &mut Ui, m: &Model, c: &crate::data::memory::Character, art: &
 fn nemeses(ui: &mut Ui, m: &Model, c: &crate::data::memory::Character, art: &mut Art) {
     let list = crate::data::bonds::nemeses(m, c);
     if list.is_empty() {
-        super::empty(ui, &tr!("No nemesis yet: nothing has killed {name}.", name = first_name(c)));
+        super::empty(ui, art, icons::SKULL, tr!("No nemesis yet"), &tr!("Nothing has killed {name}. The world will try.", name = first_name(c)));
         return;
     }
     egui::ScrollArea::vertical().id_salt("nemeses").auto_shrink(false).show(ui, |ui| {
@@ -142,7 +142,10 @@ fn everyone(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     if m.players.is_empty() {
         super::empty(
             ui,
-            tr!("Nobody met yet. Players show up from the combat and chat logs."),
+            art,
+            icons::GROUP,
+            tr!("Nobody met yet"),
+            tr!("Everyone you fight beside, trade words with or cross blades against will be remembered here."),
         );
         return;
     }
@@ -240,7 +243,7 @@ fn everyone(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 .and_then(|n| m.players.iter().find(|p| &p.name == n))
             {
                 Some(p) => profile(ui, m, p, art),
-                None => super::empty(ui, tr!("Pick someone on the left.")),
+                None => super::hint(ui, tr!("Pick someone on the left.")),
             }
         });
     });

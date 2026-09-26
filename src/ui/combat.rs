@@ -19,9 +19,10 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     if cb.lines == 0 {
         super::empty(
             ui,
-            tr!(
-                "No combat logs yet. They are archived after the game closes, or read live from the game's Logs folder."
-            ),
+            art,
+            widgets::icons::SWORDS,
+            tr!("No battles recorded yet"),
+            tr!("The game keeps a log of every fight. Draw steel, and it will be read here after the session."),
         );
         return;
     }
@@ -213,7 +214,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                                         );
                                     });
                             }
-                            None => super::empty(ui, tr!("No fights yet.")),
+                            None => super::hint(ui, tr!("No fights yet.")),
                         }
                     });
                 },

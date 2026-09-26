@@ -44,8 +44,11 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
         let name = chars.first().map(first).unwrap_or_default();
         super::empty(
             ui,
+            art,
+            133468,
+            tr!("A letter needs two"),
             &tr!(
-                "Letters need two. {name} has nobody on this account to write to yet; once another character has been played with the addon, they can write to each other.",
+                "{name} has nobody on this account to write to yet. Play another character with the addon, and they can start writing to each other.",
                 name = name
             ),
         );
