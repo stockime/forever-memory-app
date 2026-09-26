@@ -17,12 +17,20 @@ const TABS: [(&str, QuestStatus); 3] = [
     ("Abandoned", QuestStatus::Abandoned),
 ];
 
+/// The Quests page's fourth tab: the NPCs talked to.
+pub const CONVERSATIONS: usize = 3;
+
 pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
+    if st.quest_tab == CONVERSATIONS {
+        super::conversations::show(ui, m, st, art);
+        return;
+    }
     let c = character(m, st);
     let list_w = 360.0;
     ui.horizontal_top(|ui| {
         ui.vertical(|ui| {
             ui.set_width(list_w);
+            tabs(ui, m, st);
             list(ui, c, st);
         });
         ui.add_space(16.0);
@@ -46,24 +54,40 @@ fn progress(q: &Quest) -> Option<(i64, i64)> {
     (n > 0).then_some((h, n))
 }
 
-fn list(ui: &mut Ui, c: &Character, st: &mut State) {
+/// The quest log or the conversations; in the log, active, completed and
+/// abandoned quests.
+pub fn tabs(ui: &mut Ui, m: &Model, st: &mut State) {
+    let c = character(m, st);
+    let talks = super::conversations::all(ui, m, st).len();
+    let tab = |ui: &mut Ui, text: String, on: bool, size: f32| {
+        let text = RichText::new(text).size(size).color(if on { GOLD } else { INK });
+        let fill = if on { RAISED } else { Color32::TRANSPARENT };
+        ui.add(egui::Button::new(text).fill(fill)).clicked()
+    };
+    let talking = st.quest_tab == CONVERSATIONS;
+    ui.horizontal(|ui| {
+        if tab(ui, tr!("Quest log").into(), !talking, 17.0) && talking {
+            st.quest_tab = 0;
+        }
+        if tab(ui, format!("{} {talks}", tr!("Conversations")), talking, 17.0) {
+            st.quest_tab = CONVERSATIONS;
+        }
+    });
+    if talking {
+        return;
+    }
     ui.horizontal(|ui| {
         for (i, (name, status)) in TABS.iter().enumerate() {
             let n = c.quests.iter().filter(|q| q.status == *status).count();
-            let text = RichText::new(format!("{} {n}", crate::i18n::t(name)))
-                .color(if st.quest_tab == i { GOLD } else { INK });
-            if ui
-                .add(egui::Button::new(text).fill(if st.quest_tab == i {
-                    RAISED
-                } else {
-                    Color32::TRANSPARENT
-                }))
-                .clicked()
-            {
+            let text = format!("{} {n}", crate::i18n::t(name));
+            if tab(ui, text, st.quest_tab == i, 14.5) {
                 st.quest_tab = i;
             }
         }
     });
+}
+
+fn list(ui: &mut Ui, c: &Character, st: &mut State) {
     ui.add(
         egui::TextEdit::singleline(&mut st.quest_search)
             .hint_text(tr!("Filter by title, zone or text"))

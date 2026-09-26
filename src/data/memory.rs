@@ -175,6 +175,69 @@ pub struct Character {
     pub explored: BTreeMap<i64, Explored>,
     /// Their roleplay profile (Total RP 3 and the like), if they have one.
     pub rp: Option<std::sync::Arc<super::rp::Profile>>,
+    /// Where the character stands with each faction, in the reputation
+    /// frame's order (addon 0.4.0).
+    pub reputation: Vec<Faction>,
+}
+
+/// One faction as the reputation frame shows it. Names are in the game's
+/// language; `standing` runs from 1 (Hated) to 8 (Exalted).
+#[derive(Clone, Debug, Default)]
+pub struct Faction {
+    pub id: i64,
+    pub name: String,
+    /// The header it is listed under ("Horde", "Other"), and a sub-header.
+    pub group: String,
+    pub sub: String,
+    pub standing: i64,
+    pub value: i64,
+    /// The bounds of the current standing.
+    pub min: i64,
+    pub max: i64,
+    pub war: bool,
+    /// When the addon first saw the faction.
+    pub since: i64,
+    /// When each standing was first seen, by standing.
+    pub reached: BTreeMap<i64, i64>,
+}
+
+fn reputation(v: Option<Value>) -> Vec<Faction> {
+    let Some(v) = v else { return vec![] };
+    entries(&v)
+        .into_iter()
+        .filter_map(|(_, f)| {
+            let s = |k: &str| f.get(k).and_then(Value::as_str).unwrap_or("").to_string();
+            let i = |k: &str| {
+                f.get(k)
+                    .and_then(|x| x.as_i64().or_else(|| x.as_f64().map(|v| v as i64)))
+                    .unwrap_or(0)
+            };
+            let name = s("name");
+            if name.is_empty() {
+                return None;
+            }
+            let reached = f
+                .get("reached")
+                .map(entries)
+                .unwrap_or_default()
+                .into_iter()
+                .filter_map(|(k, t)| Some((k, t.as_i64()?)))
+                .collect();
+            Some(Faction {
+                id: i("id"),
+                name,
+                group: s("group"),
+                sub: s("sub"),
+                standing: i("reaction"),
+                value: i("value"),
+                min: i("min"),
+                max: i("max"),
+                war: f.get("war").and_then(Value::as_bool).unwrap_or(false),
+                since: i("since"),
+                reached,
+            })
+        })
+        .collect()
 }
 
 /// What the game reveals of a zone map: its overlay textures, each laid out
@@ -283,8 +346,18 @@ pub struct Memory {
     /// By GUID, the same key the combat log uses.
     pub players: HashMap<String, KnownPlayer>,
     pub items: HashMap<i64, ItemInfo>,
-    /// NPC gossip: (npc name, text, options)
-    pub gossip: Vec<(String, String, Vec<String>)>,
+    pub gossip: Vec<Gossip>,
+}
+
+/// What an NPC said when spoken to, and the options they offered.
+#[derive(Clone, Debug, Default)]
+pub struct Gossip {
+    pub npc: Option<i64>,
+    pub name: String,
+    pub text: String,
+    pub options: Vec<String>,
+    /// The last time it was shown.
+    pub seen: i64,
 }
 
 fn read_json(p: &Path) -> Option<Value> {
@@ -334,17 +407,21 @@ pub fn load(repo: &Path) -> Memory {
                         .collect()
                 })
                 .unwrap_or_default();
-            gossip.push((
-                v.get("name")
+            gossip.push(Gossip {
+                npc: v.get("npc").and_then(Value::as_i64),
+                name: v
+                    .get("name")
                     .and_then(Value::as_str)
                     .unwrap_or("?")
                     .to_string(),
-                v.get("text")
+                text: v
+                    .get("text")
                     .and_then(Value::as_str)
                     .unwrap_or("")
                     .to_string(),
-                opts,
-            ));
+                options: opts,
+                seen: v.get("seen").and_then(Value::as_i64).unwrap_or(0),
+            });
         }
     }
 
@@ -521,6 +598,7 @@ fn load_character(
     c.sessions = sessions(&c.events);
     c.quests = quests(&c, texts, read_json(&dir.join("questlog.json")));
     c.explored = explored(read_json(&dir.join("explored.json")));
+    c.reputation = reputation(read_json(&dir.join("reputation.json")));
     Some(c)
 }
 

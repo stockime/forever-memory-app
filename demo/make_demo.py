@@ -241,6 +241,81 @@ GENERAL = [
     "those murlocs at the north coast respawn so fast",
 ]
 
+# ------------------------------------------------------- people and places
+
+# What quest givers say when spoken to (the gossip frame), and an option the
+# paladin picks before taking the task.
+GREETINGS = {
+    "Undertaker Mordo": ("Another one rises. Stand still, the stitches are fresh. Can you speak? Good. The dead who can speak are the ones who matter now.", ["What happened to me?"]),
+    "Shadow Priest Sarvis": ("The Dark Lady has given us back our wills, but not our souls. What you do with the one will decide what becomes of the other.", []),
+    "Executor Arren": ("Keep your voice down near the graves. Some of them are still listening, and not all of them are friends.", []),
+    "Deathguard Saltain": ("You're the one with the hammer. I heard. Don't pray near me, paladin; it makes my teeth ache.", ["The Light answered me. I did not ask it to."]),
+    "Aramis Hammerhand": ("Hold the shield higher. Higher. The Light doesn't care how you look, but the Scourge does.", ["Why does the Light still answer us?", "I am ready to train."]),
+    "Gordo": ("Gordo carry. Gordo always carry. Master says good Gordo.", []),
+    "Apothecary Johaan": ("Careful where you step. The pumpkins are for the Apothecarium, and some of them are... improved.", ["Improved how?"]),
+    "Coleman Farthing": ("Drink? No, of course not. Old habits. The Gallows' End was full every night, once.", []),
+    "Executor Zygand": ("Brill stands because we make it stand. If you're here to help, read the poster. If you're here to preach, move along.", []),
+    "Breton Samuels": ("Welcome to Bandarion Keep, brother. It was a ruin when we found it. It will be a fortress when we are done with it.", ["Tell me about Bandarion Keep."]),
+    "Danitha Morr": ("Sit. You've walked a long way to stand in a cold room with a dead woman who still believes. So have I.", ["What does the Keep ask of me?"]),
+    "Deathguard Burgess": ("The Crusade's watchtower can see Brill from its top floor. I'd like it to see less.", []),
+    "High Executor Hadrec": ("The Sepulcher holds because every one of us holds. Report.", []),
+    "Dalar Dawnweaver": ("Ah. A paladin. How novel. The Dark Lady tolerates many things, you know. Try to be one of the useful ones.", ["I serve Bandarion Keep."]),
+    "Rane Yorick": ("Ivar keeps his hounds hungry. I'd not go without a plan, or without a friend.", []),
+    "Deathstalker Faerleia": ("Two of mine went to Fenris and the island kept them. I want names, and I want the gnolls to regret it.", []),
+    "Shadow Priestess Malia": ("The worgs are only animals. It's the men who became them you should fear.", []),
+    "Deathguard Morris": ("I stand this post so I don't have to stand anywhere else. Ambermill is close. Too close.", ["You said you had a wife there."]),
+    "Chancellor Amai": ("Orgrimmar sent me to watch the Forsaken. I find I'd rather watch the Ruins. Something down there is still making soldiers.", ["What do you need?"]),
+}
+# Quest givers say something aloud as the paladin takes the task (chat log).
+SAYS = {
+    "Undertaker Mordo": "Rise, and remember who freed you.",
+    "Deathguard Saltain": "Delicious pain. The skeletons won't feel it, more's the pity.",
+    "Aramis Hammerhand": "Not even death can stop the Light.",
+    "Executor Zygand": "Another hero for the poster. We'll see.",
+    "Breton Samuels": "The Keep stands!",
+    "Danitha Morr": "Light keep you, brother. Come back to us.",
+    "Deathguard Morris": "If you find it... just bring it back. Please.",
+}
+# NPCs heard nearby on entering a place (chat log).
+AMBIENT = {
+    "Brill": [("Deathguard Dillinger", "says", "Move along. The living are not welcome here, and you're barely the other kind."),
+              ("Innkeeper Renee", "says", "Rooms upstairs, if you still sleep. Most don't.")],
+    "Bandarion Keep": [("Hilda the Breaker", "yells", "Shields up! A paladin who drops his guard is a paladin who drops!")],
+    "The Sepulcher": [("Deathguard Podrig", "says", "Watch the road north. The worgen came that way last night.")],
+    "Scarlet Watch Post": [("Scarlet Missionary", "yells", "The Light will burn you from this world, abomination!")],
+    "Solliden Farmstead": [("Scarlet Convert", "yells", "There is no redemption for your kind!")],
+    "Ruins of Lordaeron": [("Baron Vardus", "yells", "More flesh for the stitching table!")],
+}
+# What givers say when a task is handed in, for some quests.
+TURNIN = {
+    364: ("Did you do it? Are they quiet?", "Quiet at last. Some of them were farmers, once. So were we."),
+    3901: ("Twelve. I counted them going out, I'll count them coming back.", "Good. The graves are ours again. For tonight."),
+    98389: ("Did you find them? Did they wake?", "You brought them out of the dark and into the Light. I told you it would answer."),
+    381: ("The banners. Did you see the banners?", "They'll raise new ones. We'll pull those down too."),
+    362: ("And the mills?", "The Agamands can rest. Take this; the family would have wanted someone to use it."),
+    398: ("Is that... it is. Maggot Eye's paw.", "Brill owes you. Brill doesn't often owe anyone."),
+    91212: ("You smell of wolf and grave-dirt. Good.", "The Whispering Wood is quieter tonight. Carry this, initiate; you've earned the Keep's weight."),
+    423: ("You came back. Ivar didn't, I take it.", "The farm is ours. The hounds too, if anyone wants them."),
+    91213: ("Did you... was it there?", "It's warmer than I remembered. Thank you. Keep it close, paladin. Remember that someone loved you."),
+    91216: ("Vardus?", "Orgrimmar will hear that a Forsaken paladin held the line in the Ruins. I'll write the report myself."),
+}
+# Reputation: faction ID, header, and where the paladin started with it.
+FACTIONS = {
+    "Undercity": (68, "Horde", 3000),
+    "Orgrimmar": (76, "Horde", 0),
+    "Thunder Bluff": (81, "Horde", 0),
+    "Darkspear Trolls": (530, "Horde", 0),
+    "Scarlet Crusade": (56, "Other", -38800),
+}
+THRESH = [-42000, -6000, -3000, 0, 3000, 9000, 21000, 42000, 43000]
+REP_FROM = 4  # the session the addon learned to keep standings (0.4.0)
+
+def standing(v):
+    return max(i + 1 for i in range(8) if v >= THRESH[i])
+
+def npc_id(name):
+    return 40000 + sum(ord(c) for c in name) % 9000
+
 # ----------------------------------------------------------------- helpers
 
 def ts_combat(t):
@@ -290,6 +365,11 @@ class Sim:
         self.session_end = 0
         self.worn = {}  # slot -> item id
         self.lay_on_hands = -1e9
+        self.rep = {k: FACTIONS[k][2] for k in ("Undercity", "Orgrimmar", "Thunder Bluff", "Darkspear Trolls", "Scarlet Crusade")}
+        self.first_look = {}
+        self.rep_since = None
+        self.reached = {}
+        self.heard = set()
 
     def log(self, e, **row):
         self.n += 1
@@ -305,11 +385,42 @@ class Sim:
     def wait(self, s):
         self.t += s
 
+    def gain_rep(self, name, d):
+        fid, _, _ = FACTIONS[name]
+        before = self.rep[name]
+        self.rep[name] = max(-42000, min(42999, before + d))
+        word = "increased" if d > 0 else "decreased"
+        self.log("msg", kind="rep", text=f"Your reputation with {name} has {word} by {abs(d)}.")
+        if self.session >= REP_FROM:
+            v = self.rep[name]
+            s = standing(v)
+            if s != standing(before):
+                self.reached.setdefault(name, {})[s] = int(self.t) + 1
+            self.n += 1
+            self.rows.append(dict(e="rep", n=self.n, t=int(self.t) + 1, id=fid, faction=name, d=v - before, value=v,
+                                  standing=s, min=THRESH[s - 1], max=THRESH[s]))
+
+    def talk(self, giver, accept=True):
+        npc = npc_id(giver)
+        self.log("gossip", name=giver, npc=npc)
+        if giver in GREETINGS:
+            text, options = GREETINGS[giver]
+            self.gossip[f"{npc}:{text}"] = {"name": giver, "npc": npc, "text": text, "options": options, "seen": int(self.t)}
+            if accept and options and ("pick", giver) not in self.heard:
+                self.heard.add(("pick", giver))
+                self.log("gossip_pick", name=giver, npc=npc, option=options[0])
+        if accept and giver in SAYS and ("say", giver) not in self.heard:
+            self.heard.add(("say", giver))
+            self.chat_line(f"{giver} says: {SAYS[giver]}")
+
     # --- sessions
     def login(self, start):
         self.session += 1
         self.t = start
         self.log("login", level=self.level, money=self.money, xp=self.xp, zone=ZONES[self.pos[0]])
+        if self.session == REP_FROM:
+            self.rep_since = int(self.t) + 2  # the addon's first look, a moment after login
+            self.first_look = {k: standing(v) for k, v in self.rep.items()}
         self.log("zone", map=self.pos[0], sub=self.sub or "", zone=ZONES[self.pos[0]])
         self.wait(20)
         self.log("played", level=int(self.level_played), total=int(self.played))
@@ -399,6 +510,10 @@ class Sim:
         if sub != self.sub:
             self.sub = sub
             self.log("subzone", sub=sub, zone=zone)
+            for who, how, line in AMBIENT.get(sub, []):
+                if (sub, who, self.session) not in self.heard:
+                    self.heard.add((sub, who, self.session))
+                    self.chat_line(f"{who} {how}: {line}")
             if sub not in self.explored:
                 self.explored.add(sub)
                 self.log("explore", map=m or 2870, sub=sub, zone=zone)
@@ -609,6 +724,8 @@ class Sim:
         self.wait(0.3)
         self.cl(f"UNIT_DIED,0000000000000000,nil,0x80000000,0x80000000,{mob},0")
         self.kills += 1
+        if name.startswith("Scarlet"):
+            self.gain_rep("Scarlet Crusade", -5)
         diff = level - self.level
         xp = max(10, int((self.level * 5 + 45) * (1 + 0.05 * diff))) * (3 if boss else 1)
         if party:
@@ -651,7 +768,7 @@ class Sim:
     def quest(self, q):
         qid, title, level, hub, target, objectives, giver, text, objective, reward = q
         self.go(hub)
-        self.log("gossip", name=giver, npc=40000 + qid % 9000)
+        self.talk(giver)
         self.quest_texts[qid] = {"title": title, "text": text, "objective": objective, "level": level, "seen": int(self.t)}
         self.log("quest", act="accept", id=qid, title=title)
         self.questlog[qid] = {"id": qid, "title": title, "level": level, "objectives": [
@@ -697,21 +814,27 @@ class Sim:
             if party:
                 self.leave_group()
         self.go(hub)
-        self.log("gossip", name=giver, npc=40000 + qid % 9000)
+        self.talk(giver, accept=False)
         xp = int(80 * level * (1.3 if level > 10 else 1) + 60)
         money = level * 45 + rng.randint(0, 60)
         choice = None
         if reward:
             choice = link(reward[0], reward[1], reward[3], self.level)
             self.quest_texts[qid]["choices"] = [choice]
-        self.quest_texts[qid]["reward"] = "You have done well. The Dark Lady will hear of it."
-        self.quest_texts[qid]["progress"] = "Is it done?"
+        progress, done = TURNIN.get(qid, ("Is it done?", "You have done well. The Dark Lady will hear of it."))
+        self.quest_texts[qid]["reward"] = done
+        self.quest_texts[qid]["progress"] = progress
         self.log("quest", act="turnin", choice=choice, id=qid, money=money, title=title, xp=xp)
         self.log("quest", act="remove", id=qid)
         self.questlog.pop(qid, None)
         self.done.add(qid)
         self.gain_xp(xp)
         self.gain_money(money, "quest")
+        self.gain_rep("Undercity", level * 25 + 50)
+        if hub == "ruins" or qid in (91215, 91216):
+            self.gain_rep("Orgrimmar", 150)
+        if qid in (381, 374):
+            self.gain_rep("Scarlet Crusade", -250)
         if reward:
             self.gain_item(reward, 1, "quest")
             if reward[0] in WEAR:
@@ -782,7 +905,7 @@ def endgame(s):
                 s.equip((91413, "Scepter of the Abandoned", 133485, 3), 16)
             s.leave_group()
         s.go("bandarion")
-        s.log("gossip", name="Danitha Morr", npc=248851)
+        s.talk("Danitha Morr", accept=False)
         s.wander("bandarion", 300)
     next_session(s)
 
@@ -843,7 +966,7 @@ def simulate():
     s.log("quest", act="accept", id=91217, title="The Wolfsbane Oath")
     s.wander("sepulcher", 900)
     s.go("bandarion")
-    s.log("gossip", name="Danitha Morr", npc=248851)
+    s.talk("Danitha Morr", accept=False)
     s.wander("bandarion", 900)
     s.logout()
     return s
@@ -1206,6 +1329,33 @@ def roleplay(game):
                             "DE": "Soot on her cheeks, a squirrel made of brass on her shoulder, a wrench on every belt loop.",
                             "HI": "Left the Tinkers' Town for the open road after the third explosion that wasn't her fault.",
                             "CU": "Looking for crocolisk leather for a new pair of boots."}}})
+# ------------------------------------------------------------- reputation
+
+def rep_rows(values, since, reached=None, first_look=None):
+    """reputation.json as the addon writes it: the frame's order, headers as groups."""
+    out = []
+    for name, (fid, group, _) in sorted(FACTIONS.items(), key=lambda kv: (kv[1][1] != "Horde", kv[0])):
+        if name not in values:
+            continue
+        v = values[name]
+        s = standing(v)
+        seen = {(first_look or {}).get(name, s): since}
+        seen.update((reached or {}).get(name, {}))
+        out.append({"id": fid, "name": name, "group": group, "reaction": s, "value": v, "min": THRESH[s - 1],
+                    "max": THRESH[s], "since": since, "reached": {str(k): t for k, t in sorted(seen.items())},
+                    **({"war": True} if group == "Other" else {})})
+    return out
+
+ALLIANCE = {"Stormwind": (72, "Alliance"), "Ironforge": (47, "Alliance"), "Gnomeregan Exiles": (54, "Alliance"),
+            "Darnassus": (69, "Alliance")}
+FACTIONS.update({k: (fid, g, 0) for k, (fid, g) in ALLIANCE.items()})
+# Where the alts stand after their few evenings.
+ALT_REP = {
+    "Usain": {"Orgrimmar": 4350, "Darkspear Trolls": 2600, "Thunder Bluff": 1200, "Undercity": 450},
+    "Elijah": {"Darkspear Trolls": 5150, "Orgrimmar": 3650, "Thunder Bluff": 800, "Undercity": 700},
+    "Oprah": {"Ironforge": 5400, "Gnomeregan Exiles": 2900, "Stormwind": 1500, "Darnassus": 900},
+    "Jon": {"Stormwind": 3000, "Ironforge": 0, "Gnomeregan Exiles": 0, "Darnassus": 0},
+}
 
 # ------------------------------------------------------------------ output
 
@@ -1224,6 +1374,7 @@ def main():
     dump(os.path.join(tom, "snapshot.json"), snapshot(template, s))
     dump(os.path.join(tom, "seen.json"), s.seen)
     dump(os.path.join(tom, "questlog.json"), list(s.questlog.values()))
+    dump(os.path.join(tom, "reputation.json"), rep_rows(s.rep, s.rep_since or int(s.t), s.reached, s.first_look))
     by_day = {}
     for r in s.rows:
         by_day.setdefault(datetime.fromtimestamp(r["t"]).strftime("%Y-%m-%d"), []).append(r)
@@ -1279,6 +1430,8 @@ def main():
             rows.append({"e": "logout", "money": money, "n": n, "t": int(start + length), "zone": steps[-1][1].get("zone", a[10])})
         snap = alt_snapshot(template, a, max(r["t"] for rs in by_day.values() for r in rs))
         dump(os.path.join(d, "snapshot.json"), snap)
+        first = min(r["t"] for rs in by_day.values() for r in rs)
+        dump(os.path.join(d, "reputation.json"), rep_rows(ALT_REP[a[0]], first))
         os.makedirs(os.path.join(d, "log"), exist_ok=True)
         for day, rows in by_day.items():
             with open(os.path.join(d, "log", day + ".jsonl"), "w") as f:
@@ -1303,7 +1456,7 @@ def main():
     for g, first, sur, cls, race, level, guild in PARTY + STRANGERS:
         players[g] = {"name": first, "surname": sur, "class": cls, "race": race, "level": level, "guild": guild or None, "seen": int(s.t)}
     dump(os.path.join(arch, "players.json"), {k: {kk: vv for kk, vv in v.items() if vv is not None} for k, v in players.items()})
-    dump(os.path.join(arch, "gossip.json"), {
+    dump(os.path.join(arch, "gossip.json"), {**s.gossip,
         "5680:Light keep you, Forsaken. Few would have believed it.": {"name": "Shari Stilwell", "npc": 5680, "seen": int(s.t),
             "text": "Light keep you, Forsaken. Few would have believed it.", "options": ["I would like to train."]},
         "248850:Again. Your shield arm drops every time you swing.": {"name": "Hilda the Breaker", "npc": 248850, "seen": int(s.t),

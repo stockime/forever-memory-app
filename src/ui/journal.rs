@@ -438,11 +438,11 @@ fn event(
             let name = e.s("name").unwrap_or(tr!("someone"));
             let r = ui.label(RichText::new(tr!("Talked to {name}", name = name)).color(MUTED));
             // What they said, from the gossip cache.
-            if let Some((_, text, options)) = m.memory.gossip.iter().find(|(n, _, _)| n == name) {
+            if let Some(g) = m.memory.gossip.iter().find(|g| g.name == name) {
                 r.on_hover_ui(|ui| {
                     ui.set_max_width(380.0);
-                    ui.label(RichText::new(text).family(theme::italic()).color(INK));
-                    for o in options {
+                    ui.label(RichText::new(&g.text).family(theme::italic()).color(INK));
+                    for o in &g.options {
                         ui.label(RichText::new(format!("› {o}")).color(GOLD));
                     }
                 });

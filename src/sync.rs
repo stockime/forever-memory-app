@@ -10,6 +10,7 @@
 //!   characters/<slug>/log/<date>.jsonl    event rows, one JSON object per line
 //!   characters/<slug>/questlog.json       the quest log with objective progress
 //!   characters/<slug>/explored.json       the explored parts of each zone map
+//!   characters/<slug>/reputation.json     the standing with each faction
 //!   items.json, players.json, gossip.json, quests/<id>.json
 //!   account.json                          account-wide mounts and companions
 //!   logs/manifest.jsonl                   every archived native log
@@ -281,6 +282,9 @@ fn export(dir: &Path, raw: &[u8], vars: &Map<String, Value>) -> Result<Option<St
         }
         if let Some(ex) = c.get("explored").filter(|v| v.is_object()) {
             write_json(&base.join("explored.json"), ex)?;
+        }
+        if let Some(rep) = c.get("reputation").filter(|v| v.is_array()) {
+            write_json(&base.join("reputation.json"), rep)?;
         }
         let mut by_day: BTreeMap<String, Vec<&Map<String, Value>>> = BTreeMap::new();
         let mut counts: HashMap<String, usize> = HashMap::new();

@@ -1,6 +1,7 @@
 pub mod armory;
 pub mod chronicle;
 pub mod combat;
+pub mod conversations;
 pub mod dead;
 pub mod deeds;
 pub mod diary;
