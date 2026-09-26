@@ -15,7 +15,7 @@ pub struct Job {
     pub rx: std::sync::mpsc::Receiver<Result<String, String>>,
 }
 
-pub fn show(ui: &mut Ui, m: &Model, st: &mut State, _art: &mut Art) {
+pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     let c = character(m, st);
     finish_job(m, st);
     let days = diary::days(c);
@@ -100,7 +100,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, _art: &mut Art) {
         ui.vertical(|ui| {
             ui.set_width(w);
             let day = st.diary_day.clone().unwrap_or_default();
-            entry(ui, m, st, &day);
+            entry(ui, m, st, &day, art);
         });
     });
     if st.diary_job.is_some() {
@@ -109,7 +109,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, _art: &mut Art) {
     }
 }
 
-fn entry(ui: &mut Ui, m: &Model, st: &mut State, day: &str) {
+fn entry(ui: &mut Ui, m: &Model, st: &mut State, day: &str, art: &mut Art) {
     let c = character(m, st);
     egui::ScrollArea::vertical().id_salt("entry").auto_shrink(false).show(ui, |ui| {
         ui.set_width(ui.available_width().min(760.0));
@@ -132,7 +132,7 @@ fn entry(ui: &mut Ui, m: &Model, st: &mut State, day: &str) {
         match c.diary.get(day) {
             Some(stored) => {
                 let (prose, stored_facts) = diary::split(stored);
-                render(ui, prose);
+                super::widgets::parchment(ui, art, 720.0, |ui| render(ui, prose));
                 ui.add_space(14.0);
                 ui.horizontal(|ui| {
                     if ui.add_enabled(st.diary_job.is_none(), egui::Button::new("Rewrite")).on_hover_text("Writes this day again from the facts as they are now").clicked() {
@@ -180,8 +180,8 @@ fn render(ui: &mut Ui, md: &str) {
         if let Some(h) = block.strip_prefix('#') {
             ui.label(
                 RichText::new(h.trim_start_matches('#').trim())
-                    .font(theme::display_font(22.0))
-                    .color(GOLD),
+                    .font(theme::display_font(24.0))
+                    .color(super::widgets::INK_RED),
             );
             ui.add_space(4.0);
             continue;
@@ -194,8 +194,8 @@ fn render(ui: &mut Ui, md: &str) {
         ui.label(
             RichText::new(text)
                 .family(theme::italic())
-                .size(18.0)
-                .color(Color32::from_rgb(0xe4, 0xd9, 0xbd)),
+                .size(18.5)
+                .color(super::widgets::INK_BROWN),
         );
         ui.add_space(8.0);
     }

@@ -7,6 +7,7 @@ pub mod map;
 pub mod overview;
 pub mod players;
 pub mod quests;
+pub mod widgets;
 
 use crate::art::Art;
 use crate::data::Model;
@@ -192,11 +193,6 @@ fn search(ui: &mut Ui, m: &Model, st: &mut State, page: &mut Page) {
     });
 }
 
-/// Tables and bar lists lay out on one line per row; names never break.
-pub fn nowrap(ui: &mut Ui) {
-    ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Extend);
-}
-
 pub fn empty(ui: &mut Ui, text: &str) {
     ui.add_space(40.0);
     ui.label(RichText::new(text).color(MUTED).size(17.0));
@@ -210,30 +206,20 @@ pub fn heading(ui: &mut Ui, text: &str) {
     );
 }
 
-/// A smaller section title in the client's label gold.
+/// A section title in the client's label gold, with a fading rule.
 pub fn label(ui: &mut Ui, text: &str) {
-    ui.label(
-        RichText::new(text)
-            .font(theme::display_font(17.0))
-            .color(GOLD),
-    );
-}
-
-/// A number with a caption underneath.
-pub fn figure(ui: &mut Ui, value: &str, caption: &str) {
-    ui.vertical(|ui| {
-        ui.spacing_mut().item_spacing.y = 0.0;
-        ui.label(
-            RichText::new(value)
-                .font(theme::display_font(26.0))
-                .color(INK),
-        );
-        ui.label(RichText::new(caption).small().color(MUTED));
-    });
+    widgets::title(ui, text);
 }
 
 /// Two equal columns; each card inside fills its column, padding included.
 pub fn pair(ui: &mut Ui, left: impl FnOnce(&mut Ui), right: impl FnOnce(&mut Ui)) {
+    // Narrow windows (a tiled half screen) stack the two instead.
+    if ui.available_width() < 900.0 {
+        left(ui);
+        ui.add_space(14.0);
+        right(ui);
+        return;
+    }
     ui.columns(2, |c| {
         c[0].spacing_mut().item_spacing.x = 14.0;
         left(&mut c[0]);
@@ -241,12 +227,34 @@ pub fn pair(ui: &mut Ui, left: impl FnOnce(&mut Ui), right: impl FnOnce(&mut Ui)
     });
 }
 
+/// Two equal columns drawn by one closure (column 0 or 1), for content that
+/// needs the same mutable state on both sides.
+pub fn pair_by(ui: &mut Ui, mut add: impl FnMut(&mut Ui, usize)) {
+    if ui.available_width() < 900.0 {
+        add(ui, 0);
+        ui.add_space(14.0);
+        add(ui, 1);
+        return;
+    }
+    ui.columns(2, |c| {
+        let (a, b) = c.split_at_mut(1);
+        add(&mut a[0], 0);
+        add(&mut b[0], 1);
+    });
+}
+
 pub fn card<R>(ui: &mut Ui, add: impl FnOnce(&mut Ui) -> R) -> R {
     egui::Frame::new()
         .fill(PANEL)
-        .stroke(Stroke::new(1.0, EDGE))
-        .corner_radius(8)
-        .inner_margin(egui::Margin::same(16))
+        .stroke(Stroke::new(1.0, Color32::from_rgb(0x34, 0x3a, 0x62)))
+        .corner_radius(10)
+        .inner_margin(egui::Margin::same(18))
+        .shadow(egui::Shadow {
+            offset: [0, 4],
+            blur: 18,
+            spread: 0,
+            color: Color32::from_black_alpha(90),
+        })
         .show(ui, add)
         .inner
 }

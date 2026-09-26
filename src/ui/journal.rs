@@ -137,13 +137,26 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 .font(theme::display_font(28.0)),
             );
             ui.horizontal_wrapped(|ui| {
-                ui.spacing_mut().item_spacing.x = 36.0;
-                super::figure(ui, &theme::duration(s.seconds() as f64), "played");
-                super::figure(ui, &theme::thousands(s.xp), "experience");
-                super::figure(ui, &theme::money(s.money), "money");
-                super::figure(ui, &s.items.to_string(), "items looted");
-                super::figure(ui, &s.quests.to_string(), "quests done");
-                super::figure(ui, &s.deaths.to_string(), "deaths");
+                use super::widgets::{self, icons};
+                ui.spacing_mut().item_spacing = egui::vec2(30.0, 10.0);
+                widgets::figure_text(
+                    ui,
+                    art,
+                    icons::WATCH,
+                    &theme::duration(s.seconds() as f64),
+                    "played",
+                );
+                widgets::figure_text(
+                    ui,
+                    art,
+                    icons::SPIRIT,
+                    &theme::thousands(s.xp),
+                    "experience",
+                );
+                widgets::figure_money(ui, art, icons::COIN, s.money, "money");
+                widgets::figure_text(ui, art, icons::BAG, &s.items.to_string(), "items looted");
+                widgets::figure_text(ui, art, icons::NOTE, &s.quests.to_string(), "quests done");
+                widgets::figure_text(ui, art, icons::FEIGN, &s.deaths.to_string(), "deaths");
             });
             ui.add_space(8.0);
             chips(ui, &CATEGORIES, &mut st.journal_hide);
@@ -323,15 +336,8 @@ fn event(
         }),
         "money" => {
             let d = e.i("d").unwrap_or(0);
-            line(ui, t, "⛃", |ui| {
-                ui.label(
-                    RichText::new(if d > 0 {
-                        format!("+{}", theme::money(d))
-                    } else {
-                        theme::money(d)
-                    })
-                    .color(if d > 0 { GOLD } else { INK }),
-                );
+            line(ui, t, if d > 0 { "+" } else { "−" }, |ui| {
+                super::widgets::coins(ui, art, d.abs(), 15.0);
                 ui.label(
                     RichText::new(match e.s("ctx") {
                         Some("loot") => "looted",

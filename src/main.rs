@@ -126,17 +126,19 @@ impl Page {
             Page::Players => "Players",
         }
     }
-    fn glyph(self) -> &'static str {
+    /// Game icons (file IDs) for the navigation.
+    fn icon(self) -> i64 {
+        use ui::widgets::icons;
         match self {
-            Page::Overview => "🏠",
-            Page::Armory => "⛨",
-            Page::Journal => "📖",
-            Page::Diary => "📜",
-            Page::Quests => "❗",
-            Page::Map => "⌖",
-            Page::Combat => "⚔",
-            Page::Economy => "⛃",
-            Page::Players => "☺",
+            Page::Overview => icons::SPIRIT,
+            Page::Armory => icons::CHEST,
+            Page::Journal => icons::BOOK,
+            Page::Diary => icons::SCROLL,
+            Page::Quests => icons::NOTE,
+            Page::Map => icons::MAP,
+            Page::Combat => icons::SWORDS,
+            Page::Economy => icons::COIN,
+            Page::Players => icons::GROUP,
         }
     }
 }
@@ -362,20 +364,73 @@ impl eframe::App for App {
             )
             .show(ui, |ui| {
                 ui.spacing_mut().item_spacing.y = 2.0;
+                let class = model
+                    .memory
+                    .characters
+                    .get(self.state.character)
+                    .map(|c| c.class_file.to_lowercase())
+                    .unwrap_or_default();
                 for p in Page::ALL {
                     let selected = self.page == p;
                     // The active page is marked by background and colour only.
-                    let text = egui::RichText::new(format!("{}   {}", p.glyph(), p.label()))
-                        .size(16.5)
-                        .color(if selected { theme::GOLD } else { theme::INK });
-                    let button = egui::Button::new(text)
-                        .fill(if selected {
-                            theme::RAISED
+                    let (rect, resp) = ui.allocate_exact_size(
+                        egui::vec2(ui.available_width(), 38.0),
+                        egui::Sense::click(),
+                    );
+                    let painter = ui.painter();
+                    if selected || resp.hovered() {
+                        painter.rect_filled(
+                            rect,
+                            7.0,
+                            if selected {
+                                theme::RAISED
+                            } else {
+                                egui::Color32::from_rgb(0x12, 0x18, 0x33)
+                            },
+                        );
+                    }
+                    let icon_rect = egui::Rect::from_center_size(
+                        egui::pos2(rect.left() + 20.0, rect.center().y),
+                        egui::vec2(24.0, 24.0),
+                    );
+                    let tex = if p == Page::Overview {
+                        self.art.get(&ctx, &format!("class-{class}.png"))
+                    } else {
+                        self.art.icon(&ctx, Some(p.icon()))
+                    };
+                    if let Some(t) = tex {
+                        let tint = if selected {
+                            egui::Color32::WHITE
                         } else {
-                            egui::Color32::TRANSPARENT
-                        })
-                        .min_size(egui::vec2(ui.available_width(), 36.0));
-                    if ui.add(button).clicked() {
+                            egui::Color32::from_gray(185)
+                        };
+                        painter.image(
+                            t.id(),
+                            icon_rect,
+                            egui::Rect::from_min_max(
+                                egui::pos2(0.07, 0.07),
+                                egui::pos2(0.93, 0.93),
+                            ),
+                            tint,
+                        );
+                        painter.rect_stroke(
+                            icon_rect,
+                            4.0,
+                            egui::Stroke::new(1.0, egui::Color32::from_rgb(0x6b, 0x5a, 0x2e)),
+                            egui::StrokeKind::Outside,
+                        );
+                    }
+                    painter.text(
+                        egui::pos2(rect.left() + 44.0, rect.center().y),
+                        egui::Align2::LEFT_CENTER,
+                        p.label(),
+                        egui::FontId::proportional(16.5),
+                        if selected { theme::GOLD } else { theme::INK },
+                    );
+                    if resp
+                        .on_hover_cursor(egui::CursorIcon::PointingHand)
+                        .clicked()
+                    {
                         self.page = p;
                     }
                 }

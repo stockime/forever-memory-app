@@ -143,11 +143,12 @@ pub fn install(ctx: &egui::Context) {
         let v = &mut s.visuals;
         *v = egui::Visuals::dark();
         v.panel_fill = NIGHT;
-        v.window_fill = PANEL;
+        v.window_fill = Color32::from_rgb(0x07, 0x0b, 0x1c);
         v.extreme_bg_color = Color32::from_rgb(0x07, 0x0a, 0x18);
-        v.faint_bg_color = PANEL;
+        // Table stripes, and tooltips in the game's own navy.
+        v.faint_bg_color = Color32::from_rgb(0x15, 0x1c, 0x3a);
         v.override_text_color = Some(INK);
-        v.window_stroke = egui::Stroke::new(1.0, EDGE);
+        v.window_stroke = egui::Stroke::new(1.0, Color32::from_rgb(0x5d, 0x64, 0x85));
         v.selection.bg_fill = Color32::from_rgb(0x4a, 0x3b, 0x0c);
         v.selection.stroke = egui::Stroke::new(1.0, GOLD);
         v.hyperlink_color = GOLD;

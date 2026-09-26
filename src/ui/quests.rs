@@ -127,12 +127,23 @@ fn list(ui: &mut Ui, c: &Character, st: &mut State) {
                     .show(ui, |ui| {
                         ui.set_width(ui.available_width());
                         ui.horizontal(|ui| {
+                            // Coloured by difficulty, as in the game's quest log.
+                            let diff = q.level.map(|l| super::widgets::quest_color(l, c.level));
                             if let Some(l) = q.level {
-                                ui.label(RichText::new(format!("{l:>2}")).color(MUTED).monospace());
+                                ui.label(
+                                    RichText::new(format!("[{l}]"))
+                                        .color(diff.unwrap_or(MUTED))
+                                        .small(),
+                                );
                             }
+                            let color = if q.status == QuestStatus::Active {
+                                diff.unwrap_or(INK)
+                            } else {
+                                INK
+                            };
                             ui.label(
                                 RichText::new(&q.title)
-                                    .color(if selected { GOLD } else { INK })
+                                    .color(if selected { GOLD } else { color })
                                     .size(16.0),
                             );
                         });
@@ -216,12 +227,13 @@ fn detail(ui: &mut Ui, m: &Model, c: &Character, q: &Quest, art: &mut Art) {
                 ui.set_width(ui.available_width());
                 label(ui, "Rewards");
                 ui.horizontal_wrapped(|ui| {
+                    use super::widgets::{self, icons};
                     ui.spacing_mut().item_spacing.x = 28.0;
                     if q.xp > 0 {
-                        super::figure(ui, &theme::thousands(q.xp), "experience");
+                        widgets::figure_text(ui, art, icons::SPIRIT, &theme::thousands(q.xp), "experience");
                     }
                     if q.money > 0 {
-                        super::figure(ui, &theme::money(q.money), "money");
+                        widgets::figure_money(ui, art, icons::COIN, q.money, "money");
                     }
                 });
                 choices(ui, m, q, art);
@@ -258,15 +270,19 @@ fn detail(ui: &mut Ui, m: &Model, c: &Character, q: &Quest, art: &mut Art) {
             ui.add_space(10.0);
         }
 
-        for (title, text) in [("Description", &q.text), ("Objective", &q.objective), ("Progress", &q.progress), ("Completion", &q.reward)] {
-            if text.trim().is_empty() {
-                continue;
-            }
-            label(ui, title);
-            // Quest text reads like a letter: italic serif-ish body, a comfortable measure.
-            ui.scope(|ui| {
-                ui.set_max_width(680.0);
-                ui.label(RichText::new(text.replace("$B", "\n")).family(theme::italic()).size(17.0).color(Color32::from_rgb(0xe4, 0xd9, 0xbd)));
+        // The quest text on the Classic quest log's parchment, in its ink.
+        let sections: Vec<(&str, &String)> = [("Description", &q.text), ("Objective", &q.objective), ("Progress", &q.progress), ("Completion", &q.reward)]
+            .into_iter()
+            .filter(|(_, t)| !t.trim().is_empty())
+            .collect();
+        if !sections.is_empty() {
+            super::widgets::parchment(ui, art, 720.0, |ui| {
+                for (title, text) in &sections {
+                    ui.label(RichText::new(*title).font(theme::display_font(21.0)).color(super::widgets::INK_RED));
+                    ui.add_space(2.0);
+                    ui.label(RichText::new(text.replace("$B", "\n")).size(17.5).color(super::widgets::INK_BROWN));
+                    ui.add_space(14.0);
+                }
             });
             ui.add_space(12.0);
         }

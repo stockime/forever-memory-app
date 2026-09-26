@@ -1,6 +1,7 @@
 //! Everyone met in the world: search, and a profile per player from the combat
 //! and chat logs.
 
+use super::widgets::{self, Col, Key, icons};
 use super::{card, label};
 use crate::State;
 use crate::art::Art;
@@ -41,6 +42,13 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                             .contains(&needle)
                 })
                 .collect();
+            if !st
+                .player
+                .as_ref()
+                .is_some_and(|n| list.iter().any(|p| &p.name == n))
+            {
+                st.player = list.first().map(|p| p.name.clone());
+            }
             ui.label(
                 RichText::new(format!("{} of {}", list.len(), m.players.len()))
                     .small()
@@ -190,12 +198,27 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
             });
             ui.add_space(10.0);
             card(ui, |ui| {
+                ui.set_width(ui.available_width());
                 ui.horizontal_wrapped(|ui| {
-                    ui.spacing_mut().item_spacing.x = 40.0;
-                    super::figure(ui, &theme::when(p.first_seen), "first seen");
-                    super::figure(ui, &theme::ago(p.last_seen), "last seen");
-                    super::figure(
+                    ui.spacing_mut().item_spacing = egui::vec2(36.0, 12.0);
+                    widgets::figure_text(
                         ui,
+                        art,
+                        icons::MAP,
+                        &theme::day(p.first_seen),
+                        "first seen",
+                    );
+                    widgets::figure_text(
+                        ui,
+                        art,
+                        icons::WATCH,
+                        &theme::ago(p.last_seen),
+                        "last seen",
+                    );
+                    widgets::figure_text(
+                        ui,
+                        art,
+                        icons::BOOK,
                         &p.days.len().to_string(),
                         if p.days.len() == 1 {
                             "day seen"
@@ -203,26 +226,34 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
                             "days seen"
                         },
                     );
-                    super::figure(
+                    widgets::figure_text(
                         ui,
+                        art,
+                        icons::SWORDS,
                         &theme::thousands(p.combat_lines as i64),
-                        "combat log lines",
+                        "times in your combat log",
                     );
-                    super::figure(ui, &p.chat.len().to_string(), "chat lines");
+                    widgets::figure_text(
+                        ui,
+                        art,
+                        icons::SCROLL,
+                        &p.chat.len().to_string(),
+                        "things said",
+                    );
                 });
             });
             ui.add_space(12.0);
             if let Some(s) = seen {
-                super::pair(
-                    ui,
-                    |ui| {
+                super::pair_by(ui, |ui, col| {
+                    if col == 0 {
                         card(ui, |ui| {
+                            ui.set_width(ui.available_width());
                             label(ui, "Between you");
                             let rows = [
-                                ("Damage to you", s.damage_to_me),
-                                ("Your damage to them", s.damage_from_me),
-                                ("Healing you got", s.heal_to_me),
-                                ("Healing you gave", s.heal_from_me),
+                                ("Damage to you", s.damage_to_me, theme::DANGER),
+                                ("Your damage to them", s.damage_from_me, SERIES[0]),
+                                ("Healing you got", s.heal_to_me, SERIES[2]),
+                                ("Healing you gave", s.heal_from_me, SERIES[2]),
                             ];
                             if rows.iter().all(|r| r.1 == 0) {
                                 ui.label(
@@ -232,9 +263,19 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
                                     .color(MUTED),
                                 );
                             }
-                            for (l, v) in rows.into_iter().filter(|r| r.1 > 0) {
+                            let max = rows.iter().map(|r| r.1).max().unwrap_or(1).max(1) as f32;
+                            for (l, v, color) in rows.into_iter().filter(|r| r.1 > 0) {
                                 ui.horizontal(|ui| {
-                                    ui.label(RichText::new(l).color(MUTED));
+                                    ui.add_sized(
+                                        [150.0, 22.0],
+                                        egui::Label::new(RichText::new(l).color(MUTED)),
+                                    );
+                                    widgets::bar(
+                                        ui,
+                                        v as f32 / max,
+                                        color,
+                                        (ui.available_width() - 70.0).max(60.0),
+                                    );
                                     ui.label(RichText::new(theme::thousands(v)).color(INK));
                                 });
                             }
@@ -249,37 +290,52 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
                                 );
                             }
                         });
-                    },
-                    |ui| {
+                    } else {
                         card(ui, |ui| {
+                            ui.set_width(ui.available_width());
                             label(ui, "What they cast");
-                            let mut spells: Vec<_> = s.spells.iter().collect();
-                            spells.sort_by(|a, b| b.1.cmp(a.1));
-                            let max = spells.first().map(|x| *x.1).unwrap_or(1) as f32;
-                            if spells.is_empty() {
+                            let rows: Vec<(String, u32)> = s
+                                .spells
+                                .iter()
+                                .map(|(sp, n)| (m.combat.spell_name(*sp).to_string(), *n))
+                                .collect();
+                            if rows.is_empty() {
                                 ui.label(RichText::new("Nothing seen.").color(MUTED));
+                                return;
                             }
-                            super::nowrap(ui);
-                            egui::Grid::new("their-spells")
-                                .num_columns(2)
-                                .spacing([14.0, 4.0])
-                                .show(ui, |ui| {
-                                    for (sp, n) in spells.into_iter().take(10) {
-                                        ui.label(
-                                            RichText::new(m.combat.spell_name(*sp)).color(INK),
-                                        );
-                                        ui.add(
-                                            egui::ProgressBar::new(*n as f32 / max)
-                                                .desired_width(150.0)
-                                                .fill(SERIES[1])
-                                                .text(n.to_string()),
-                                        );
-                                        ui.end_row();
+                            let max = rows.iter().map(|r| r.1).max().unwrap_or(1) as f32;
+                            let cols = [
+                                Col::grow("Spell"),
+                                Col::fit("", 110.0),
+                                Col::num("Casts", 44.0),
+                            ];
+                            widgets::table(
+                                ui,
+                                "their-spells",
+                                &cols,
+                                &rows,
+                                (2, true),
+                                28.0,
+                                |r, i| {
+                                    if i == 0 {
+                                        Key::Text(r.0.clone())
+                                    } else {
+                                        Key::Num(r.1 as f64)
                                     }
-                                });
+                                },
+                                |ui, r, i| match i {
+                                    0 => {
+                                        ui.label(RichText::new(&r.0).color(INK));
+                                    }
+                                    1 => widgets::bar(ui, r.1 as f32 / max, SERIES[1], 100.0),
+                                    _ => {
+                                        ui.label(RichText::new(r.1.to_string()).color(INK));
+                                    }
+                                },
+                            );
                         });
-                    },
-                );
+                    }
+                });
                 ui.add_space(12.0);
             }
             card(ui, |ui| {

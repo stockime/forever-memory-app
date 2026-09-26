@@ -80,7 +80,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                         ui.set_height(h - 34.0);
                         egui::ScrollArea::vertical()
                             .id_salt("stats")
-                            .show(ui, |ui| stats(ui, c));
+                            .show(ui, |ui| stats(ui, c, art));
                     });
                 });
             });
@@ -291,7 +291,7 @@ fn strip_codes(s: &str) -> String {
     out
 }
 
-fn stats(ui: &mut Ui, c: &Character) {
+fn stats(ui: &mut Ui, c: &Character, art: &mut Art) {
     let mut seen = std::collections::HashSet::new();
     for (_, cat) in c.snapshot.get("stats").map(entries).unwrap_or_default() {
         let name = cat.get("name").and_then(Value::as_str).unwrap_or("");
@@ -348,7 +348,7 @@ fn stats(ui: &mut Ui, c: &Character) {
         ui.add_space(10.0);
     }
     label(ui, "Purse");
-    ui.label(theme::money(c.money));
+    super::widgets::coins(ui, art, c.money, 17.0);
 }
 
 // ---- talent trees ----

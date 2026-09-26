@@ -1,4 +1,4 @@
-use super::{card, character, figure, label, plot};
+use super::{card, character, label, plot};
 use crate::art::Art;
 use crate::data::Model;
 use crate::data::memory::{Character, QuestStatus};
@@ -14,7 +14,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art, page: &mut Pa
         .show(ui, |ui| {
             hero(ui, c, art);
             ui.add_space(14.0);
-            card(ui, |ui| figures(ui, m, c));
+            card(ui, |ui| figures(ui, m, c, art));
             ui.add_space(14.0);
             super::pair(
                 ui,
@@ -130,7 +130,8 @@ fn in_play(c: &Character, t: f64) -> bool {
         .any(|s| t >= s.start as f64 - 60.0 && t <= s.end as f64 + 60.0)
 }
 
-fn figures(ui: &mut Ui, m: &Model, c: &Character) {
+fn figures(ui: &mut Ui, m: &Model, c: &Character, art: &mut Art) {
+    use super::widgets::{self, icons};
     let played = c.total_play() as f64;
     let xp: i64 = c.sessions.iter().map(|s| s.xp).sum();
     let quests = c
@@ -150,23 +151,26 @@ fn figures(ui: &mut Ui, m: &Model, c: &Character) {
         .iter()
         .filter(|p| in_play(c, p.last_seen) || in_play(c, p.first_seen))
         .count();
+    ui.set_width(ui.available_width());
     ui.horizontal_wrapped(|ui| {
-        ui.spacing_mut().item_spacing.x = 44.0;
-        figure(ui, &theme::duration(played), "played");
-        figure(
+        ui.spacing_mut().item_spacing = egui::vec2(34.0, 12.0);
+        widgets::figure_text(ui, art, icons::WATCH, &theme::duration(played), "played");
+        widgets::figure_text(
             ui,
+            art,
+            icons::SPIRIT,
             &if played > 60.0 {
                 theme::thousands((xp as f64 / played * 3600.0) as i64)
             } else {
                 "–".into()
             },
-            "XP per hour",
+            "experience per hour",
         );
-        figure(ui, &theme::money(c.money), "carried");
-        figure(ui, &quests.to_string(), "quests done");
-        figure(ui, &kills.to_string(), "kills");
-        figure(ui, &deaths.to_string(), "deaths");
-        figure(ui, &met.to_string(), "players met");
+        widgets::figure_money(ui, art, icons::COIN, c.money, "carried");
+        widgets::figure_text(ui, art, icons::NOTE, &quests.to_string(), "quests done");
+        widgets::figure_text(ui, art, icons::SKULL, &kills.to_string(), "kills");
+        widgets::figure_text(ui, art, icons::FEIGN, &deaths.to_string(), "deaths");
+        widgets::figure_text(ui, art, icons::GROUP, &met.to_string(), "players met");
     });
 }
 

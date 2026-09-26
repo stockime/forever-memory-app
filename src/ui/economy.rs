@@ -1,14 +1,14 @@
 //! Gold and loot: where money comes from and goes, and every item that
 //! passed through the bags, with when it was first seen.
 
-use super::{card, character, icon, label, plot};
+use super::widgets::{self, Col, Key, icons};
+use super::{card, character, label};
 use crate::State;
 use crate::art::Art;
 use crate::data::Model;
-use crate::data::memory::parse_link;
+use crate::data::memory::{Character, parse_link};
 use crate::theme::{self, INK, MUTED, SERIES};
 use egui::{RichText, Ui};
-use egui_plot::{Bar, BarChart};
 use std::collections::HashMap;
 
 fn source(ctx: Option<&str>) -> &'static str {
@@ -26,7 +26,6 @@ fn source(ctx: Option<&str>) -> &'static str {
 
 pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     let c = character(m, st);
-    // Quest money arrives as a money row during the turn-in; the quest context covers it.
     let mut earned: HashMap<&str, i64> = HashMap::new();
     let mut spent: HashMap<&str, i64> = HashMap::new();
     for e in c.events.iter().filter(|e| e.e == "money") {
@@ -42,41 +41,44 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
         .auto_shrink(false)
         .show(ui, |ui| {
             card(ui, |ui| {
+                ui.set_width(ui.available_width());
                 ui.horizontal_wrapped(|ui| {
-                    ui.spacing_mut().item_spacing.x = 44.0;
-                    super::figure(ui, &theme::money(earned.values().sum()), "earned");
-                    super::figure(ui, &theme::money(spent.values().sum()), "spent");
-                    super::figure(ui, &theme::money(c.money), "carried now");
+                    ui.spacing_mut().item_spacing.x = 40.0;
+                    let total: i64 = earned.values().sum();
+                    widgets::figure_money(ui, art, icons::COIN, total, "earned");
+                    widgets::figure_money(ui, art, icons::BAG, spent.values().sum(), "spent");
+                    widgets::figure_money(ui, art, icons::COINS, c.money, "carried now");
                     let played = c.total_play() as f64;
                     if played > 60.0 {
-                        super::figure(
+                        widgets::figure_money(
                             ui,
-                            &theme::money(
-                                (earned.values().sum::<i64>() as f64 / played * 3600.0) as i64,
-                            ),
+                            art,
+                            icons::WATCH,
+                            (total as f64 / played * 3600.0) as i64,
                             "earned per hour",
                         );
                     }
                 });
             });
             ui.add_space(14.0);
-            super::pair(
-                ui,
-                |ui| money_card(ui, 0, "Where money comes from", &earned),
-                |ui| money_card(ui, 1, "Where it goes", &spent),
-            );
+            super::pair_by(ui, |ui, i| {
+                if i == 0 {
+                    flows(ui, art, "Where money comes from", &earned)
+                } else {
+                    flows(ui, art, "Where it goes", &spent)
+                }
+            });
             ui.add_space(14.0);
             card(ui, |ui| {
                 ui.set_width(ui.available_width());
                 ui.horizontal(|ui| {
                     label(ui, "Everything that went through the bags");
-                    ui.add_space(12.0);
-                    ui.add(
-                        egui::TextEdit::singleline(&mut st.loot_search)
-                            .hint_text("Filter items")
-                            .desired_width(240.0),
-                    );
                 });
+                ui.add(
+                    egui::TextEdit::singleline(&mut st.loot_search)
+                        .hint_text("Filter items")
+                        .desired_width(260.0),
+                );
                 ui.add_space(6.0);
                 items(ui, m, c, &st.loot_search, art);
             });
@@ -84,8 +86,10 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
         });
 }
 
-fn money_card(ui: &mut Ui, k: usize, title: &str, map: &HashMap<&str, i64>) {
+/// Money by source as share bars with coins, largest first.
+fn flows(ui: &mut Ui, art: &mut Art, title: &str, map: &HashMap<&str, i64>) {
     card(ui, |ui| {
+        ui.set_width(ui.available_width());
         label(ui, title);
         let mut rows: Vec<(&str, i64)> = map.iter().map(|(k, v)| (*k, *v)).collect();
         rows.sort_by(|a, b| b.1.cmp(&a.1));
@@ -93,132 +97,137 @@ fn money_card(ui: &mut Ui, k: usize, title: &str, map: &HashMap<&str, i64>) {
             ui.label(RichText::new("Nothing yet.").color(MUTED));
             return;
         }
-        let names: Vec<String> = rows.iter().map(|r| r.0.to_string()).collect();
-        let bars: Vec<Bar> = rows
-            .iter()
-            .enumerate()
-            .map(|(i, (n, v))| {
-                Bar::new(-(i as f64), *v as f64)
-                    .width(0.6)
-                    .name(*n)
-                    .fill(SERIES[0])
-            })
-            .collect();
-        plot(&format!("money-{k}"))
-            .height(60.0 + 34.0 * rows.len() as f32)
-            .y_axis_formatter(move |g, _| {
-                names
-                    .get((-g.value).round() as usize)
-                    .cloned()
-                    .unwrap_or_default()
-            })
-            .y_axis_min_width(110.0)
-            .x_axis_formatter(|g, _| theme::money(g.value as i64))
-            .show(ui, |pu| {
-                pu.bar_chart(BarChart::new("Money", bars).horizontal().element_formatter(
-                    Box::new(|b, _| format!("{}: {}", b.name, theme::money(b.value as i64))),
-                ));
+        let max = rows[0].1.max(1) as f32;
+        let bar_w = (ui.available_width() - 260.0).max(80.0);
+        for (name, v) in rows {
+            ui.horizontal(|ui| {
+                ui.add_sized(
+                    [110.0, 22.0],
+                    egui::Label::new(RichText::new(name).color(INK)),
+                );
+                widgets::bar(ui, v as f32 / max, SERIES[0], bar_w);
+                ui.add_space(8.0);
+                widgets::coins(ui, art, v, 15.0);
             });
+        }
     });
 }
 
 struct Row {
     id: i64,
+    icon: Option<i64>,
     name: String,
     quality: Option<i64>,
     gained: i64,
     lost: i64,
-    sources: HashMap<&'static str, i64>,
+    from: String,
     first: Option<i64>,
 }
 
-fn items(ui: &mut Ui, m: &Model, c: &crate::data::memory::Character, filter: &str, art: &mut Art) {
-    let mut rows: HashMap<i64, Row> = HashMap::new();
+fn items(ui: &mut Ui, m: &Model, c: &Character, filter: &str, art: &mut Art) {
+    let mut by: HashMap<i64, (Row, HashMap<&'static str, i64>)> = HashMap::new();
     for e in c.events.iter().filter(|e| e.e == "item") {
         let Some(l) = e.s("link").and_then(parse_link) else {
             continue;
         };
         let d = e.i("d").unwrap_or(0);
         let info = m.memory.items.get(&l.id);
-        let r = rows.entry(l.id).or_insert_with(|| Row {
-            id: l.id,
-            name: if l.name.is_empty() {
+        let (r, src) = by.entry(l.id).or_insert_with(|| {
+            let name = if l.name.is_empty() {
                 info.map(|i| i.name.clone()).unwrap_or_default()
             } else {
                 l.name.clone()
-            },
-            quality: l.quality.or(info.and_then(|i| i.quality)),
-            gained: 0,
-            lost: 0,
-            sources: HashMap::new(),
-            first: c.seen.get(e.s("key").unwrap_or("")).copied(),
+            };
+            (
+                Row {
+                    id: l.id,
+                    icon: info.and_then(|i| i.icon),
+                    name: if name.is_empty() {
+                        format!("Item {}", l.id)
+                    } else {
+                        name
+                    },
+                    quality: l.quality.or(info.and_then(|i| i.quality)),
+                    gained: 0,
+                    lost: 0,
+                    from: String::new(),
+                    first: c.seen.get(e.s("key").unwrap_or("")).copied(),
+                },
+                HashMap::new(),
+            )
         });
         if d > 0 {
             r.gained += d;
-            *r.sources.entry(source(e.s("ctx"))).or_default() += d;
+            *src.entry(source(e.s("ctx"))).or_default() += d;
         } else {
             r.lost -= d;
         }
     }
     let needle = filter.to_lowercase();
-    let mut list: Vec<Row> = rows
+    let rows: Vec<Row> = by
         .into_values()
+        .map(|(mut r, src)| {
+            let mut s: Vec<_> = src.into_iter().collect();
+            s.sort_by(|a, b| b.1.cmp(&a.1));
+            r.from = s.iter().map(|(k, _)| *k).collect::<Vec<_>>().join(", ");
+            r
+        })
         .filter(|r| needle.is_empty() || r.name.to_lowercase().contains(&needle))
         .collect();
-    list.sort_by(|a, b| b.gained.cmp(&a.gained).then(a.name.cmp(&b.name)));
-    if list.is_empty() {
+    if rows.is_empty() {
         ui.label(RichText::new("No items match.").color(MUTED));
         return;
     }
-    super::nowrap(ui);
-    egui::Grid::new("items")
-        .num_columns(5)
-        .striped(false)
-        .spacing([20.0, 6.0])
-        .show(ui, |ui| {
-            for h in ["Item", "Gained", "Gone", "From", "First seen"] {
-                ui.label(RichText::new(h).small().color(MUTED));
-            }
-            ui.end_row();
-            for r in list {
-                ui.horizontal(|ui| {
-                    match m.memory.items.get(&r.id).and_then(|i| i.icon) {
-                        Some(i) => {
-                            icon(ui, art, Some(i), theme::quality(r.quality), 26.0);
-                        }
-                        None => {
-                            ui.add_space(34.0);
-                        }
+    let cols = [
+        Col::grow("Item"),
+        Col::num("Gained", 60.0),
+        Col::num("Gone", 50.0),
+        Col::fit("From", 110.0),
+        Col::fit("First seen", 130.0),
+    ];
+    widgets::table(
+        ui,
+        "bags",
+        &cols,
+        &rows,
+        (1, true),
+        34.0,
+        |r, i| match i {
+            0 => Key::Text(r.name.clone()),
+            1 => Key::Num(r.gained as f64),
+            2 => Key::Num(r.lost as f64),
+            3 => Key::Text(r.from.clone()),
+            _ => Key::Num(r.first.unwrap_or(0) as f64),
+        },
+        |ui, r, i| match i {
+            0 => {
+                match r.icon {
+                    Some(icon) => {
+                        super::icon(ui, art, Some(icon), theme::quality(r.quality), 26.0);
                     }
-                    let name = if r.name.is_empty() {
-                        format!("Item {}", r.id)
-                    } else {
-                        r.name.clone()
-                    };
-                    ui.label(RichText::new(name).color(theme::quality(r.quality)));
-                });
+                    None => ui.add_space(30.0),
+                }
+                ui.label(RichText::new(&r.name).color(theme::quality(r.quality)));
+                let _ = r.id;
+            }
+            1 => {
                 ui.label(RichText::new(r.gained.to_string()).color(INK));
-                ui.label(
-                    RichText::new(if r.lost > 0 {
-                        r.lost.to_string()
-                    } else {
-                        String::new()
-                    })
-                    .color(MUTED),
-                );
-                let mut src: Vec<_> = r.sources.into_iter().collect();
-                src.sort_by(|a, b| b.1.cmp(&a.1));
-                ui.label(
-                    RichText::new(src.iter().map(|(s, _)| *s).collect::<Vec<_>>().join(", "))
-                        .small()
-                        .color(MUTED),
-                );
+            }
+            2 => {
+                if r.lost > 0 {
+                    ui.label(RichText::new(r.lost.to_string()).color(MUTED));
+                }
+            }
+            3 => {
+                ui.label(RichText::new(&r.from).small().color(MUTED));
+            }
+            _ => {
                 ui.label(
                     RichText::new(r.first.map(|t| theme::when(t as f64)).unwrap_or_default())
                         .small()
                         .color(MUTED),
                 );
-                ui.end_row();
             }
-        });
+        },
+    );
 }

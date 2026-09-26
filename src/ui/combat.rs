@@ -1,6 +1,7 @@
 //! Combat from the native combat logs: fights, abilities, kills, and the ten
 //! seconds before every death.
 
+use super::widgets::{self, Col, Key, icons};
 use super::{card, character, label, plot};
 use crate::State;
 use crate::art::Art;
@@ -11,7 +12,7 @@ use egui::{RichText, Ui};
 use egui_plot::{Bar, BarChart, Line, PlotPoints};
 use std::collections::HashMap;
 
-pub fn show(ui: &mut Ui, m: &Model, st: &mut State, _art: &mut Art) {
+pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     let c = character(m, st);
     let cb = &m.combat;
     if cb.lines == 0 {
@@ -22,10 +23,10 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, _art: &mut Art) {
         return;
     }
     let in_char = |t: f64| {
-        c.sessions
-            .iter()
-            .any(|s| t >= s.start as f64 - 60.0 && t <= s.end as f64 + 60.0)
-            || c.sessions.is_empty()
+        c.sessions.is_empty()
+            || c.sessions
+                .iter()
+                .any(|s| t >= s.start as f64 - 60.0 && t <= s.end as f64 + 60.0)
     };
     let dealt: Vec<&Hit> = cb.dealt.iter().filter(|h| in_char(h.t)).collect();
     let taken: Vec<&Hit> = cb.taken.iter().filter(|h| in_char(h.t)).collect();
@@ -43,30 +44,48 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, _art: &mut Art) {
         .auto_shrink(false)
         .show(ui, |ui| {
             card(ui, |ui| {
+                ui.set_width(ui.available_width());
                 ui.horizontal_wrapped(|ui| {
-                    ui.spacing_mut().item_spacing.x = 44.0;
+                    ui.spacing_mut().item_spacing = egui::vec2(36.0, 12.0);
                     let total: i64 = dealt.iter().map(|h| h.amount).sum();
                     let fight_time: f64 =
                         fights.iter().map(|(_, f)| (f.end - f.start).max(1.5)).sum();
-                    super::figure(ui, &theme::thousands(total), "damage done");
-                    super::figure(
+                    widgets::figure_text(
                         ui,
-                        &format!("{:.1}", total as f64 / fight_time.max(1.0)),
-                        "damage per second in fights",
+                        art,
+                        icons::SWORDS,
+                        &theme::thousands(total),
+                        "damage done",
                     );
-                    super::figure(
+                    widgets::figure_text(
                         ui,
+                        art,
+                        icons::SWORDS,
+                        &format!("{:.1}", total as f64 / fight_time.max(1.0)),
+                        "per second in a fight",
+                    );
+                    widgets::figure_text(
+                        ui,
+                        art,
+                        icons::HEAL,
                         &theme::thousands(healed.iter().map(|h| h.amount - h.over).sum()),
                         "healing done",
                     );
-                    super::figure(
+                    widgets::figure_text(
                         ui,
+                        art,
+                        icons::FEIGN,
                         &theme::thousands(taken.iter().map(|h| h.amount).sum()),
                         "damage taken",
                     );
-                    super::figure(ui, &kills.len().to_string(), "kills");
-                    super::figure(ui, &deaths.len().to_string(), "deaths");
-                    super::figure(ui, &fights.len().to_string(), "fights");
+                    widgets::figure_text(ui, art, icons::SKULL, &kills.len().to_string(), "kills");
+                    widgets::figure_text(
+                        ui,
+                        art,
+                        icons::FEIGN,
+                        &deaths.len().to_string(),
+                        "deaths",
+                    );
                 });
             });
             ui.add_space(14.0);
@@ -87,8 +106,8 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, _art: &mut Art) {
                         let bars: Vec<Bar> = fights
                             .iter()
                             .enumerate()
-                            .map(|(k, (_, f))| {
-                                let fill = if fight_sel.get() == Some(fights[k].0) {
+                            .map(|(k, (i, f))| {
+                                let fill = if fight_sel.get() == Some(*i) {
                                     SERIES[1]
                                 } else {
                                     SERIES[0]
@@ -177,12 +196,18 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, _art: &mut Art) {
             st.fight = fight_sel.get();
             ui.add_space(14.0);
 
-            super::pair(
-                ui,
-                |ui| {
+            super::pair_by(ui, |ui, col| {
+                if col == 0 {
                     card(ui, |ui| {
+                        ui.set_width(ui.available_width());
                         label(ui, "Abilities");
-                        ui.label(RichText::new("Your damage by ability").small().color(MUTED));
+                        struct A {
+                            name: String,
+                            dmg: i64,
+                            hits: u32,
+                            crits: u32,
+                            share: f32,
+                        }
                         let mut by: HashMap<u32, (i64, u32, u32)> = HashMap::new();
                         for h in &dealt {
                             let e = by.entry(h.spell).or_default();
@@ -191,61 +216,110 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, _art: &mut Art) {
                             e.2 += h.crit as u32;
                         }
                         let total: i64 = by.values().map(|v| v.0).sum::<i64>().max(1);
-                        let mut rows: Vec<_> = by.into_iter().collect();
-                        rows.sort_by(|a, b| b.1.0.cmp(&a.1.0));
-                        super::nowrap(ui);
-                        egui::Grid::new("abilities")
-                            .num_columns(4)
-                            .spacing([18.0, 6.0])
-                            .show(ui, |ui| {
-                                for (spell, (dmg, n, crits)) in rows.iter().take(12) {
-                                    ui.label(RichText::new(cb.spell_name(*spell)).color(INK));
-                                    ui.add(
-                                        egui::ProgressBar::new(*dmg as f32 / total as f32)
-                                            .desired_width(160.0)
-                                            .fill(SERIES[0])
-                                            .text(format!(
-                                                "{:.0}%",
-                                                *dmg as f64 / total as f64 * 100.0
-                                            )),
+                        let rows: Vec<A> = by
+                            .into_iter()
+                            .map(|(s, (dmg, hits, crits))| A {
+                                name: cb.spell_name(s).to_string(),
+                                dmg,
+                                hits,
+                                crits,
+                                share: dmg as f32 / total as f32,
+                            })
+                            .collect();
+                        let cols = [
+                            Col::grow("Ability"),
+                            Col::fit("Share", 100.0),
+                            Col::num("Damage", 56.0),
+                            Col::num("Hits", 84.0),
+                        ];
+                        widgets::table(
+                            ui,
+                            "abilities",
+                            &cols,
+                            &rows,
+                            (2, true),
+                            28.0,
+                            |r, i| match i {
+                                0 => Key::Text(r.name.clone()),
+                                1 | 2 => Key::Num(r.dmg as f64),
+                                _ => Key::Num(r.hits as f64),
+                            },
+                            |ui, r, i| match i {
+                                0 => {
+                                    ui.label(RichText::new(&r.name).color(INK));
+                                }
+                                1 => {
+                                    widgets::bar(ui, r.share, SERIES[0], 60.0);
+                                    ui.label(
+                                        RichText::new(format!("{:.0}%", r.share * 100.0))
+                                            .small()
+                                            .color(MUTED),
                                     );
-                                    ui.label(RichText::new(theme::thousands(*dmg)).color(INK));
+                                }
+                                2 => {
+                                    ui.label(RichText::new(theme::thousands(r.dmg)).color(INK));
+                                }
+                                _ => {
                                     ui.label(
                                         RichText::new(format!(
-                                            "{n} hits, {:.0}% crit",
-                                            *crits as f64 / (*n).max(1) as f64 * 100.0
+                                            "{} ({:.0}% crit)",
+                                            r.hits,
+                                            r.crits as f64 / r.hits.max(1) as f64 * 100.0
                                         ))
                                         .small()
                                         .color(MUTED),
                                     );
-                                    ui.end_row();
                                 }
-                            });
+                            },
+                        );
                     });
-                },
-                |ui| {
+                } else {
                     card(ui, |ui| {
+                        ui.set_width(ui.available_width());
                         label(ui, "Kills");
                         let mut by: HashMap<&str, usize> = HashMap::new();
                         for (_, u) in &kills {
                             *by.entry(cb.unit_name(*u)).or_default() += 1;
                         }
-                        let mut rows: Vec<_> = by.into_iter().collect();
-                        rows.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(b.0)));
-                        super::nowrap(ui);
-                        egui::Grid::new("kills")
-                            .num_columns(2)
-                            .spacing([18.0, 4.0])
-                            .show(ui, |ui| {
-                                for (name, n) in rows.iter().take(16) {
-                                    ui.label(RichText::new(*name).color(INK));
-                                    ui.label(RichText::new(format!("{n}×")).color(MUTED));
-                                    ui.end_row();
+                        let max = by.values().copied().max().unwrap_or(1) as f32;
+                        let rows: Vec<(&str, usize)> = by.into_iter().collect();
+                        let cols = [
+                            Col::grow("Creature"),
+                            Col::fit("", 110.0),
+                            Col::num("Kills", 40.0),
+                        ];
+                        widgets::table(
+                            ui,
+                            "kills",
+                            &cols,
+                            &rows,
+                            (2, true),
+                            28.0,
+                            |r, i| {
+                                if i == 0 {
+                                    Key::Text(r.0.to_string())
+                                } else {
+                                    Key::Num(r.1 as f64)
                                 }
-                            });
+                            },
+                            |ui, r, i| match i {
+                                0 => {
+                                    ui.label(RichText::new(r.0).color(INK));
+                                }
+                                1 => widgets::bar(
+                                    ui,
+                                    r.1 as f32 / max,
+                                    theme::DANGER.gamma_multiply(0.8),
+                                    100.0,
+                                ),
+                                _ => {
+                                    ui.label(RichText::new(r.1.to_string()).color(INK));
+                                }
+                            },
+                        );
                     });
-                },
-            );
+                }
+            });
             ui.add_space(14.0);
 
             card(ui, |ui| {
@@ -265,23 +339,41 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, _art: &mut Art) {
                             .small()
                             .color(MUTED),
                     );
-                    let before: Vec<&&Hit> = taken
+                    let before: Vec<&Hit> = taken
                         .iter()
+                        .copied()
                         .filter(|h| h.t <= *t && h.t > t - 10.0)
                         .collect();
-                    super::nowrap(ui);
-                    egui::Grid::new(("recap", (*t * 10.0) as i64))
-                        .num_columns(4)
-                        .spacing([16.0, 2.0])
-                        .show(ui, |ui| {
-                            for h in before {
-                                ui.label(
-                                    RichText::new(format!("−{:.1}s", t - h.t))
-                                        .monospace()
-                                        .color(MUTED),
-                                );
+                    let cols = [
+                        Col::num("Before", 60.0),
+                        Col::grow("From"),
+                        Col::fit("With", 140.0),
+                        Col::num("Damage", 70.0),
+                    ];
+                    widgets::table(
+                        ui,
+                        &format!("recap-{}", (*t * 10.0) as i64),
+                        &cols,
+                        &before,
+                        (0, true),
+                        24.0,
+                        |h, i| match i {
+                            0 => Key::Num(t - h.t),
+                            1 => Key::Text(cb.unit_name(h.src).to_string()),
+                            2 => Key::Text(cb.spell_name(h.spell).to_string()),
+                            _ => Key::Num(h.amount as f64),
+                        },
+                        |ui, h, i| match i {
+                            0 => {
+                                ui.label(RichText::new(format!("−{:.1}s", t - h.t)).color(MUTED));
+                            }
+                            1 => {
                                 ui.label(RichText::new(cb.unit_name(h.src)).color(INK));
+                            }
+                            2 => {
                                 ui.label(RichText::new(cb.spell_name(h.spell)).color(MUTED));
+                            }
+                            _ => {
                                 ui.label(
                                     RichText::new(format!(
                                         "{}{}",
@@ -290,10 +382,10 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, _art: &mut Art) {
                                     ))
                                     .color(DANGER),
                                 );
-                                ui.end_row();
                             }
-                        });
-                    ui.add_space(8.0);
+                        },
+                    );
+                    ui.add_space(10.0);
                 }
             });
             ui.add_space(24.0);
