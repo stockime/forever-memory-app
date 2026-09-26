@@ -3,7 +3,7 @@
 A local desktop app (Rust, egui) for struci's World of Warcraft: Forever
 characters: the armory, plus everything the memory recorder keeps.
 
-[![Forever Memory: watch the 25-second video](docs/forever-memory.jpg)](docs/forever-memory.mp4)
+https://github.com/user-attachments/assets/f553f177-e1f1-46bd-84ca-62c66443479c
 
 - **Overview**: leveling curve and gold against hours played, time per zone,
   XP per hour per session, open quests nearest to done.
