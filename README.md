@@ -1,9 +1,38 @@
 # Forever Memory
 
-A local desktop app (Rust, egui) for struci's World of Warcraft: Forever
-characters: the armory, plus everything the memory recorder keeps.
+Everything your World of Warcraft: Forever characters live through, kept for
+good: an armory, every step on the real map, fights, quests, the people you
+met, and a diary your character writes (and reads aloud) themselves.
+
+<p>
+  <a href="https://github.com/stockime/forever-memory-app/releases/latest/download/forever-memory-windows-x86_64.zip"><img alt="Download for Windows" src="https://img.shields.io/badge/Download-Windows-ffd100?style=for-the-badge&logo=windows&logoColor=white&labelColor=0a0e1f"></a>
+  <a href="https://github.com/stockime/forever-memory-app/releases/latest/download/forever-memory-macos.zip"><img alt="Download for macOS" src="https://img.shields.io/badge/Download-macOS-ffd100?style=for-the-badge&logo=apple&logoColor=white&labelColor=0a0e1f"></a>
+  <a href="https://github.com/stockime/forever-memory-app/releases/latest/download/forever-memory-linux-x86_64.tar.gz"><img alt="Download for Linux" src="https://img.shields.io/badge/Download-Linux-ffd100?style=for-the-badge&logo=linux&logoColor=white&labelColor=0a0e1f"></a>
+  <a href="https://github.com/stockime/forever-memory-app/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/stockime/forever-memory-app?style=for-the-badge&label=latest&color=1e2a55&labelColor=0a0e1f"></a>
+</p>
 
 https://github.com/user-attachments/assets/f59303f1-bf69-4616-9714-345f404d5e93
+
+## Getting started
+
+1. Download the app for your system above and start it.
+   - **macOS**: the app isn't notarized; the first time, right-click it and
+     choose Open.
+   - **Linux**: unpack it and run `forever-memory`; the `.desktop` file next
+     to it adds it to your menu.
+2. The app finds World of Warcraft on its own (Blizzard's usual folders on
+   Windows and macOS; Wine, Lutris, Bottles and Steam prefixes on Linux). If
+   it doesn't, pick the folder in Settings.
+3. Click **Install the addon**. It is called *armory*, changes nothing in the
+   game and sends nothing anywhere: it records into the game's saved
+   variables. (Or install [`armory-addon.zip`](https://github.com/stockime/forever-memory-app/releases/latest/download/armory-addon.zip) by hand.)
+4. Play. Whenever the game saves (on `/reload` and logout), the app records
+   it into your archive and shows your characters.
+
+The app speaks English, Deutsch, Français, Español, Português (Brasil) and
+简体中文, following the game's language unless you pick one.
+
+## What's in it
 
 - **Overview**: leveling curve and gold against hours played, time per zone,
   XP per hour per session, open quests nearest to done.
@@ -15,23 +44,19 @@ https://github.com/user-attachments/assets/f59303f1-bf69-4616-9714-345f404d5e93
   deaths, NPCs and the chat going on at the time, with filters.
 - **Diary**: a personality note per character, and for each day played an
   entry the character writes themselves: a first-person look back on the day's
-  journey, from inside the world, written by Claude Code (`claude -p`, the CLI
-  behind `cx`, with its existing login; no API key) from that day's recorded
-  facts. The facts sit under each entry so every sentence can be checked;
-  entries and notes are committed to the memory archive
-  (`characters/<name>/diary/`, `personality.md`). Other players' chat is never
-  sent. `forever-memory diary <character> [YYYY-MM-DD]` writes one from the
-  command line.
+  journey, from inside the world, written from that day's recorded facts by
+  the agent CLI you already use (Claude Code, Codex, Gemini CLI or any
+  command) or any OpenAI-compatible API, hosted or local (Ollama, LM Studio).
+  The facts sit under each entry so every sentence can be checked. Other
+  players' chat is never sent. `forever-memory diary <character> [YYYY-MM-DD]`
+  writes one from the command line.
 - **Narration**: each diary entry can be read aloud by ElevenLabs. Every
   character gets one voice, designed once in the style of their race and
   gender in the game (a raspy Forsaken, a Scottish dwarf, …; designed from a
   description, not cloned from the game's actors), shaped by the personality
   note, with one seed per race and gender; its id is kept in the
-  archive (`characters/<name>/voice.json`), so every entry sounds like the
-  same person. Spoken entries are cached in
-  `~/.local/share/forever-memory/audio/` and only regenerated when the text
-  changes. Needs `ELEVENLABS_API_KEY` or a key pasted in the app (kept in
-  `~/.config/forever-memory/elevenlabs-api-key`, mode 600).
+  archive, so every entry sounds like the same person, in every language
+  (each language gets its own voice). Optional; needs an ElevenLabs API key.
 - **Quests**: active (with objective progress), completed and abandoned, with
   the full quest text, rewards offered and chosen, time taken, and how the
   objectives progressed.
@@ -43,13 +68,39 @@ https://github.com/user-attachments/assets/f59303f1-bf69-4616-9714-345f404d5e93
   through the bags.
 - **Players**: everyone met, searchable, with full names, class, race, level
   and guild once the addon has seen them up close (else a class guess from
-  their spells),
-  what passed between you, what they cast and what they said.
+  their spells), what passed between you, what they cast and what they said.
 
 On start the app shows a loading screen (Forever's own continent art, a
 progress bar, tips about your characters) until the logs are read and all game
-art is painted, so pages never fill in piece by piece. Ctrl+K searches quests, players and items from anywhere; F5 reloads. The app
-also reloads on its own when armory-sync commits a save.
+art is painted, so pages never fill in piece by piece. Ctrl+K searches
+quests, players and items from anywhere; F5 reloads. The app also reloads on
+its own whenever the game saves.
+
+## Settings
+
+Everything works without setup; Settings lets you change:
+
+- **World of Warcraft**: the install and game client folder, and the addon
+  (installed and kept up to date from the app).
+- **Language**: automatic (the game's, then the system's) or one of six.
+  Diary entries are written and read aloud in it.
+- **Who writes the diary**: automatic (the first agent CLI or API found), an
+  agent CLI (Claude Code, Codex, Gemini CLI, or any command that reads a
+  prompt on stdin), or an OpenAI-compatible API (OpenAI, OpenRouter, DeepSeek,
+  Mistral, Ollama, LM Studio, … found from `OPENAI_API_KEY` and friends or
+  running locally).
+- **Reading the diary aloud**: your ElevenLabs API key.
+- **The archive**: where recordings are kept (with full git history when git
+  is installed), and whether finished chat and combat logs are moved out of
+  the game folder between sessions.
+- **Backup** (optional): S3-compatible object storage (AWS, Hetzner,
+  Backblaze B2, Cloudflare R2, MinIO, …). The archive goes up as incremental
+  git bundles, the native logs compressed. With object lock on the bucket the
+  backup can't be altered.
+
+Settings live in `settings.json` in your config folder
+(`~/.config/forever-memory` on Linux, `~/Library/Application Support/forever-memory`
+on macOS, `%APPDATA%\forever-memory` on Windows), readable only by you.
 
 ## Screenshots
 
@@ -83,21 +134,33 @@ also reloads on its own when armory-sync commits a save.
 
 ## Data
 
-| What | Where (override with) |
+| What | Where |
 |---|---|
-| Memory archive | `~/Work/personal/forever-memory` (`FM_REPO`) |
-| Archived native logs | `~/.local/share/forever-memory/logs` (`FM_RAW_LOGS`) |
-| Live native logs | the beta client's `Logs/` folder (`FM_LIVE_LOGS`) |
-| Game art cache | `~/.cache/forever-memory/art` (`FM_ART`) |
-| Art renderer | `~/.local/bin/wowdata` from stru.ci/wow (`FM_WOWDATA`) |
+| Archive | `forever-memory/archive` in your data folder, or the one you pick |
+| Archived native logs | `forever-memory/logs` in your data folder, or the one you pick |
+| Live native logs | the game client's `Logs/` folder |
+| Game art | rendered from your game install on first use, cached in `forever-memory/art` in your cache folder |
+| Narration | `forever-memory/audio` in your data folder |
 
-Missing art (icons, banners, talent backgrounds, world maps) is rendered from
-the local game install by `wowdata art` in the background and cached.
+The archive holds, per character, the armory snapshot, every recorded event
+by day (`log/<date>.jsonl`), the quest log, when each item was first seen,
+the diary and the voice; plus the item catalogue, quest texts, the players
+met and a manifest of every native log. No game art is stored or shipped:
+it is read from your own install.
 
 ## Build
 
+    git clone --recursive https://github.com/stockime/forever-memory-app
     cargo build --release
-    install -Dm755 target/release/forever-memory ~/.local/bin/forever-memory
 
+The addon lives in its own repository,
+[forever-memory-addon](https://github.com/stockime/forever-memory-addon),
+included here as a submodule and built into the app.
+
+Command line: `forever-memory record` archives the current saves once;
+`forever-memory diary <character> [YYYY-MM-DD]` writes a diary entry;
 `FM_SHOT=out.png FM_PAGE=quests forever-memory` saves a screenshot of a page
-and quits (used to check layouts).
+and quits (used to check layouts), `FM_LANG=de` picks a language for it.
+
+Releases are built by GitHub Actions for Linux, macOS (universal) and
+Windows when a `v*` tag is pushed.

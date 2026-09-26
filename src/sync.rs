@@ -296,7 +296,7 @@ fn export(dir: &Path, raw: &[u8], vars: &Map<String, Value>) -> Result<Option<St
     commit(dir, &msg)
 }
 
-/// The display name and folder for a character: "Dead Poole", "dead-poole".
+/// The display name and folder for a character: "Ada Wright", "ada-wright".
 fn names(guid: &str, snap: Option<&Map<String, Value>>) -> (String, String) {
     let s = |k: &str| {
         snap.and_then(|m| m.get(k))

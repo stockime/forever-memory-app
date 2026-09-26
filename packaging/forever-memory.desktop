@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Forever Memory
+Comment=The armory and memories of your WoW Forever characters
+Exec=forever-memory
+Categories=Game;
+StartupWMClass=forever-memory

@@ -101,7 +101,7 @@ pub fn save_personality(repo: &Path, c: &Character, text: &str) -> Result<(), St
     commit(repo, &p, &format!("personality: {}", c.name))
 }
 
-/// Commits one file. armory-sync commits in the same repository, so a
+/// Commits one file. The recorder commits in the same repository, so a
 /// held index lock is waited out briefly.
 pub fn commit(repo: &Path, file: &Path, msg: &str) -> Result<(), String> {
     if !crate::sync::git_available() || !repo.join(".git").exists() {
