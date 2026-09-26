@@ -22,6 +22,7 @@ import json, math, os, random, shutil, sys
 from datetime import datetime, timedelta
 
 rng = random.Random(20261104)
+rng2 = random.Random(7)  # for later additions, so the journey above stays the same
 OUT = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else "demo-out")
 GAME = os.path.expanduser("~/Games/battlenet/drive_c/Program Files (x86)/World of Warcraft")
 if "--game" in sys.argv:
@@ -182,6 +183,8 @@ LOOT = {
            (3300, "Rotting Flesh", 134339, 0)],
 }
 FOOD = (159, "Refreshing Spring Water", 132794, 1)
+# Where rewards and drops go when put on (inventory slot IDs).
+WEAR = {2960: 5, 3272: 7, 3319: 16, 3322: 15, 91401: 16, 91402: 3, 91403: 9, 91404: 2, 91405: 7, 91406: 12, 91413: 16}
 
 # XP to reach the next level, levels 1..20.
 XP_TO = [400, 900, 1400, 2100, 2800, 3600, 4500, 5400, 6500, 7600, 8800, 10100, 11400, 12900, 14400, 16000, 17700, 19400, 21300, 22900]
@@ -285,6 +288,8 @@ class Sim:
         self.players = {}
         self.group = []
         self.session_end = 0
+        self.worn = {}  # slot -> item id
+        self.lay_on_hands = -1e9
 
     def log(self, e, **row):
         self.n += 1
@@ -434,6 +439,13 @@ class Sim:
         if ctx == "loot":
             self.log("msg", kind="loot", text=f"You receive loot: {link(iid, name, q, self.level)}" + (f"x{n}." if n > 1 else "."))
 
+    def equip(self, item, slot):
+        iid, name, icon, q = item[:4]
+        if self.worn.get(slot) == iid:
+            return
+        self.worn[slot] = iid
+        self.log("equip", link=link(iid, name, q, self.level), slot=slot)
+
     def trainer(self, area_hub):
         new = [s for s in SPELLS if s[0] <= self.level and s[1] not in self.spells]
         if not new:
@@ -575,6 +587,12 @@ class Sim:
                 next_mob = 2.0
             if lose and self.t - start > 6:
                 self.hp = min(self.hp, int(maxhp * 0.25))
+            if not lose and self.hp < maxhp * 0.3 and 633 in self.spells and self.t - self.lay_on_hands > 3600 and rng2.random() < 0.25:
+                self.lay_on_hands = self.t
+                h = maxhp - self.hp
+                self.hp = maxhp
+                self.cl(f'SPELL_CAST_SUCCESS,{me},{me},633,"Lay on Hands",0x2,{self.adv(ME, self.hp, maxhp)}')
+                self.cl(f'SPELL_HEAL,{me},{me},633,"Lay on Hands",0x2,{self.adv(ME, self.hp, maxhp)},{h},{h},0,0,nil')
             if self.hp < maxhp * 0.3:
                 # Some fights are lost (the road has two); otherwise the Light answers.
                 if lose:
@@ -696,6 +714,9 @@ class Sim:
         self.gain_money(money, "quest")
         if reward:
             self.gain_item(reward, 1, "quest")
+            if reward[0] in WEAR:
+                self.wait(4)
+                self.equip(reward, WEAR[reward[0]])
         self.check_session()
 
     def run_dungeon(self):
@@ -757,6 +778,8 @@ def endgame(s):
             s.fight("Baron Vardus", lvl, npc, undead, boss=True, party=True)
             if run == 0:
                 s.gain_item((91413, "Scepter of the Abandoned", 133485, 3))
+                s.wait(6)
+                s.equip((91413, "Scepter of the Abandoned", 133485, 3), 16)
             s.leave_group()
         s.go("bandarion")
         s.log("gossip", name="Danitha Morr", npc=248851)
@@ -775,6 +798,7 @@ def simulate():
     for iid, name, icon, q, slot in starter:
         s.items[iid] = {"name": name, "icon": icon, "q": q}
         s.seen[str(iid)] = int(s.t)
+        s.worn[slot] = iid
     for q in QUESTS[:-1]:
         hub = q[3]
         if hub in ("brill", "bandarion", "sepulcher") and rng.random() < 0.6:
@@ -803,7 +827,7 @@ def simulate():
         iid, name, icon, q = item[:4]
         s.items[iid] = {"name": name, "icon": icon, "q": q}
         s.seen.setdefault(str(iid), int(s.t) - rng.randint(0, 3 * 86400))
-        s.log("equip", link=link(iid, name, q, 20), slot=int(slot))
+        s.equip((iid, name, icon, q), int(slot))
     arugal = QUESTS[-1]
     s.quest_texts[1014] = {"title": arugal[1], "text": arugal[7], "objective": arugal[8], "level": 20, "seen": int(s.t),
                            "choices": [link(6414, "Seal of Sylvanas", 2, 20)]}
