@@ -11,7 +11,7 @@ met, and a diary your character writes (and reads aloud) themselves.
   <a href="https://github.com/stockime/forever-memory-app/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/stockime/forever-memory-app?style=for-the-badge&label=latest&color=1e2a55&labelColor=0a0e1f"></a>
 </p>
 
-https://github.com/user-attachments/assets/1cdc56b9-407f-4dc6-89e8-ed3481cba8ac
+https://github.com/user-attachments/assets/155cfd52-e408-4c76-b37f-cc8a5c515874
 
 ## Getting started
 
