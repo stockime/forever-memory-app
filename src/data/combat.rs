@@ -166,15 +166,28 @@ pub fn parse_time(s: &str) -> Option<f64> {
     Some(local.timestamp() as f64 + sec.fract())
 }
 
-pub fn load(files: &[std::path::PathBuf], me: &[String]) -> Combat {
+/// Parses the files in order; `progress(bytes done, bytes total)` after each.
+pub fn load(
+    files: &[std::path::PathBuf],
+    me: &[String],
+    mut progress: impl FnMut(u64, u64),
+) -> Combat {
     let mut c = Combat::default();
     c.spell("Melee");
     let mine: Vec<u32> = me.iter().map(|g| c.unit(g, "")).collect();
     let mut last_hit: HashMap<u32, f64> = HashMap::new();
+    let total: u64 = files
+        .iter()
+        .filter_map(|f| fs::metadata(f).ok())
+        .map(|m| m.len())
+        .sum();
+    let mut done = 0;
     for f in files {
         if let Ok(text) = fs::read_to_string(f) {
             c.files += 1;
             parse(&mut c, &text, &mine, &mut last_hit);
+            done += text.len() as u64;
+            progress(done, total);
         }
     }
     c.dealt.sort_by(|a, b| a.t.total_cmp(&b.t));
@@ -465,7 +478,7 @@ mod tests {
         fs::create_dir_all(&dir).unwrap();
         let file = dir.join("WoWCombatLog-test.txt");
         fs::write(&file, log).unwrap();
-        let c = load(&[file], &["Player-4613-00A46D50".to_string()]);
+        let c = load(&[file], &["Player-4613-00A46D50".to_string()], |_, _| {});
         fs::remove_dir_all(&dir).ok();
         assert_eq!(c.lines, 4);
         assert_eq!(c.healed.len(), 1);

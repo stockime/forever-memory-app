@@ -45,7 +45,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
         .show(ui, |ui| {
             card(ui, |ui| {
                 ui.set_width(ui.available_width());
-                ui.horizontal_wrapped(|ui| {
+                super::widgets::figure_row(ui, |ui| {
                     ui.spacing_mut().item_spacing = egui::vec2(36.0, 12.0);
                     let total: i64 = dealt.iter().map(|h| h.amount).sum();
                     let fight_time: f64 =

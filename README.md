@@ -20,6 +20,14 @@ characters: the armory, plus everything the memory recorder keeps.
   (`characters/<name>/diary/`, `personality.md`). Other players' chat is never
   sent. `forever-memory diary <character> [YYYY-MM-DD]` writes one from the
   command line.
+- **Narration**: each diary entry can be read aloud by ElevenLabs. Every
+  character gets one voice, designed once from their race, class and
+  personality note (you pick from three previews); its id is kept in the
+  archive (`characters/<name>/voice.json`), so every entry sounds like the
+  same person. Spoken entries are cached in
+  `~/.local/share/forever-memory/audio/` and only regenerated when the text
+  changes. Needs `ELEVENLABS_API_KEY` or a key pasted in the app (kept in
+  `~/.config/forever-memory/elevenlabs-api-key`, mode 600).
 - **Quests**: active (with objective progress), completed and abandoned, with
   the full quest text, rewards offered and chosen, time taken, and how the
   objectives progressed.
@@ -34,7 +42,9 @@ characters: the armory, plus everything the memory recorder keeps.
   their spells),
   what passed between you, what they cast and what they said.
 
-Ctrl+K searches quests, players and items from anywhere; F5 reloads. The app
+On start the app shows a loading screen (Forever's own continent art, a
+progress bar, tips about your characters) until the logs are read and all game
+art is painted, so pages never fill in piece by piece. Ctrl+K searches quests, players and items from anywhere; F5 reloads. The app
 also reloads on its own when armory-sync commits a save.
 
 ## Data

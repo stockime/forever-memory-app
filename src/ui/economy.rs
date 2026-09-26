@@ -42,7 +42,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
         .show(ui, |ui| {
             card(ui, |ui| {
                 ui.set_width(ui.available_width());
-                ui.horizontal_wrapped(|ui| {
+                super::widgets::figure_row(ui, |ui| {
                     ui.spacing_mut().item_spacing.x = 40.0;
                     let total: i64 = earned.values().sum();
                     widgets::figure_money(ui, art, icons::COIN, total, "earned");

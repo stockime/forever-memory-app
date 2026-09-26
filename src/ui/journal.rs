@@ -136,7 +136,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 ))
                 .font(theme::display_font(28.0)),
             );
-            ui.horizontal_wrapped(|ui| {
+            super::widgets::figure_row(ui, |ui| {
                 use super::widgets::{self, icons};
                 ui.spacing_mut().item_spacing = egui::vec2(30.0, 10.0);
                 widgets::figure_text(

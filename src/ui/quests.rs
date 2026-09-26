@@ -226,7 +226,7 @@ fn detail(ui: &mut Ui, m: &Model, c: &Character, q: &Quest, art: &mut Art) {
             card(ui, |ui| {
                 ui.set_width(ui.available_width());
                 label(ui, "Rewards");
-                ui.horizontal_wrapped(|ui| {
+                super::widgets::figure_row(ui, |ui| {
                     use super::widgets::{self, icons};
                     ui.spacing_mut().item_spacing.x = 28.0;
                     if q.xp > 0 {

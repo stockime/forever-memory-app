@@ -103,7 +103,7 @@ pub fn save_personality(repo: &Path, c: &Character, text: &str) -> Result<(), St
 
 /// Commits one file. armory-sync commits in the same repository, so a
 /// held index lock is waited out briefly.
-fn commit(repo: &Path, file: &Path, msg: &str) -> Result<(), String> {
+pub fn commit(repo: &Path, file: &Path, msg: &str) -> Result<(), String> {
     let rel = file.strip_prefix(repo).unwrap_or(file);
     for attempt in 0..5 {
         let add = std::process::Command::new("git")

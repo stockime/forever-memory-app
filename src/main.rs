@@ -6,6 +6,7 @@ mod claude;
 mod data;
 mod theme;
 mod ui;
+mod voice;
 
 use data::{Model, Paths};
 use std::sync::Arc;
@@ -16,7 +17,7 @@ use std::time::{Duration, Instant};
 /// without opening the window (the day defaults to the latest one played).
 fn diary_cli(args: &[String]) -> ! {
     let paths = Paths::from_env();
-    let model = data::load(&paths);
+    let model = data::load(&paths, None);
     let who = args.first().map(|s| s.to_lowercase()).unwrap_or_default();
     let Some(c) = model
         .memory
@@ -72,6 +73,24 @@ fn main() -> eframe::Result {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.first().map(String::as_str) == Some("diary") {
         diary_cli(&args[1..]);
+    }
+    // `forever-memory play <file.mp3>`: plays a file through the narration player (a check).
+    if args.first().map(String::as_str) == Some("play") {
+        let path = std::path::PathBuf::from(args.get(1).cloned().unwrap_or_default());
+        match voice::Player::play(&path, "cli".into()) {
+            Ok(p) => {
+                println!("length ~{:.1}s", p.length);
+                while !p.finished() {
+                    std::thread::sleep(Duration::from_millis(250));
+                }
+                println!("played to {:.1}s", p.position());
+                std::process::exit(0);
+            }
+            Err(e) => {
+                eprintln!("{e}");
+                std::process::exit(1);
+            }
+        }
     }
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -172,6 +191,12 @@ pub struct State {
     pub diary_queue: Vec<String>,
     pub diary_error: Option<String>,
     pub diary_status: Option<String>,
+    pub voice_job: Option<std::sync::mpsc::Receiver<ui::diary::VoiceMsg>>,
+    pub voice_busy: String,
+    pub voice_previews: Vec<(String, std::path::PathBuf)>,
+    pub voice_error: Option<String>,
+    pub narrator: Option<voice::Player>,
+    pub el_key_input: String,
 }
 
 pub struct App {
@@ -183,6 +208,7 @@ pub struct App {
     art: art::Art,
     page: Page,
     state: State,
+    progress: data::Shared,
     /// FM_SHOT=<file.png> [FM_PAGE=quests]: save a screenshot after loading and quit.
     shot: Option<(std::path::PathBuf, Instant, bool)>,
 }
@@ -201,6 +227,7 @@ impl App {
             last_load: Instant::now(),
             art,
             page: Page::Overview,
+            progress: Default::default(),
             state: State {
                 repo,
                 ..Default::default()
@@ -225,9 +252,10 @@ impl App {
         }
         let (tx, rx) = channel();
         let paths = self.paths.clone();
+        let progress = self.progress.clone();
         let ctx = ctx.clone();
         std::thread::spawn(move || {
-            tx.send(data::load(&paths)).ok();
+            tx.send(data::load(&paths, Some(&progress))).ok();
             ctx.request_repaint();
         });
         self.loading = Some(rx);
@@ -279,7 +307,8 @@ impl App {
             .ok()
             .and_then(|s| s.parse().ok())
             .unwrap_or(6.0);
-        if !*asked && self.model.is_some() && started.elapsed().as_secs_f64() > wait {
+        let early = std::env::var("FM_SHOT_LOADING").is_ok(); // shoot the loading screen
+        if !*asked && (self.model.is_some() || early) && started.elapsed().as_secs_f64() > wait {
             *asked = true;
             ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::UserData::default()));
         }
@@ -313,15 +342,8 @@ impl eframe::App for App {
         self.watch(&ctx);
         self.screenshot(&ctx);
         let Some(model) = self.model.clone() else {
-            egui::CentralPanel::default().show(ui, |ui| {
-                ui.centered_and_justified(|ui| {
-                    ui.label(
-                        egui::RichText::new("Reading your memories…")
-                            .font(theme::display_font(28.0))
-                            .color(theme::MUTED),
-                    );
-                });
-            });
+            loading_screen(ui, &self.progress, &mut self.art);
+            ctx.request_repaint_after(Duration::from_millis(50));
             return;
         };
         if self.state.character >= model.memory.characters.len() {
@@ -478,4 +500,110 @@ impl eframe::App for App {
                 }
             });
     }
+}
+
+/// The first read, drawn like the game's own loading screen: Forever's
+/// continent art, a tip, and a framed bar that fills as the logs are read and
+/// the art is painted. Nothing else shows until everything is ready.
+fn loading_screen(ui: &mut egui::Ui, progress: &data::Shared, art: &mut art::Art) {
+    use egui::{Align2, Color32, FontId, Rect, Stroke};
+    let p = progress.lock().map(|g| g.clone()).unwrap_or_default();
+    let rect = ui.max_rect();
+    let painter = ui.painter();
+    painter.rect_filled(rect, 0.0, Color32::from_rgb(4, 6, 14));
+    let key = match p.continent {
+        Some("kalimdor") => 7963779,
+        _ => 7963776,
+    };
+    if let Some(tex) = art.icon(ui.ctx(), Some(key)) {
+        // The art sits in a band from 16% to 84% of the texture's height.
+        let band = Rect::from_min_max(egui::pos2(0.0, 0.158), egui::pos2(1.0, 0.842));
+        let aspect = 2992.0 / 1152.0;
+        let (w, h) = (rect.width(), rect.height());
+        let uv = if w / h > aspect {
+            let vh = band.height() * (h * aspect / w);
+            Rect::from_min_max(
+                egui::pos2(0.0, band.center().y - vh / 2.0),
+                egui::pos2(1.0, band.center().y + vh / 2.0),
+            )
+        } else {
+            let vw = w / (h * aspect);
+            Rect::from_min_max(
+                egui::pos2(0.5 - vw / 2.0, band.min.y),
+                egui::pos2(0.5 + vw / 2.0, band.max.y),
+            )
+        };
+        painter.image(tex.id(), rect, uv, Color32::from_gray(200));
+    }
+    // Darken towards the bottom where the bar sits.
+    let mut mesh = egui::Mesh::default();
+    let top = rect.top() + rect.height() * 0.55;
+    mesh.colored_vertex(egui::pos2(rect.left(), top), Color32::from_black_alpha(0));
+    mesh.colored_vertex(egui::pos2(rect.right(), top), Color32::from_black_alpha(0));
+    mesh.colored_vertex(rect.right_bottom(), Color32::from_black_alpha(220));
+    mesh.colored_vertex(rect.left_bottom(), Color32::from_black_alpha(220));
+    mesh.add_triangle(0, 1, 2);
+    mesh.add_triangle(0, 2, 3);
+    painter.add(mesh);
+
+    let title = egui::pos2(rect.center().x, rect.top() + rect.height() * 0.12);
+    painter.text(
+        title + egui::vec2(2.0, 3.0),
+        Align2::CENTER_CENTER,
+        "Forever Memory",
+        theme::display_font(54.0),
+        Color32::from_black_alpha(160),
+    );
+    painter.text(
+        title,
+        Align2::CENTER_CENTER,
+        "Forever Memory",
+        theme::display_font(54.0),
+        theme::GOLD,
+    );
+
+    let bar_w = (rect.width() * 0.62).min(900.0);
+    let bar = Rect::from_center_size(
+        egui::pos2(rect.center().x, rect.bottom() - 90.0),
+        egui::vec2(bar_w, 22.0),
+    );
+    if !p.tips.is_empty() {
+        let secs = ui.input(|i| i.time) as usize / 6;
+        let tip = &p.tips[secs % p.tips.len()];
+        painter.text(
+            bar.center_top() - egui::vec2(0.0, 40.0),
+            Align2::CENTER_CENTER,
+            tip,
+            FontId::proportional(18.0),
+            theme::INK,
+        );
+    }
+    painter.rect_filled(bar.expand(3.0), 4.0, Color32::from_rgb(8, 8, 10));
+    painter.rect_stroke(
+        bar.expand(3.0),
+        4.0,
+        Stroke::new(2.0, Color32::from_rgb(0x8a, 0x6d, 0x2c)),
+        egui::StrokeKind::Outside,
+    );
+    let mut fill = bar;
+    fill.set_width(bar.width() * p.frac.clamp(0.0, 1.0));
+    let mut m = egui::Mesh::default();
+    let (a, b) = (
+        Color32::from_rgb(0x9a, 0x6a, 0x08),
+        Color32::from_rgb(0xf2, 0xc2, 0x3a),
+    );
+    m.colored_vertex(fill.left_top(), b);
+    m.colored_vertex(fill.right_top(), b);
+    m.colored_vertex(fill.right_bottom(), a);
+    m.colored_vertex(fill.left_bottom(), a);
+    m.add_triangle(0, 1, 2);
+    m.add_triangle(0, 2, 3);
+    painter.add(m);
+    painter.text(
+        bar.center_bottom() + egui::vec2(0.0, 22.0),
+        Align2::CENTER_CENTER,
+        &p.stage,
+        FontId::proportional(15.0),
+        theme::MUTED,
+    );
 }

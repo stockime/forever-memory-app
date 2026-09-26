@@ -199,7 +199,7 @@ fn profile(ui: &mut Ui, m: &Model, p: &Player, art: &mut Art) {
             ui.add_space(10.0);
             card(ui, |ui| {
                 ui.set_width(ui.available_width());
-                ui.horizontal_wrapped(|ui| {
+                super::widgets::figure_row(ui, |ui| {
                     ui.spacing_mut().item_spacing = egui::vec2(36.0, 12.0);
                     widgets::figure_text(
                         ui,

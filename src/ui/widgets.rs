@@ -26,6 +26,10 @@ pub mod icons {
     pub const SWORDS: i64 = 132147;
     pub const BAG: i64 = 133639;
     pub const HEAL: i64 = 135942;
+    pub const ALL: &[i64] = &[
+        GOLD, SILVER, COPPER, WATCH, SPIRIT, NOTE, SKULL, FEIGN, GROUP, COIN, COINS, CHEST, BOOK,
+        SCROLL, MAP, SWORDS, BAG, HEAL,
+    ];
 }
 
 fn icon_image(ui: &mut Ui, art: &mut Art, id: i64, size: f32) {
@@ -87,8 +91,12 @@ pub fn figure(
     value: impl FnOnce(&mut Ui, &mut Art),
     caption: &str,
 ) {
+    // A fixed-height row, everything centred in it, so figures line up
+    // whatever their value (text or coins) and caption look like.
+    const H: f32 = 44.0;
     ui.horizontal(|ui| {
         ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Extend);
+        ui.set_min_height(H);
         let (rect, _) = ui.allocate_exact_size(Vec2::splat(38.0), Sense::hover());
         let p = ui.painter();
         p.rect_filled(rect, 6.0, Color32::from_rgb(5, 7, 15));
@@ -106,12 +114,29 @@ pub fn figure(
             Stroke::new(1.0, Color32::from_rgb(0x6b, 0x5a, 0x2e)),
             egui::StrokeKind::Inside,
         );
+        ui.add_space(4.0);
         ui.vertical(|ui| {
             ui.spacing_mut().item_spacing.y = 0.0;
-            value(ui, art);
+            ui.horizontal(|ui| {
+                ui.set_min_height(26.0);
+                value(ui, art)
+            });
             ui.label(RichText::new(caption).small().color(MUTED));
         });
     });
+}
+
+/// A wrapping row of figures. Items are top-aligned: all figures are the
+/// same height, so they line up exactly (centring against a growing row
+/// height would make them step downwards).
+pub fn figure_row(ui: &mut Ui, add: impl FnOnce(&mut Ui)) {
+    ui.with_layout(
+        Layout::left_to_right(Align::Min).with_main_wrap(true),
+        |ui| {
+            ui.spacing_mut().item_spacing = egui::vec2(34.0, 12.0);
+            add(ui)
+        },
+    );
 }
 
 pub fn figure_text(ui: &mut Ui, art: &mut Art, icon: i64, value: &str, caption: &str) {
@@ -244,8 +269,8 @@ pub fn table<R>(
             t = t.column(if c.grow {
                 Column::remainder().at_least(c.min).clip(true)
             } else {
-                Column::auto().at_least(c.min)
-            });
+                Column::exact(c.min).clip(true)
+            }); // fixed widths: no resizing as rows arrive
         }
         let mut clicked = None;
         t.header(26.0, |mut h| {

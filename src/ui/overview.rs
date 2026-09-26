@@ -152,7 +152,7 @@ fn figures(ui: &mut Ui, m: &Model, c: &Character, art: &mut Art) {
         .filter(|p| in_play(c, p.last_seen) || in_play(c, p.first_seen))
         .count();
     ui.set_width(ui.available_width());
-    ui.horizontal_wrapped(|ui| {
+    super::widgets::figure_row(ui, |ui| {
         ui.spacing_mut().item_spacing = egui::vec2(34.0, 12.0);
         widgets::figure_text(ui, art, icons::WATCH, &theme::duration(played), "played");
         widgets::figure_text(

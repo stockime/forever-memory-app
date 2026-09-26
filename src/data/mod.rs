@@ -41,19 +41,61 @@ pub struct Model {
     pub stamp: u64,
 }
 
-pub fn load(p: &Paths) -> Model {
+/// What the loading screen shows while `load` runs.
+#[derive(Default, Clone)]
+pub struct Progress {
+    pub frac: f32,
+    pub stage: String,
+    /// Loading-screen tips made from the archive once it is read.
+    pub tips: Vec<String>,
+    /// "easternkingdom" or "kalimdor", for the loading screen art.
+    pub continent: Option<&'static str>,
+}
+
+pub type Shared = std::sync::Arc<std::sync::Mutex<Progress>>;
+
+fn report(p: Option<&Shared>, frac: f32, stage: &str) {
+    if let Some(p) = p {
+        if let Ok(mut g) = p.lock() {
+            g.frac = frac;
+            g.stage = stage.to_string();
+        }
+    }
+}
+
+/// Reads everything. With `progress`, also renders all game art the pages
+/// will need, so the first frame shows the finished picture.
+pub fn load(p: &Paths, progress: Option<&Shared>) -> Model {
+    report(progress, 0.02, "Opening the archive");
     let memory = memory::load(&p.repo);
+    if let (Some(pr), Some(c)) = (progress, memory.characters.first()) {
+        if let Ok(mut g) = pr.lock() {
+            g.continent = Some(match c.race.as_str() {
+                "Orc" | "Troll" | "Tauren" | "Night Elf" => "kalimdor",
+                _ => "easternkingdom",
+            });
+            g.tips = tips(&memory);
+        }
+    }
     let guids: Vec<String> = memory.characters.iter().map(|c| c.guid.clone()).collect();
     let names: Vec<String> = memory.characters.iter().map(|c| c.name.clone()).collect();
     let combat_dir = p.raw_logs.join("combat");
     let chat_dir = p.raw_logs.join("chat");
     let combat_files = combat::log_files(&[&combat_dir, &p.live_logs], "WoWCombatLog");
     let chat_files = combat::log_files(&[&chat_dir, &p.live_logs], "WoWChatLog");
-    let combat = combat::load(&combat_files, &guids);
+    let combat = combat::load(&combat_files, &guids, |done, total| {
+        report(
+            progress,
+            0.08 + 0.52 * done as f32 / total.max(1) as f32,
+            "Reading the combat logs",
+        );
+    });
     let fights = combat::fights(&combat);
+    report(progress, 0.62, "Reading what was said");
     let chat = chat::load(&chat_files);
+    report(progress, 0.68, "Remembering faces");
     let players = players::build(&combat, &chat, &names, &memory.players);
-    Model {
+    let model = Model {
         memory,
         combat,
         fights,
@@ -61,6 +103,172 @@ pub fn load(p: &Paths) -> Model {
         players,
         loaded_at: SystemTime::now(),
         stamp: stamp(p),
+    };
+    if progress.is_some() {
+        prefetch_art(p, &model, progress);
+    }
+    report(progress, 1.0, "Ready");
+    model
+}
+
+/// A few things worth knowing, for the loading screen.
+fn tips(m: &memory::Memory) -> Vec<String> {
+    let mut out = vec![];
+    for c in &m.characters {
+        let done = c
+            .quests
+            .iter()
+            .filter(|q| q.status == memory::QuestStatus::Completed)
+            .count();
+        let deaths = c.events.iter().filter(|e| e.e == "death").count();
+        let played: i64 = c.sessions.iter().map(|s| s.seconds()).sum();
+        out.push(format!(
+            "{} has spent {} in the world.",
+            c.name,
+            crate::theme::duration(played as f64)
+        ));
+        if done > 0 {
+            out.push(format!(
+                "{} has seen {done} task{} through.",
+                c.name,
+                if done == 1 { "" } else { "s" }
+            ));
+        }
+        out.push(if deaths == 0 {
+            format!("{} has not died. Yet.", c.name)
+        } else {
+            format!(
+                "{} has died {deaths} time{}.",
+                c.name,
+                if deaths == 1 { "" } else { "s" }
+            )
+        });
+        if let Some(q) = c
+            .quests
+            .iter()
+            .find(|q| q.status == memory::QuestStatus::Active)
+        {
+            out.push(format!(
+                "Still waiting on {}: \"{}\".",
+                c.name.split(' ').next().unwrap_or(""),
+                q.title
+            ));
+        }
+        if !c.diary.is_empty() {
+            out.push(format!(
+                "{} has written {} diary entr{}.",
+                c.name,
+                c.diary.len(),
+                if c.diary.len() == 1 { "y" } else { "ies" }
+            ));
+        }
+    }
+    out
+}
+
+/// Every piece of game art the pages use, as art keys.
+pub fn art_keys(m: &Model) -> Vec<String> {
+    use serde_json::Value;
+    let mut keys: std::collections::BTreeSet<String> = Default::default();
+    let icon = |id: Option<i64>, keys: &mut std::collections::BTreeSet<String>| {
+        if let Some(i) = id.filter(|i| *i > 0) {
+            keys.insert(format!("icon-{i}.png"));
+        }
+    };
+    for id in crate::ui::widgets::icons::ALL {
+        icon(Some(*id), &mut keys);
+    }
+    for id in [3450737, 7963776, 7963779] {
+        icon(Some(id), &mut keys);
+    }
+    for it in m.memory.items.values() {
+        icon(it.icon, &mut keys);
+    }
+    let slots = [
+        "ammo",
+        "head",
+        "neck",
+        "shoulder",
+        "shirt",
+        "chest",
+        "waist",
+        "legs",
+        "feet",
+        "wrists",
+        "hands",
+        "finger",
+        "rfinger",
+        "trinket",
+        "rear",
+        "mainhand",
+        "secondaryhand",
+        "ranged",
+        "tabard",
+    ];
+    for s in slots {
+        keys.insert(format!("slot-{s}.png"));
+    }
+    for c in &m.memory.characters {
+        let class = c.class_file.to_lowercase();
+        for k in [
+            format!("class-{class}.png"),
+            format!("banner-{class}.jpg"),
+            format!("scene-{class}.jpg"),
+            format!("tree-{class}-0.png"),
+            format!("tree-{class}-1.png"),
+            format!("tree-{class}-2.png"),
+        ] {
+            keys.insert(k);
+        }
+        let mut walk = vec![&c.snapshot];
+        while let Some(v) = walk.pop() {
+            match v {
+                Value::Object(o) => {
+                    if let Some(i) = o.get("icon").and_then(Value::as_i64) {
+                        icon(Some(i), &mut keys);
+                    }
+                    walk.extend(o.values());
+                }
+                Value::Array(a) => walk.extend(a.iter()),
+                _ => {}
+            }
+        }
+        for e in c.events.iter().filter(|e| e.e == "pos") {
+            if let Some(map) = e.i("map").filter(|m| (1411..=1458).contains(m)) {
+                keys.insert(format!("map-{map}.jpg"));
+            }
+        }
+    }
+    for p in &m.players {
+        if let Some(cl) = p.class {
+            keys.insert(format!("class-{}.png", cl.to_lowercase()));
+        }
+    }
+    keys.into_iter().collect()
+}
+
+fn prefetch_art(p: &Paths, m: &Model, progress: Option<&Shared>) {
+    let _ = std::fs::create_dir_all(&p.art);
+    let missing: Vec<String> = art_keys(m)
+        .into_iter()
+        .filter(|k| !p.art.join(k).exists())
+        .collect();
+    for (n, chunk) in missing.chunks(40).enumerate() {
+        report(
+            progress,
+            0.7 + 0.29 * (n * 40) as f32 / missing.len().max(1) as f32,
+            &format!(
+                "Painting icons ({} of {})",
+                (n * 40).min(missing.len()),
+                missing.len()
+            ),
+        );
+        let _ = std::process::Command::new(&p.wowdata)
+            .arg("art")
+            .args(chunk)
+            .env("OUT", &p.art)
+            .stderr(std::process::Stdio::null())
+            .status();
     }
 }
 
