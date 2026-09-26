@@ -62,7 +62,6 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     let read = st.dead.read.take().unwrap();
     let first = c.name.split(' ').next().unwrap_or(&c.name).to_string();
 
-    super::heading(ui, tr!("Book of the Dead"));
     let n = read.deaths.len();
     if n == 0 {
         ui.add_space(30.0);

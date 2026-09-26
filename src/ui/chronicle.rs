@@ -99,7 +99,6 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     let c = character(m, st);
     super::diary::poll_voice(st);
     if c.diary.is_empty() {
-        super::heading(ui, tr!("Chronicle"));
         super::empty(
             ui,
             tr!("Nothing to bind yet. The entries written in the Diary become this book."),
