@@ -259,7 +259,6 @@ fn finish_job(m: &Model, st: &mut State) {
 // ---- narration ----
 
 pub enum VoiceMsg {
-    Previews(Vec<(String, std::path::PathBuf)>),
     Created,
     Spoken(std::path::PathBuf, String),
     Failed(String),
@@ -281,11 +280,7 @@ fn poll_voice(st: &mut State) {
     st.voice_job = None;
     st.voice_busy.clear();
     match msg {
-        VoiceMsg::Previews(p) => st.voice_previews = p,
-        VoiceMsg::Created => {
-            st.voice_previews.clear();
-            st.reload_now = true;
-        }
+        VoiceMsg::Created => st.reload_now = true,
         VoiceMsg::Spoken(path, key) => match crate::voice::Player::play(&path, key) {
             Ok(p) => st.narrator = Some(p),
             Err(e) => st.voice_error = Some(e),
@@ -347,99 +342,38 @@ fn narration(
         };
         let Some(v) = voice::load_voice(&st.repo, c) else {
             label(ui, &format!("{first}'s voice"));
-            if st.voice_previews.is_empty() {
-                ui.label(RichText::new(format!("{first} doesn't have a voice yet. One is designed from their race, class and the note above, and then used for every entry.")).small().color(MUTED));
-                if ui
-                    .button(RichText::new(format!("Give {first} a voice")).color(GOLD))
-                    .clicked()
-                {
-                    let (desc, slug) = (voice::describe(c), c.slug.clone());
-                    run(
-                        st,
-                        &format!("Finding {first}'s voice…"),
-                        move || match voice::design(&key, &desc) {
-                            Ok(previews) => {
-                                let dir = std::env::temp_dir()
-                                    .join("forever-memory-voices")
-                                    .join(slug);
-                                let _ = std::fs::create_dir_all(&dir);
-                                VoiceMsg::Previews(
-                                    previews
-                                        .into_iter()
-                                        .enumerate()
-                                        .map(|(i, (id, mp3))| {
-                                            let p = dir.join(format!("preview-{i}.mp3"));
-                                            let _ = std::fs::write(&p, mp3);
-                                            (id, p)
-                                        })
-                                        .collect(),
-                                )
-                            }
-                            Err(e) => VoiceMsg::Failed(e),
-                        },
-                    );
-                }
-            } else {
-                ui.label(
-                    RichText::new("Listen to each, then keep the one that sounds like them.")
-                        .small()
-                        .color(MUTED),
+            ui.label(RichText::new(format!("{first} doesn't have a voice yet. It's made once, in the style of a{} {} {} in the game and shaped by the note above, then kept for every entry.", if c.race.starts_with(['A', 'E', 'I', 'O', 'U']) { "n" } else { "" }, c.race, if c.snapshot.get("sex").and_then(serde_json::Value::as_i64) == Some(3) { "woman" } else { "man" })).small().color(MUTED));
+            if ui
+                .button(RichText::new(format!("Give {first} a voice")).color(GOLD))
+                .clicked()
+            {
+                let (desc, seed, name, repo, ch) = (
+                    voice::describe(c),
+                    voice::seed(c),
+                    format!("{} (Forever Memory)", c.name),
+                    st.repo.clone(),
+                    c.clone(),
                 );
-                let previews = st.voice_previews.clone();
-                for (i, (id, path)) in previews.iter().enumerate() {
-                    ui.horizontal(|ui| {
-                        let playing = st
-                            .narrator
-                            .as_ref()
-                            .is_some_and(|p| p.key == format!("preview-{i}"));
-                        if ui
-                            .button(if playing { "■ Stop" } else { "▶ Listen" })
-                            .clicked()
-                        {
-                            st.narrator = if playing {
-                                None
-                            } else {
-                                voice::Player::play(path, format!("preview-{i}"))
-                                    .map_err(|e| st.voice_error = Some(e))
-                                    .ok()
-                            };
-                        }
-                        ui.label(RichText::new(format!("Voice {}", i + 1)).color(INK));
-                        if ui
-                            .button(RichText::new("Keep this one").color(GOLD))
-                            .clicked()
-                        {
-                            st.narrator = None;
-                            let (desc, gid, name, repo) = (
-                                voice::describe(c),
-                                id.clone(),
-                                format!("{} (Forever Memory)", c.name),
-                                st.repo.clone(),
-                            );
-                            let (ch, key) = (c.clone(), key.clone());
-                            run(st, "Keeping the voice…", move || {
-                                match voice::create(&key, &name, &desc, &gid) {
-                                    Ok(voice_id) => match voice::save_voice(
-                                        &repo,
-                                        &ch,
-                                        &voice::Voice {
-                                            voice_id,
-                                            name,
-                                            description: desc,
-                                        },
-                                    ) {
-                                        Ok(()) => VoiceMsg::Created,
-                                        Err(e) => VoiceMsg::Failed(e),
-                                    },
-                                    Err(e) => VoiceMsg::Failed(e),
-                                }
-                            });
-                        }
+                run(st, &format!("Finding {first}'s voice…"), move || {
+                    // One step: design in the race's in-game style and keep the first voice.
+                    let made = voice::design(&key, &desc, seed).and_then(|previews| {
+                        let (gid, _) = previews.into_iter().next().ok_or("no voice")?;
+                        let voice_id = voice::create(&key, &name, &desc, &gid)?;
+                        voice::save_voice(
+                            &repo,
+                            &ch,
+                            &voice::Voice {
+                                voice_id,
+                                name,
+                                description: desc,
+                            },
+                        )
                     });
-                }
-                if ui.small_button("None of these, try again").clicked() {
-                    st.voice_previews.clear();
-                }
+                    match made {
+                        Ok(()) => VoiceMsg::Created,
+                        Err(e) => VoiceMsg::Failed(e),
+                    }
+                });
             }
             return;
         };

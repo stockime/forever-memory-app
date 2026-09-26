@@ -193,7 +193,6 @@ pub struct State {
     pub diary_status: Option<String>,
     pub voice_job: Option<std::sync::mpsc::Receiver<ui::diary::VoiceMsg>>,
     pub voice_busy: String,
-    pub voice_previews: Vec<(String, std::path::PathBuf)>,
     pub voice_error: Option<String>,
     pub narrator: Option<voice::Player>,
     pub el_key_input: String,

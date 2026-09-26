@@ -68,25 +68,59 @@ pub fn load_voice(repo: &Path, c: &Character) -> Option<Voice> {
 }
 
 /// A voice description from what we know about the character.
-pub fn describe(c: &Character) -> String {
-    let sex = match c.snapshot.get("sex").and_then(Value::as_i64) {
-        Some(3) => "woman",
-        _ => "man",
-    };
-    let race = match c.race.as_str() {
-        "Undead" => {
-            "one of the Forsaken, a risen undead: dry, raspy and hollow, with a faint rattle in the throat"
+/// How each race and gender sounds in the game, as a voice description.
+/// The designed voice is in that style, not a copy of the game's actors.
+fn in_game_style(race: &str, female: bool) -> &'static str {
+    match (race, female) {
+        ("Undead", false) => {
+            "Forsaken undead man: raspy, hollow, gravelly half-whisper with a dry, sardonic, faintly sinister edge, like a corpse's dry throat, with a slight eerie echo"
         }
-        "Orc" => "an orc: deep, gravelly and forceful",
-        "Tauren" => "a tauren: very deep, slow, calm and warm",
-        "Troll" => "a jungle troll with a lilting island accent",
-        "Dwarf" => "a dwarf with a thick, hearty Scottish burr",
-        "Gnome" => "a gnome: quick, bright and a little high",
-        "Night Elf" => "a night elf: soft, measured and ancient",
-        _ => "a human from Stormwind with a light old-world English accent",
-    };
+        ("Undead", true) => {
+            "Forsaken undead woman: raspy, breathy and hollow, cold and eerie, dry and sardonic, with a slight eerie echo"
+        }
+        ("Orc", false) => "Orc man: very deep, guttural, gravelly and powerful, proud and blunt",
+        ("Orc", true) => "Orc woman: husky, strong and gravelly, fierce and direct",
+        ("Tauren", false) => {
+            "Tauren man: extremely deep, slow, resonant and gentle, calm like the plains"
+        }
+        ("Tauren", true) => "Tauren woman: deep, warm, earthy and calm, slow and kind",
+        ("Troll", false) => {
+            "Jungle troll man: laid-back Caribbean island accent, raspy and playful, rolling rhythm"
+        }
+        ("Troll", true) => {
+            "Jungle troll woman: lilting Caribbean island accent, sly, rhythmic and warm"
+        }
+        ("Dwarf", false) => {
+            "Dwarf man: gruff, hearty and booming, thick Scottish accent, cheerful and stubborn"
+        }
+        ("Dwarf", true) => "Dwarf woman: hearty, bright and bold, thick Scottish accent, cheerful",
+        ("Gnome", false) => "Gnome man: high-pitched, quick and nasal, excitable and clever",
+        ("Gnome", true) => "Gnome woman: high, bright and squeaky, fast and cheerful",
+        ("Night Elf", false) => {
+            "Night elf man: deep, calm and measured, quiet and ancient, slightly ethereal"
+        }
+        ("Night Elf", true) => {
+            "Night elf woman: soft, graceful and calm, mysterious and slightly ethereal"
+        }
+        (_, false) => {
+            "Human man from Stormwind: clear, confident baritone, light old-world English accent, earnest"
+        }
+        (_, true) => {
+            "Human woman from Stormwind: clear, warm and confident, light old-world English accent"
+        }
+    }
+}
+
+fn female(c: &Character) -> bool {
+    c.snapshot.get("sex").and_then(Value::as_i64) == Some(3)
+}
+
+/// The voice description: the race and gender's in-game style, then the
+/// personality note.
+pub fn describe(c: &Character) -> String {
     let mut d = format!(
-        "A {sex}, {race}. A {} who is reading their own travel journal aloud, unhurried and personal.",
+        "{}. A {} reading their own travel journal aloud, unhurried and personal.",
+        in_game_style(&c.race, female(c)),
         c.class.to_lowercase()
     );
     let note = c.personality.trim();
@@ -94,6 +128,15 @@ pub fn describe(c: &Character) -> String {
         d += &format!(" Character: {note}");
     }
     d.chars().take(990).collect()
+}
+
+/// The same race and gender start from the same seed, so voices of one
+/// kind sound related, as they do in the game.
+pub fn seed(c: &Character) -> u32 {
+    use std::hash::{Hash, Hasher};
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    (c.race.as_str(), female(c)).hash(&mut h);
+    (h.finish() % 2_000_000_000) as u32
 }
 
 fn post(path: &str, key: &str, body: Value) -> Result<ureq::http::Response<ureq::Body>, String> {
@@ -135,8 +178,8 @@ fn check(
 }
 
 /// Designs voices for a description; returns (generated voice id, preview mp3).
-pub fn design(key: &str, description: &str) -> Result<Vec<(String, Vec<u8>)>, String> {
-    let body = json!({"voice_description": description, "model_id": DESIGN_MODEL, "auto_generate_text": true});
+pub fn design(key: &str, description: &str, seed: u32) -> Result<Vec<(String, Vec<u8>)>, String> {
+    let body = json!({"voice_description": description, "model_id": DESIGN_MODEL, "auto_generate_text": true, "seed": seed});
     let mut resp = check(post("/text-to-voice/design", key, body)?)?;
     let v: Value = resp.body_mut().read_json().map_err(|e| e.to_string())?;
     use base64::Engine;

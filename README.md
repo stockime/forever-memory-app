@@ -21,8 +21,10 @@ characters: the armory, plus everything the memory recorder keeps.
   sent. `forever-memory diary <character> [YYYY-MM-DD]` writes one from the
   command line.
 - **Narration**: each diary entry can be read aloud by ElevenLabs. Every
-  character gets one voice, designed once from their race, class and
-  personality note (you pick from three previews); its id is kept in the
+  character gets one voice, designed once in the style of their race and
+  gender in the game (a raspy Forsaken, a Scottish dwarf, …; designed from a
+  description, not cloned from the game's actors), shaped by the personality
+  note, with one seed per race and gender; its id is kept in the
   archive (`characters/<name>/voice.json`), so every entry sounds like the
   same person. Spoken entries are cached in
   `~/.local/share/forever-memory/audio/` and only regenerated when the text
