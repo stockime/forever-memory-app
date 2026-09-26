@@ -959,6 +959,75 @@ ALTS = [
      [("16", 25, "Worn Shortsword", 135274, 1), ("4", 38, "Recruit's Shirt", 135009, 1)], "Elwynn Forest"),
 ]
 
+# A few more evenings for the alts, so they have days to write about; the
+# "collect" steps are the mounts and companions they brought home (account.json).
+def Q(act, qid, title, **kw):
+    return ("quest", dict(act=act, id=qid, title=title, **kw))
+
+def Z(zone, sub=""):
+    return ("zone", {"zone": zone, "sub": sub})
+
+def SUB(zone, sub):
+    return ("subzone", {"zone": zone, "sub": sub})
+
+ALT_LIFE = {
+    "Usain": [
+        (local(2026, 9, 21, 14, 10), [
+            Z("Orgrimmar", "Valley of Spirits"), ("open", {"what": "trainer"}),
+            ("gossip", {"name": "Uthel'nay", "npc": 7311}), ("spell", {"id": 1461}), ("spell", {"id": 865}),
+            SUB("Orgrimmar", "Valley of Honor"), ("gossip", {"name": "Ogunaro Wolfbinder", "npc": 3362}),
+            ("open", {"what": "merchant"}), ("money", {"ctx": "merchant", "d": -35000}),
+            ("collect", {"kind": "mounts", "key": 14, "name": "Timber Wolf", "icon": 132224}),
+            Z("The Barrens", "The Crossroads"), ("gossip", {"name": "Mankrik", "npc": 3432}),
+            Q("accept", 899, "Consumed by Hatred", text="The Kolkar did this. They raided our camp and took her from me. I cannot rest while they still walk the Barrens. Bring me their beads, as many as the dead have fingers.", objective="Bring 12 Kolkar Heads to Mankrik at the Crossroads."),
+            Q("accept", 4021, "Lost in Battle", text="My wife went out with the caravan to Lushwater Oasis. The Kolkar came. She did not come back. Find her. Whatever is left, find her.", objective="Find Mankrik's wife."),
+            SUB("The Barrens", "Lushwater Oasis"), ("equip", {"link": link(91501, "Emberwood Staff", 2, 20), "slot": 16}),
+        ], 8400),
+        (local(2026, 9, 24, 13, 30), [
+            Z("The Barrens", "Lushwater Oasis"), ("death", {}), ("alive", {}),
+            Q("turnin", 4021, "Lost in Battle"), SUB("The Barrens", "The Crossroads"),
+            ("gossip", {"name": "Mankrik", "npc": 3432}), Q("turnin", 899, "Consumed by Hatred", money=1800),
+            ("money", {"ctx": "quest", "d": 1800}),
+            ("msg", {"kind": "skill", "text": "Your skill in Tailoring has increased to 150."}),
+        ], 7200),
+    ],
+    "Elijah": [
+        (local(2026, 9, 20, 13, 0), [
+            Z("The Barrens", "The Forgotten Pools"), Q("turnin", 870, "The Forgotten Pools", money=1200),
+            Q("accept", 867, "Harpy Raiders", text="The Witchwing harpies nest in the rocks to the west and pick off our riders. Their talons would make a fine warning to the rest.", objective="Bring 8 Witchwing Talons to Darsok Swiftdagger."),
+            ("equip", {"link": link(91503, "Voodoo Hexstaff", 2, 20), "slot": 16}),
+            SUB("The Barrens", "The Crossroads"), ("gossip", {"name": "Darsok Swiftdagger", "npc": 3449}),
+            Q("turnin", 867, "Harpy Raiders", money=1500),
+        ], 6600),
+        (local(2026, 9, 23, 14, 0), [
+            Z("Tirisfal Glades", "Brill"), Z("Silverpine Forest", "The Sepulcher"),
+            ("gossip", {"name": "Dalar Dawnweaver", "npc": 1938}),
+            Q("accept", 99, "Arugal's Folly", text="The wizard Arugal thought his wolves would save Lordaeron. Now Pyrewood howls at night and the Dalaran mages at Ambermill guard secrets nobody should keep. Bring me their spellbooks.", objective="Bring the Dalaran spellbooks from Ambermill to Dalar Dawnweaver."),
+            SUB("Silverpine Forest", "Ambermill"), ("item", {"item": (8491, "Cat Carrier (Black Tabby)", 132599, 1)}),
+            ("collect", {"kind": "pets", "key": 42, "name": "Black Tabby Cat", "icon": 132599}),
+            ("death", {}), ("alive", {}),
+        ], 7800),
+    ],
+    "Oprah": [
+        (local(2026, 9, 19, 14, 30), [
+            Z("Loch Modan", "Thelsamar"), ("gossip", {"name": "Mountaineer Kadrell", "npc": 1340}),
+            Q("turnin", 436, "Report to Ironforge", money=900),
+            ("msg", {"kind": "skill", "text": "Your skill in Engineering has increased to 146."}),
+            ("msg", {"kind": "skill", "text": "Your skill in Engineering has increased to 150."}),
+            ("item", {"item": (4401, "Mechanical Squirrel Box", 132599, 1), "ctx": "craft"}),
+            ("collect", {"kind": "pets", "key": 39, "name": "Mechanical Squirrel", "icon": 134063}),
+            SUB("Loch Modan", "Ironband's Excavation Site"),
+            Q("accept", 468, "Excavation Progress Report", text="Prospector Ironband wants word carried to Ironforge that the dig goes well. It does not go well. Carry the word anyway.", objective="Take the report to Ironforge."),
+        ], 7000),
+        (local(2026, 9, 22, 13, 45), [
+            Z("Wetlands", "Menethil Harbor"), ("gossip", {"name": "Karl Boran", "npc": 1242}),
+            Q("accept", 484, "Young Crocolisk Skins", text="The young crocolisks of the marsh make the finest leather this side of the sea. Bring me their skins and I will make it worth your while.", objective="Bring 4 Young Crocolisk Skins to Karl Boran in Menethil Harbor."),
+            SUB("Wetlands", "Bluegill Marsh"), ("death", {}), ("alive", {}),
+            SUB("Wetlands", "Menethil Harbor"), Q("turnin", 484, "Young Crocolisk Skins", money=1400),
+        ], 6300),
+    ],
+}
+
 def alt_snapshot(template, a, when):
     first, sur, race, race_file, race_id, cls, cls_file, cls_id, guid, gear, zone = a
     snap = {k: v for k, v in template.items()}
@@ -1012,18 +1081,61 @@ def main():
     saved = os.path.join(os.path.dirname(os.path.abspath(__file__)), "diary")
     if os.path.isdir(saved):
         shutil.copytree(saved, os.path.join(tom, "diary"))
+    n = s.n
+    alt_quests = {}
+    collected = []
     for i, a in enumerate(ALTS):
         when = SESSION_TIMES[i][0] - 3600 * (i + 2)
         slug = f"{a[0]}-{a[1]}".lower()
         d = os.path.join(arch, "characters", slug)
-        dump(os.path.join(d, "snapshot.json"), alt_snapshot(template, a, when))
         lvl = 1 if a[0] == "Jon" else 20
-        rows = [{"e": "login", "level": lvl, "money": 0 if lvl == 1 else 50000, "n": 1, "t": int(when), "xp": 0, "zone": a[10]},
-                {"e": "logout", "money": 0 if lvl == 1 else 50000, "n": 2, "t": int(when + (300 if lvl == 1 else 2400)), "zone": a[10]}]
+        money = 0 if lvl == 1 else 50000
+        by_day = {}
+        evenings = [(when, [("zone", {"zone": a[10], "sub": ""})], 300 if lvl == 1 else 2400)] + ALT_LIFE.get(a[0], [])
+        for start, steps, length in sorted(evenings, key=lambda e: e[0]):
+            t = int(start)
+            day = datetime.fromtimestamp(t).strftime("%Y-%m-%d")
+            rows = by_day.setdefault(day, [])
+            n += 1
+            rows.append({"e": "login", "level": lvl, "money": money, "n": n, "t": t, "xp": 0, "zone": steps[0][1].get("zone", a[10])})
+            for e, row in steps:
+                t += rng.randint(240, 900)
+                if e == "collect":
+                    collected.append((row["kind"], row["key"], row["name"], row["icon"], t, a[8]))
+                    continue
+                n += 1
+                if e == "quest" and "text" in row:
+                    alt_quests[row["id"]] = {"title": row["title"], "text": row.pop("text"), "objective": row.pop("objective", ""),
+                                             "level": 20, "seen": t}
+                if e == "item":
+                    iid, name, icon, q = row.pop("item")
+                    s.items[iid] = {"name": name, "icon": icon, "q": q}
+                    row.update(ctx=row.get("ctx", "loot"), d=1, key=str(iid), link=link(iid, name, q, lvl), total=1)
+                if e == "money":
+                    money += row["d"]
+                    row["total"] = money
+                rows.append({**row, "e": e, "n": n, "t": t})
+            n += 1
+            rows.append({"e": "logout", "money": money, "n": n, "t": int(start + length), "zone": steps[-1][1].get("zone", a[10])})
+        snap = alt_snapshot(template, a, max(r["t"] for rs in by_day.values() for r in rs))
+        dump(os.path.join(d, "snapshot.json"), snap)
         os.makedirs(os.path.join(d, "log"), exist_ok=True)
-        with open(os.path.join(d, "log", datetime.fromtimestamp(when).strftime("%Y-%m-%d") + ".jsonl"), "w") as f:
-            for r in rows:
-                f.write(json.dumps(r) + "\n")
+        for day, rows in by_day.items():
+            with open(os.path.join(d, "log", day + ".jsonl"), "w") as f:
+                for r in rows:
+                    f.write(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n")
+    s.quest_texts.update(alt_quests)
+    # Account-wide collections (account.json, addon 0.3.0): who brought each home, and when.
+    brill = next(r["t"] for r in s.rows if r["e"] == "subzone" and r.get("sub") == "Brill" and r["t"] > SESSION_TIMES[5][0])
+    collected.insert(0, ("mounts", 5, "Skeletal Horse", 132264, brill, ME))
+    account = {}
+    for kind, key, name, icon, t, guid in collected:
+        account.setdefault(kind, {})[str(key)] = {"name": name, "icon": icon, "first": int(t), "by": guid}
+    dump(os.path.join(arch, "account.json"), account)
+    # Letters between them, written earlier for the demo (by the app's own writer).
+    saved = os.path.join(os.path.dirname(os.path.abspath(__file__)), "letters")
+    if os.path.isdir(saved):
+        shutil.copytree(saved, os.path.join(arch, "letters"))
     for qid, q in s.quest_texts.items():
         dump(os.path.join(arch, "quests", f"{qid}.json"), q)
     dump(os.path.join(arch, "items.json"), {str(k): v for k, v in s.items.items()})

@@ -1,8 +1,10 @@
 pub mod chat;
 pub mod combat;
 pub mod diary;
+pub mod letters;
 pub mod memory;
 pub mod players;
+pub mod presets;
 
 use crate::tr;
 use std::path::{Path, PathBuf};

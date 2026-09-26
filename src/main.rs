@@ -88,6 +88,9 @@ fn main() -> eframe::Result {
     if args.first().map(String::as_str) == Some("diary") {
         diary_cli(&args[1..]);
     }
+    if args.first().map(String::as_str) == Some("letter") {
+        data::letters::cli(&args[1..]);
+    }
     // `forever-memory record [armory.lua]`: archives the addon's saves once and exits.
     if args.first().map(String::as_str) == Some("record") {
         let settings = config::get();
@@ -307,6 +310,7 @@ pub struct State {
     pub voice_busy: String,
     pub voice_error: Option<String>,
     pub narrator: Option<voice::Player>,
+    pub letters: ui::letters::Letters,
     pub el_key_input: String,
     pub settings_page: ui::settings::Page,
     pub sync_status: sync::SharedStatus,
