@@ -273,6 +273,7 @@ pub struct Collected {
     pub by: String,
 }
 
+#[derive(Clone)]
 pub struct Memory {
     pub characters: Vec<Character>,
     /// Account-wide collections, oldest first.

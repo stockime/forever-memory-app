@@ -1,8 +1,12 @@
+mod cache;
 pub mod chat;
 pub mod combat;
 pub mod diary;
 pub mod memory;
 pub mod players;
+
+#[cfg(test)]
+mod bench;
 
 use crate::tr;
 use std::path::{Path, PathBuf};
@@ -67,10 +71,12 @@ fn report(p: Option<&Shared>, frac: f32, stage: &str) {
 }
 
 /// Reads everything. With `progress`, also renders all game art the pages
-/// will need, so the first frame shows the finished picture.
+/// will need, so the first frame shows the finished picture. Later loads
+/// reuse what did not change: the archive when no file in it did, and the
+/// native logs as parsed before (see `cache`).
 pub fn load(p: &Paths, progress: Option<&Shared>) -> Model {
     report(progress, 0.02, crate::tr!("Opening the archive"));
-    let memory = memory::load(&p.repo);
+    let memory = archive(&p.repo);
     if let (Some(pr), Some(c)) = (progress, memory.characters.first())
         && let Ok(mut g) = pr.lock() {
             let race = c.snapshot.get("raceFile").and_then(serde_json::Value::as_str);
@@ -86,16 +92,29 @@ pub fn load(p: &Paths, progress: Option<&Shared>) -> Model {
     let chat_dir = p.raw_logs.join("chat");
     let combat_files = combat::log_files(&[&combat_dir, &p.live_logs], "WoWCombatLog");
     let chat_files = combat::log_files(&[&chat_dir, &p.live_logs], "WoWChatLog");
-    let combat = combat::load(&combat_files, &guids, |done, total| {
+    let mut logs = cache::Logs::take(&p.raw_logs, &p.live_logs);
+    let mut whole = combat::Whole::new(&guids);
+    let read = |done: u64, total: u64| {
         report(
             progress,
             0.08 + 0.52 * done as f32 / total.max(1) as f32,
             crate::tr!("Reading the combat logs"),
         );
-    });
+    };
+    for (f, part) in logs.combat(&combat_files, &guids, &read) {
+        whole.add(part, || std::fs::read_to_string(f).unwrap_or_default());
+    }
+    let combat = whole.finish();
     let fights = combat::fights(&combat);
     report(progress, 0.62, crate::tr!("Reading what was said"));
-    let chat = chat::load(&chat_files);
+    let mut chat: Vec<chat::Line> = logs
+        .chat(&chat_files)
+        .into_iter()
+        .flat_map(|(_, part)| part.lines.iter().cloned())
+        .collect();
+    chat.sort_by(|a, b| a.t.total_cmp(&b.t));
+    logs.prune();
+    logs.keep();
     report(progress, 0.68, crate::tr!("Remembering faces"));
     let players = players::build(&combat, &chat, &names, &memory.players);
     let model = Model {
@@ -112,6 +131,47 @@ pub fn load(p: &Paths, progress: Option<&Shared>) -> Model {
     }
     report(progress, 1.0, crate::tr!("Ready"));
     model
+}
+
+/// The archive as last read, while none of its files changed.
+static ARCHIVE: std::sync::Mutex<Option<(PathBuf, u64, memory::Memory)>> =
+    std::sync::Mutex::new(None);
+
+fn archive(repo: &Path) -> memory::Memory {
+    let print = fingerprint(repo);
+    let mut kept = ARCHIVE.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some((r, f, m)) = &*kept
+        && r == repo
+        && *f == print
+    {
+        return m.clone();
+    }
+    let m = memory::load(repo);
+    *kept = Some((repo.to_path_buf(), print, m.clone()));
+    m
+}
+
+/// Every file in the archive (but git's own) by name, size and time.
+fn fingerprint(repo: &Path) -> u64 {
+    use std::hash::{Hash, Hasher};
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    let mut dirs = vec![(repo.to_path_buf(), 0)];
+    while let Some((d, depth)) = dirs.pop() {
+        let Ok(rd) = std::fs::read_dir(&d) else { continue };
+        let mut entries: Vec<_> = rd.flatten().collect();
+        entries.sort_by_key(|e| e.file_name());
+        for e in entries {
+            let Ok(m) = std::fs::metadata(e.path()) else { continue };
+            if m.is_dir() {
+                if e.file_name() != ".git" && depth < 8 {
+                    dirs.push((e.path(), depth + 1));
+                }
+                continue;
+            }
+            (e.path(), m.len(), m.modified().ok()).hash(&mut h);
+        }
+    }
+    h.finish()
 }
 
 /// A few things worth knowing, for the loading screen.

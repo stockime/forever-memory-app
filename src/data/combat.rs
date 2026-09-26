@@ -6,8 +6,9 @@
 //! absorb, 5 power fields, x, y, uiMap, facing, level … as this client writes
 //! them), then the suffix (amount first for damage and heals).
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::fs;
+use super::cache::{Cached, R, W};
 use std::path::Path;
 
 const ADVANCED: usize = 19;
@@ -53,7 +54,7 @@ pub struct PlayerSeen {
     pub max_hp: i64,
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Combat {
     pub units: Vec<Unit>,
     index: HashMap<String, u32>,
@@ -166,36 +167,366 @@ pub fn parse_time(s: &str) -> Option<f64> {
     Some(local.timestamp() as f64 + sec.fract())
 }
 
-/// Parses the files in order; `progress(bytes done, bytes total)` after each.
-pub fn load(
-    files: &[std::path::PathBuf],
-    me: &[String],
-    mut progress: impl FnMut(u64, u64),
-) -> Combat {
-    let mut c = Combat::default();
-    c.spell("Melee");
-    let mine: Vec<u32> = me.iter().map(|g| c.unit(g, "")).collect();
-    let mut last_hit: HashMap<u32, f64> = HashMap::new();
-    let total: u64 = files
-        .iter()
-        .filter_map(|f| fs::metadata(f).ok())
-        .map(|m| m.len())
-        .sum();
-    let mut done = 0;
-    for f in files {
-        if let Ok(text) = fs::read_to_string(f) {
-            c.files += 1;
-            parse(&mut c, &text, &mine, &mut last_hit);
-            done += text.len() as u64;
-            progress(done, total);
-        }
-    }
-    c.dealt.sort_by(|a, b| a.t.total_cmp(&b.t));
-    c.taken.sort_by(|a, b| a.t.total_cmp(&b.t));
-    c
+/// One file parsed on its own, with its own unit and spell tables. What
+/// depends on the files before it (kills, position sampling) is settled
+/// when it joins the whole.
+#[derive(Default)]
+pub struct Part {
+    c: Combat,
+    /// My characters' GUIDs when parsed, sorted.
+    me: Vec<String>,
+    last_hit: HashMap<u32, f64>,
+    loose: Loose,
 }
 
-fn parse(c: &mut Combat, text: &str, mine: &[u32], last_hit: &mut HashMap<u32, f64>) {
+impl Cached for Part {
+    const KIND: &'static str = "combat";
+
+    fn new(_path: &Path, me: &[String]) -> Self {
+        let mut p = Part::default();
+        p.c.spell("Melee");
+        p.c.files = 1;
+        p.me = sorted(me);
+        for g in me {
+            p.c.unit(g, "");
+        }
+        p
+    }
+
+    fn parse(&mut self, text: &str, me: &[String]) {
+        let mine: Vec<u32> = me.iter().map(|g| self.c.unit(g, "")).collect();
+        self.me = sorted(me);
+        parse(
+            &mut self.c,
+            text,
+            &mine,
+            &mut self.last_hit,
+            Some(&mut self.loose),
+        );
+    }
+
+    /// Only characters were added since, and none of them is in this file.
+    fn fits(&self, me: &[String]) -> bool {
+        let named = |g: &String| self.c.index.contains_key(g) || self.loose.unnamed.contains(g);
+        self.me.iter().all(|g| me.contains(g))
+            && me.iter().all(|g| self.me.contains(g) || !named(g))
+    }
+
+    fn write(&self, w: &mut W) {
+        let c = &self.c;
+        w.len(c.units.len());
+        for u in &c.units {
+            w.str(&u.guid);
+            w.str(&u.name);
+            w.u8(u.kind as u8);
+        }
+        w.len(c.spells.len());
+        for s in &c.spells {
+            w.str(s);
+        }
+        for hits in [&c.dealt, &c.taken, &c.healed] {
+            w.len(hits.len());
+            for h in hits {
+                w.f64(h.t);
+                w.u32(h.src);
+                w.u32(h.dst);
+                w.u32(h.spell);
+                w.i64(h.amount);
+                w.i64(h.over);
+                w.u8(h.crit as u8);
+            }
+        }
+        w.len(c.deaths.len());
+        for &t in &c.deaths {
+            w.f64(t);
+        }
+        let positions = |w: &mut W, ps: &[(f64, i64, f64, f64)]| {
+            w.len(ps.len());
+            for &(t, map, x, y) in ps {
+                w.f64(t);
+                w.i64(map);
+                w.f64(x);
+                w.f64(y);
+            }
+        };
+        w.len(c.players.len());
+        for (&u, p) in &c.players {
+            w.u32(u);
+            w.f64(p.first);
+            w.f64(p.last);
+            w.u64(p.lines);
+            w.len(p.spells.len());
+            for (&s, &n) in &p.spells {
+                w.u32(s);
+                w.u32(n);
+            }
+            positions(w, &p.positions);
+            for v in [p.damage_to_me, p.damage_from_me, p.heal_to_me, p.heal_from_me, p.max_hp] {
+                w.i64(v);
+            }
+        }
+        positions(w, &c.my_positions);
+        w.u64(c.lines);
+        w.len(c.files);
+        w.len(self.me.len());
+        for g in &self.me {
+            w.str(g);
+        }
+        w.len(self.loose.died.len());
+        for &(t, u, before) in &self.loose.died {
+            w.f64(t);
+            w.u32(u);
+            w.f64(before.unwrap_or(f64::NAN));
+        }
+        w.len(self.loose.unnamed.len());
+        for g in &self.loose.unnamed {
+            w.str(g);
+        }
+    }
+
+    fn read(r: &mut R) -> Option<Self> {
+        let mut p = Part::default();
+        let c = &mut p.c;
+        for i in 0..r.len()? {
+            let (guid, name) = (r.str()?, r.str()?);
+            let kind = match r.u8()? {
+                0 => UnitKind::Player,
+                1 => UnitKind::Creature,
+                2 => UnitKind::Pet,
+                _ => UnitKind::Other,
+            };
+            c.index.insert(guid.clone(), i as u32);
+            c.units.push(Unit { guid, name, kind });
+        }
+        for i in 0..r.len()? {
+            let s = r.str()?;
+            if i > 0 {
+                c.spell_index.insert(s.clone(), i as u32);
+            }
+            c.spells.push(s);
+        }
+        for hits in [&mut c.dealt, &mut c.taken, &mut c.healed] {
+            for _ in 0..r.len()? {
+                hits.push(Hit {
+                    t: r.f64()?,
+                    src: r.u32()?,
+                    dst: r.u32()?,
+                    spell: r.u32()?,
+                    amount: r.i64()?,
+                    over: r.i64()?,
+                    crit: r.u8()? == 1,
+                });
+            }
+        }
+        for _ in 0..r.len()? {
+            c.deaths.push(r.f64()?);
+        }
+        let positions = |r: &mut R| -> Option<Vec<(f64, i64, f64, f64)>> {
+            (0..r.len()?)
+                .map(|_| Some((r.f64()?, r.i64()?, r.f64()?, r.f64()?)))
+                .collect()
+        };
+        for _ in 0..r.len()? {
+            let u = r.u32()?;
+            let mut s = PlayerSeen {
+                first: r.f64()?,
+                last: r.f64()?,
+                lines: r.u64()?,
+                ..Default::default()
+            };
+            for _ in 0..r.len()? {
+                s.spells.insert(r.u32()?, r.u32()?);
+            }
+            s.positions = positions(r)?;
+            s.damage_to_me = r.i64()?;
+            s.damage_from_me = r.i64()?;
+            s.heal_to_me = r.i64()?;
+            s.heal_from_me = r.i64()?;
+            s.max_hp = r.i64()?;
+            c.players.insert(u, s);
+        }
+        c.my_positions = positions(r)?;
+        c.lines = r.u64()?;
+        c.files = r.len()?;
+        for _ in 0..r.len()? {
+            p.me.push(r.str()?);
+        }
+        for _ in 0..r.len()? {
+            let (t, u, before) = (r.f64()?, r.u32()?, r.f64()?);
+            p.loose.died.push((t, u, (!before.is_nan()).then_some(before)));
+        }
+        for _ in 0..r.len()? {
+            p.loose.unnamed.insert(r.str()?);
+        }
+        // Only needed to parse on, which archived files never do.
+        for h in &p.c.dealt {
+            p.last_hit.insert(h.dst, h.t);
+        }
+        let n = p.c.units.len() as u32;
+        let ok = |u: u32| u == u32::MAX || u < n;
+        let spells = p.c.spells.len() as u32;
+        let valid = [&p.c.dealt, &p.c.taken, &p.c.healed]
+            .iter()
+            .flat_map(|h| h.iter())
+            .all(|h| ok(h.src) && ok(h.dst) && h.spell < spells)
+            && p.c.players.iter().all(|(&u, s)| u < n && s.spells.keys().all(|&k| k < spells))
+            && p.loose.died.iter().all(|d| d.1 < n);
+        valid.then_some(p)
+    }
+}
+
+fn sorted(me: &[String]) -> Vec<String> {
+    let mut v = me.to_vec();
+    v.sort();
+    v.dedup();
+    v
+}
+
+/// The whole, put together from parts in file order.
+pub struct Whole {
+    c: Combat,
+    mine: Vec<u32>,
+    last_hit: HashMap<u32, f64>,
+}
+
+impl Whole {
+    pub fn new(me: &[String]) -> Self {
+        let mut c = Combat::default();
+        c.spell("Melee");
+        let mine = me.iter().map(|g| c.unit(g, "")).collect();
+        Whole {
+            c,
+            mine,
+            last_hit: HashMap::new(),
+        }
+    }
+
+    /// Adds the next file. In the rare case its part cannot be joined as is
+    /// (see `joins`), the file's `text` is parsed again against the whole.
+    pub fn add(&mut self, p: &Part, text: impl FnOnce() -> String) {
+        if !self.joins(p) {
+            self.c.files += 1;
+            parse(&mut self.c, &text(), &self.mine, &mut self.last_hit, None);
+            return;
+        }
+        let c = &mut self.c;
+        let units: Vec<u32> =
+            p.c.units
+                .iter()
+                .map(|u| match c.index.get(&u.guid) {
+                    Some(&i) => i,
+                    None => {
+                        let i = c.units.len() as u32;
+                        c.units.push(u.clone());
+                        c.index.insert(u.guid.clone(), i);
+                        i
+                    }
+                })
+                .collect();
+        let spells: Vec<u32> =
+            p.c.spells
+                .iter()
+                .enumerate()
+                .map(|(i, s)| if i == 0 { 0 } else { c.spell(s) })
+                .collect();
+        let unit = |u: u32| if u == u32::MAX { u } else { units[u as usize] };
+        let hit = |h: &Hit| Hit {
+            src: unit(h.src),
+            dst: unit(h.dst),
+            spell: spells[h.spell as usize],
+            ..*h
+        };
+        for &(t, u, before) in &p.loose.died {
+            let u = unit(u);
+            if before
+                .or_else(|| self.last_hit.get(&u).copied())
+                .is_some_and(|h| t - h < 20.0)
+            {
+                c.kills.push((t, u));
+            }
+        }
+        for h in &p.c.dealt {
+            let h = hit(h);
+            self.last_hit.insert(h.dst, h.t);
+            c.dealt.push(h);
+        }
+        c.taken.extend(p.c.taken.iter().map(hit));
+        c.healed.extend(p.c.healed.iter().map(hit));
+        c.deaths.extend_from_slice(&p.c.deaths);
+        c.my_positions.extend_from_slice(&p.c.my_positions);
+        c.lines += p.c.lines;
+        c.files += p.c.files;
+        for (&u, seen) in &p.c.players {
+            let all = c.players.entry(unit(u)).or_default();
+            if all.first == 0.0 {
+                all.first = seen.first;
+            }
+            if seen.lines > 0 {
+                all.last = seen.last;
+            }
+            all.lines += seen.lines;
+            for (&s, &n) in &seen.spells {
+                *all.spells.entry(spells[s as usize]).or_default() += n;
+            }
+            all.positions.extend_from_slice(&seen.positions);
+            all.damage_to_me += seen.damage_to_me;
+            all.damage_from_me += seen.damage_from_me;
+            all.heal_to_me += seen.heal_to_me;
+            all.heal_from_me += seen.heal_from_me;
+            all.max_hp = all.max_hp.max(seen.max_hp);
+        }
+    }
+
+    /// Whether the part, parsed on its own, came out as parsing it after the
+    /// files before would have: no unit it could not look up was known
+    /// before, and position sampling starts the same (each unit's first
+    /// sample is far enough from its last one so far).
+    fn joins(&self, p: &Part) -> bool {
+        let far =
+            |before: Option<&(f64, i64, f64, f64)>, first: Option<&(f64, i64, f64, f64)>, gap| {
+                match (before, first) {
+                    (Some(b), Some(f)) => f.0 - b.0 >= gap,
+                    _ => true,
+                }
+            };
+        p.loose.unnamed.iter().all(|g| !self.c.index.contains_key(g))
+            && far(self.c.my_positions.last(), p.c.my_positions.first(), 2.0)
+            && p.c.players.iter().all(|(&u, seen)| {
+                let before = self
+                    .c
+                    .index
+                    .get(&p.c.units[u as usize].guid)
+                    .and_then(|g| self.c.players.get(g))
+                    .and_then(|s| s.positions.last());
+                far(before, seen.positions.first(), 10.0)
+            })
+    }
+
+    pub fn finish(mut self) -> Combat {
+        self.c.dealt.sort_by(|a, b| a.t.total_cmp(&b.t));
+        self.c.taken.sort_by(|a, b| a.t.total_cmp(&b.t));
+        self.c
+    }
+}
+
+/// When parsing a file on its own: what can only be settled once the files
+/// before it are known.
+#[derive(Default)]
+struct Loose {
+    /// Deaths of others: (time, unit, when I last hit it before, in this file).
+    died: Vec<(f64, u32, Option<f64>)>,
+    /// Units the advanced fields describe before the file names them; if an
+    /// earlier file named one, the file is parsed again against the whole.
+    unnamed: BTreeSet<String>,
+}
+
+fn parse(
+    c: &mut Combat,
+    text: &str,
+    mine: &[u32],
+    last_hit: &mut HashMap<u32, f64>,
+    mut loose: Option<&mut Loose>,
+) {
     let is_me = |u: u32| mine.contains(&u);
     for line in text.lines() {
         let Some((ts, rest)) = line.split_once("  ") else {
@@ -234,22 +565,30 @@ fn parse(c: &mut Combat, text: &str, mine: &[u32], last_hit: &mut HashMap<u32, f
                 f[adv + 14].parse::<f64>(),
                 f[adv + 15].parse::<f64>(),
                 f[adv + 16].parse::<i64>(),
-            )
-                && let Some(&u) = c.index.get(info) {
-                    if is_me(u) {
-                        if c.my_positions.last().is_none_or(|p| t - p.0 >= 2.0) {
-                            c.my_positions.push((t, map, x, y));
+            ) {
+                match c.index.get(info) {
+                    Some(&u) => {
+                        if is_me(u) {
+                            if c.my_positions.last().is_none_or(|p| t - p.0 >= 2.0) {
+                                c.my_positions.push((t, map, x, y));
+                            }
+                        } else if c.units[u as usize].kind == UnitKind::Player {
+                            let p = c.players.entry(u).or_default();
+                            if p.positions.last().is_none_or(|q| t - q.0 >= 10.0) {
+                                p.positions.push((t, map, x, y));
+                            }
+                            if let Ok(hp) = f[adv + 3].parse::<i64>() {
+                                p.max_hp = p.max_hp.max(hp);
+                            }
                         }
-                    } else if c.units[u as usize].kind == UnitKind::Player {
-                        let p = c.players.entry(u).or_default();
-                        if p.positions.last().is_none_or(|q| t - q.0 >= 10.0) {
-                            p.positions.push((t, map, x, y));
-                        }
-                        if let Ok(hp) = f[adv + 3].parse::<i64>() {
-                            p.max_hp = p.max_hp.max(hp);
+                    }
+                    None => {
+                        if let Some(l) = loose.as_deref_mut() {
+                            l.unnamed.insert(info.to_string());
                         }
                     }
                 }
+            }
         }
 
         for u in [src, dst] {
@@ -331,6 +670,8 @@ fn parse(c: &mut Combat, text: &str, mine: &[u32], last_hit: &mut HashMap<u32, f
             "UNIT_DIED" if dst != u32::MAX => {
                 if is_me(dst) {
                     c.deaths.push(t);
+                } else if let Some(l) = loose.as_deref_mut() {
+                    l.died.push((t, dst, last_hit.get(&dst).copied()));
                 } else if last_hit.get(&dst).is_some_and(|&h| t - h < 20.0) {
                     c.kills.push((t, dst));
                 }
@@ -471,17 +812,30 @@ pub fn log_files(dirs: &[&Path], prefix: &str) -> Vec<std::path::PathBuf> {
 mod tests {
     use super::*;
 
-    #[test]
-    fn parses_real_lines() {
-        let log = "9/26/2026 10:53:48.3342  SPELL_DAMAGE,Pet-0-4615-0-44328-416-010024095A,\"Unknown\",0x1118,0x80000000,Creature-0-4615-0-2087-1502-00003787FF,\"Wretched Zombie\",0xa28,0x80000000,3110,\"Firebolt\",0x4,Creature-0-4615-0-2087-1502-00003787FF,0000000000000000,1,42,3,0,20,0,0,0,1,0,0,0,1898.94,1589.05,1415,3.0346,1,4,4,-1,4,0,0,0,nil,nil,nil,ST
+    /// Each file on its own, then put together, as `data::load` does.
+    fn load(files: &[std::path::PathBuf], me: &[String]) -> Combat {
+        let mut whole = Whole::new(me);
+        for f in files {
+            let text = fs::read_to_string(f).unwrap();
+            let mut part = Part::new(f, me);
+            part.parse(&text, me);
+            whole.add(&part, || text.clone());
+        }
+        whole.finish()
+    }
+
+    const LOG: &str = "9/26/2026 10:53:48.3342  SPELL_DAMAGE,Pet-0-4615-0-44328-416-010024095A,\"Unknown\",0x1118,0x80000000,Creature-0-4615-0-2087-1502-00003787FF,\"Wretched Zombie\",0xa28,0x80000000,3110,\"Firebolt\",0x4,Creature-0-4615-0-2087-1502-00003787FF,0000000000000000,1,42,3,0,20,0,0,0,1,0,0,0,1898.94,1589.05,1415,3.0346,1,4,4,-1,4,0,0,0,nil,nil,nil,ST
 9/26/2026 10:55:28.2642  SPELL_HEAL,Player-4613-00A46D50,\"Dead-ClassicBetaPvP2-\",0x511,0x80000000,Player-4613-00A46D50,\"Dead-ClassicBetaPvP2-\",0x511,0x80000000,635,\"Holy Light\",0x2,Player-4613-00A46D50,0000000000000000,104,104,56,0,167,0,0,0,0,103,103,0,1870.52,1491.64,1420,4.9584,0,41,41,26,0,nil
 9/26/2026 10:55:30.0000  SWING_DAMAGE,Player-4613-00A46D50,\"Dead-ClassicBetaPvP2-\",0x511,0x80000000,Creature-0-1-2-3-4-5,\"Rattlecage Skeleton\",0xa48,0x0,Player-4613-00A46D50,0000000000000000,104,104,56,0,167,0,0,0,0,103,103,0,1870.52,1491.64,1420,4.9584,0,12,12,-1,1,0,0,0,nil,nil,nil
 9/26/2026 10:55:31.0000  UNIT_DIED,0000000000000000,nil,0x80000000,0x80000000,Creature-0-1-2-3-4-5,\"Rattlecage Skeleton\",0xa48,0x0,0";
+
+    #[test]
+    fn parses_real_lines() {
         let dir = std::env::temp_dir().join(format!("fm-combat-{}", std::process::id()));
         fs::create_dir_all(&dir).unwrap();
         let file = dir.join("WoWCombatLog-test.txt");
-        fs::write(&file, log).unwrap();
-        let c = load(&[file], &["Player-4613-00A46D50".to_string()], |_, _| {});
+        fs::write(&file, LOG).unwrap();
+        let c = load(&[file], &["Player-4613-00A46D50".to_string()]);
         fs::remove_dir_all(&dir).ok();
         assert_eq!(c.lines, 4);
         assert_eq!(c.healed.len(), 1);
@@ -492,5 +846,51 @@ mod tests {
         assert_eq!(c.kills.len(), 1);
         assert_eq!(c.unit_name(c.kills[0].1), "Rattlecage Skeleton");
         assert!(c.my_positions.iter().any(|p| p.1 == 1420));
+    }
+
+    fn summary(c: &Combat) -> String {
+        let mut players: Vec<_> = c.players.iter().collect();
+        players.sort_by_key(|(u, _)| **u);
+        format!(
+            "{:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {}",
+            c.units, c.spells, c.dealt, c.taken, c.healed, c.kills, c.deaths, players,
+            c.my_positions, c.lines
+        )
+    }
+
+    /// Files parsed on their own, cached and put together come out as one
+    /// pass over all of them, also when they depend on each other.
+    #[test]
+    fn parts_join_like_one_pass() {
+        let me = ["Player-4613-00A46D50".to_string()];
+        let later = LOG.replace("10:55:31.0000  UNIT_DIED", "10:55:45.0000  UNIT_DIED");
+        for log in [LOG.to_string(), later] {
+            let lines: Vec<&str> = log.lines().collect();
+            let mut one = Whole::new(&me);
+            parse(&mut one.c, &log, &one.mine, &mut one.last_hit, None);
+            let want = summary(&one.finish());
+            for split in 0..=lines.len() {
+                let mut whole = Whole::new(&me);
+                for text in [lines[..split].join("\n"), lines[split..].join("\n")] {
+                    let mut part = Part::new(Path::new(""), &me);
+                    part.parse(&text, &me);
+                    let mut w = W::default();
+                    part.write(&mut w);
+                    let part = Part::read(&mut R(&w.0)).unwrap();
+                    whole.add(&part, || text.clone());
+                }
+                assert_eq!(summary(&whole.finish()), want, "split at {split}");
+            }
+        }
+    }
+
+    #[test]
+    fn parts_fit_new_characters() {
+        let me = vec!["Player-4613-00A46D50".to_string()];
+        let mut part = Part::new(Path::new(""), &me);
+        part.parse(LOG, &me);
+        assert!(part.fits(&[me[0].clone(), "Player-1-2".into()]));
+        assert!(!part.fits(&[me[0].clone(), "Creature-0-1-2-3-4-5".into()]));
+        assert!(!part.fits(&[]));
     }
 }
