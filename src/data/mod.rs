@@ -1,5 +1,6 @@
 pub mod chat;
 pub mod combat;
+pub mod dead;
 pub mod diary;
 pub mod memory;
 pub mod players;

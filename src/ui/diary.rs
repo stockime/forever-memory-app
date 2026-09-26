@@ -263,7 +263,7 @@ pub enum VoiceMsg {
     Failed(String),
 }
 
-fn run(st: &mut State, busy: &str, work: impl FnOnce() -> VoiceMsg + Send + 'static) {
+pub(crate) fn run(st: &mut State, busy: &str, work: impl FnOnce() -> VoiceMsg + Send + 'static) {
     let (tx, rx) = std::sync::mpsc::channel();
     std::thread::spawn(move || {
         tx.send(work()).ok();
@@ -273,7 +273,7 @@ fn run(st: &mut State, busy: &str, work: impl FnOnce() -> VoiceMsg + Send + 'sta
     st.voice_error = None;
 }
 
-fn poll_voice(st: &mut State) {
+pub(crate) fn poll_voice(st: &mut State) {
     let Some(rx) = &st.voice_job else { return };
     let Ok(msg) = rx.try_recv() else { return };
     st.voice_job = None;

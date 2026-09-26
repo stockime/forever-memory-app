@@ -9,7 +9,7 @@ use super::memory::{Character, Event, QuestStatus, parse_link};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
-const MARKER: &str = "<!-- forever-memory:";
+pub const MARKER: &str = "<!-- forever-memory:";
 
 pub fn day_of(t: i64) -> String {
     crate::theme::local(t as f64).format("%Y-%m-%d").to_string()
