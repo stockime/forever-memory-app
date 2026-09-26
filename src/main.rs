@@ -372,6 +372,9 @@ pub struct State {
     /// A character to select once the archive is read.
     pub select_slug: Option<String>,
     pub chronicle: ui::chronicle::Book,
+    /// Standing page: the faction opened for its history.
+    pub faction: Option<String>,
+    pub talk: ui::conversations::Talk,
     pub dead: ui::dead::Deaths,
 }
 
@@ -436,6 +439,17 @@ impl App {
         // FM_PLAYERS_TAB=1 or 2 opens the fellowship or the nemeses.
         if let Some(tab) = std::env::var("FM_PLAYERS_TAB").ok().and_then(|t| t.parse().ok()) {
             app.state.players_tab = tab;
+        }
+        // FM_TALK=<npc name> opens Quests > Conversations on that NPC, their
+        // last scene played out in full (empty: the NPC met last).
+        if let Ok(npc) = std::env::var("FM_TALK") {
+            app.state.quest_tab = ui::quests::CONVERSATIONS;
+            app.state.talk.npc = Some(npc).filter(|n| !n.is_empty());
+            app.state.talk.reveal = true;
+        }
+        // FM_FACTION=<name> opens that faction's history on the Standing page.
+        if let Ok(f) = std::env::var("FM_FACTION") {
+            app.state.faction = Some(f);
         }
         // FM_DIARY_DAY=YYYY-MM-DD opens the diary on that day.
         if let Ok(day) = std::env::var("FM_DIARY_DAY") {

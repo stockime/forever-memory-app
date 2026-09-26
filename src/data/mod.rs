@@ -2,6 +2,7 @@ pub mod bonds;
 mod cache;
 pub mod chat;
 pub mod combat;
+pub mod conversations;
 pub mod dead;
 pub mod deeds;
 pub mod diary;
@@ -10,6 +11,7 @@ pub mod letters;
 pub mod memory;
 pub mod players;
 pub mod presets;
+pub mod standing;
 
 #[cfg(test)]
 mod bench;
@@ -250,7 +252,7 @@ pub fn art_keys(m: &Model) -> Vec<String> {
     for id in crate::ui::widgets::icons::ALL {
         icon(Some(*id), &mut keys);
     }
-    for id in [3450737, 7963776, 7963779] {
+    for id in [3450737, 7963776, 7963779, 236683, 134472] {
         icon(Some(id), &mut keys);
     }
     for id in deeds::icons() {
@@ -307,6 +309,9 @@ pub fn art_keys(m: &Model) -> Vec<String> {
                 Value::Array(a) => walk.extend(a.iter()),
                 _ => {}
             }
+        }
+        for f in &c.reputation {
+            icon(Some(standing::icon(f.id)), &mut keys);
         }
         for ex in c.explored.values() {
             for o in &ex.overlays {

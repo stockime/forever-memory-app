@@ -344,8 +344,8 @@ pub fn facts(m: &Model, c: &Character, day: &str) -> Vec<String> {
                         .memory
                         .gossip
                         .iter()
-                        .find(|(n, _, _)| *n == name)
-                        .map(|(_, t, _)| format!(", who said: \"{}\"", clip(t, 240)))
+                        .find(|g| g.name == name)
+                        .map(|g| format!(", who said: \"{}\"", clip(&g.text, 240)))
                         .unwrap_or_default();
                     say(format!("spoke with {name}{said}"));
                 }
