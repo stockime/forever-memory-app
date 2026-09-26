@@ -51,6 +51,36 @@ progress bar, tips about your characters) until the logs are read and all game
 art is painted, so pages never fill in piece by piece. Ctrl+K searches quests, players and items from anywhere; F5 reloads. The app
 also reloads on its own when armory-sync commits a save.
 
+## Screenshots
+
+**Overview**
+
+![Overview](docs/screenshots/overview.png)
+
+**Armory**
+
+![Armory](docs/screenshots/armory.png)
+
+**Diary**
+
+![Diary](docs/screenshots/diary.png)
+
+**Quests**
+
+![Quests](docs/screenshots/quests.png)
+
+**Map**
+
+![Map](docs/screenshots/map.png)
+
+**Combat**
+
+![Combat](docs/screenshots/combat.png)
+
+**Gold & loot**
+
+![Gold & loot](docs/screenshots/gold.png)
+
 ## Data
 
 | What | Where (override with) |
