@@ -272,6 +272,9 @@ settings, and only one recorder works on an archive at a time.
 Command line: `forever-memory record` archives the current saves once;
 `forever-memory check-s3` checks the backup settings;
 `forever-memory diary <character> [YYYY-MM-DD]` writes a diary entry;
+`forever-memory letter <from> <to> [reply]` writes a letter between two characters;
+`forever-memory epitaph <character> [n]` writes the epitaph for a death;
+`forever-memory previously <character> [YYYY-MM-DD]` writes the "Previously on…" stream page;
 `FM_SHOT=out.png FM_PAGE=quests forever-memory` saves a screenshot of a page
 and quits (used to check layouts), `FM_LANG=de` picks a language for it.
 

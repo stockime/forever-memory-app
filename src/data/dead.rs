@@ -343,6 +343,43 @@ pub fn inscription(prose: &str) -> (String, String) {
     }
 }
 
+/// `forever-memory epitaph <character> [n]`: writes the epitaph for a death
+/// (the latest, or the n-th) as the Book of the Dead would, and prints it.
+pub fn cli(args: &[String]) -> ! {
+    let settings = crate::config::get();
+    crate::i18n::set(settings.lang());
+    let paths = super::Paths::from_settings(&settings);
+    let m = super::load(&paths, None);
+    let who = args.first().map(|s| s.to_lowercase()).unwrap_or_default();
+    let Some(c) = m.memory.characters.iter().find(|c| c.slug == who || c.name.to_lowercase() == who) else {
+        eprintln!("usage: forever-memory epitaph <character> [n]");
+        std::process::exit(2);
+    };
+    let all = deaths(&m, c);
+    let d = match args.get(1).and_then(|n| n.parse::<usize>().ok()) {
+        Some(n) => all.iter().find(|d| d.nth == n),
+        None => all.last(),
+    };
+    let Some(d) = d else {
+        eprintln!("{} has no such death", c.name);
+        std::process::exit(1);
+    };
+    let facts = facts(c, d, all.len());
+    match crate::claude::write(SYSTEM, &prompt(c, &facts)).and_then(|text| {
+        store(&paths.repo, c, d.t, &text, &facts)?;
+        Ok(text)
+    }) {
+        Ok(text) => {
+            println!("{text}");
+            std::process::exit(0);
+        }
+        Err(e) => {
+            eprintln!("{e}");
+            std::process::exit(1);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -89,6 +89,9 @@ fn main() -> eframe::Result {
     if args.first().map(String::as_str) == Some("diary") {
         diary_cli(&args[1..]);
     }
+    if args.first().map(String::as_str) == Some("epitaph") {
+        data::dead::cli(&args[1..]);
+    }
     if args.first().map(String::as_str) == Some("letter") {
         data::letters::cli(&args[1..]);
     }
@@ -459,6 +462,13 @@ impl App {
         // FM_FACTION=<name> opens that faction's history on the Standing page.
         if let Ok(f) = std::env::var("FM_FACTION") {
             app.state.faction = Some(f);
+        }
+        // FM_LETTERS=<from>:<to> opens the letters between two characters (slugs).
+        if let Ok(v) = std::env::var("FM_LETTERS")
+            && let Some((from, to)) = v.split_once(':')
+        {
+            app.state.letters.from = Some(from.to_string());
+            app.state.letters.to = Some(to.to_string());
         }
         // FM_SESSION=<n> opens the journal on that session (0 is the first).
         if let Some(n) = std::env::var("FM_SESSION").ok().and_then(|n| n.parse().ok()) {

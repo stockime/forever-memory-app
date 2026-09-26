@@ -1392,6 +1392,10 @@ def main():
     saved = os.path.join(os.path.dirname(os.path.abspath(__file__)), "diary")
     if os.path.isdir(saved):
         shutil.copytree(saved, os.path.join(tom, "diary"))
+    # And the epitaphs for his two deaths (`forever-memory epitaph`).
+    saved = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dead")
+    if os.path.isdir(saved):
+        shutil.copytree(saved, os.path.join(tom, "dead"))
     n = s.n
     alt_quests = {}
     collected = []
