@@ -1,12 +1,24 @@
-//! Forever Memory: a local armory and memory explorer for WoW Forever,
-//! reading the forever-memory archive, the native logs and the game's art.
+//! Forever Memory: a local armory and memory explorer for World of Warcraft:
+//! Forever, reading what the armory addon records, the game's native logs
+//! and its art.
 
+#![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
+
+mod addon;
 mod art;
 mod claude;
+mod config;
 mod data;
+mod gamedata;
+mod i18n;
+mod platform;
+mod s3;
+mod savedvars;
+mod sync;
 mod theme;
 mod ui;
 mod voice;
+mod writer;
 
 use data::{Model, Paths};
 use std::sync::Arc;
@@ -16,7 +28,9 @@ use std::time::{Duration, Instant};
 /// `forever-memory diary <character> [YYYY-MM-DD]` writes one diary entry
 /// without opening the window (the day defaults to the latest one played).
 fn diary_cli(args: &[String]) -> ! {
-    let paths = Paths::from_env();
+    let settings = config::get();
+    i18n::set(settings.lang());
+    let paths = Paths::from_settings(&settings);
     let model = data::load(&paths, None);
     let who = args.first().map(|s| s.to_lowercase()).unwrap_or_default();
     let Some(c) = model
@@ -74,6 +88,31 @@ fn main() -> eframe::Result {
     if args.first().map(String::as_str) == Some("diary") {
         diary_cli(&args[1..]);
     }
+    // `forever-memory record [armory.lua]`: archives the addon's saves once and exits.
+    if args.first().map(String::as_str) == Some("record") {
+        let settings = config::get();
+        let files: Vec<std::path::PathBuf> = match args.get(1) {
+            Some(f) => vec![f.into()],
+            None => settings
+                .install()
+                .and_then(|i| Some(platform::saved_variables(&i, &settings.flavor_in(&i)?)))
+                .unwrap_or_default(),
+        };
+        if files.is_empty() {
+            eprintln!("no armory SavedVariables found");
+            std::process::exit(2);
+        }
+        for f in files {
+            match sync::record(&settings, &f) {
+                Ok(msg) => println!("{}: {}", f.display(), msg.as_deref().unwrap_or("no change")),
+                Err(e) => {
+                    eprintln!("{}: {e}", f.display());
+                    std::process::exit(1);
+                }
+            }
+        }
+        std::process::exit(0);
+    }
     // `forever-memory play <file.mp3>`: plays a file through the narration player (a check).
     if args.first().map(String::as_str) == Some("play") {
         let path = std::path::PathBuf::from(args.get(1).cloned().unwrap_or_default());
@@ -118,6 +157,7 @@ pub enum Page {
     Combat,
     Economy,
     Players,
+    Settings,
 }
 
 impl Page {
@@ -134,15 +174,16 @@ impl Page {
     ];
     fn label(self) -> &'static str {
         match self {
-            Page::Overview => "Overview",
-            Page::Armory => "Armory",
-            Page::Journal => "Journal",
-            Page::Diary => "Diary",
-            Page::Quests => "Quests",
-            Page::Map => "Map",
-            Page::Combat => "Combat",
-            Page::Economy => "Gold & loot",
-            Page::Players => "Players",
+            Page::Overview => tr!("Overview"),
+            Page::Armory => tr!("Armory"),
+            Page::Journal => tr!("Journal"),
+            Page::Diary => tr!("Diary"),
+            Page::Quests => tr!("Quests"),
+            Page::Map => tr!("Map"),
+            Page::Combat => tr!("Combat"),
+            Page::Economy => tr!("Gold & loot"),
+            Page::Players => tr!("Players"),
+            Page::Settings => tr!("Settings"),
         }
     }
     /// Game icons (file IDs) for the navigation.
@@ -158,6 +199,7 @@ impl Page {
             Page::Combat => icons::SWORDS,
             Page::Economy => icons::COIN,
             Page::Players => icons::GROUP,
+            Page::Settings => 134063, // a gear
         }
     }
 }
@@ -196,6 +238,10 @@ pub struct State {
     pub voice_error: Option<String>,
     pub narrator: Option<voice::Player>,
     pub el_key_input: String,
+    pub settings_page: ui::settings::Page,
+    pub sync_status: sync::SharedStatus,
+    /// The game or archive folder changed: find everything again.
+    pub paths_changed: bool,
 }
 
 pub struct App {
@@ -208,6 +254,8 @@ pub struct App {
     page: Page,
     state: State,
     progress: data::Shared,
+    /// Set when the recorder wrote to the archive.
+    recorded: Arc<std::sync::atomic::AtomicBool>,
     /// FM_SHOT=<file.png> [FM_PAGE=quests]: save a screenshot after loading and quit.
     shot: Option<(std::path::PathBuf, Instant, bool)>,
 }
@@ -215,9 +263,19 @@ pub struct App {
 impl App {
     fn new(ctx: &egui::Context) -> Self {
         theme::install(ctx);
-        let paths = Paths::from_env();
-        let art = art::Art::new(ctx, paths.art.clone(), paths.wowdata.clone());
+        let settings = config::get();
+        i18n::set(settings.lang());
+        let paths = Paths::from_settings(&settings);
+        let art = art::Art::new(ctx, paths.art.clone());
         let repo = paths.repo.clone();
+        let sync_status = sync::SharedStatus::default();
+        let repaint = ctx.clone();
+        let recorded = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let flag = recorded.clone();
+        sync::spawn(config::shared(), sync_status.clone(), move || {
+            flag.store(true, std::sync::atomic::Ordering::Relaxed);
+            repaint.request_repaint();
+        });
         let mut app = App {
             paths,
             model: None,
@@ -227,17 +285,23 @@ impl App {
             art,
             page: Page::Overview,
             progress: Default::default(),
+            recorded,
             state: State {
                 repo,
+                sync_status,
                 ..Default::default()
             },
             shot: std::env::var("FM_SHOT")
                 .ok()
                 .map(|p| (p.into(), Instant::now(), false)),
         };
+        if !settings.onboarded {
+            app.page = Page::Settings;
+        }
         if let Ok(p) = std::env::var("FM_PAGE") {
             app.page = Page::ALL
                 .into_iter()
+                .chain([Page::Settings])
                 .find(|x| x.label().to_lowercase().starts_with(&p.to_lowercase()))
                 .unwrap_or(Page::Overview);
         }
@@ -269,6 +333,10 @@ impl App {
                 self.model = Some(Arc::new(m));
                 self.loading = None;
             }
+        }
+        // A new save was recorded: show it now rather than on the next check.
+        if self.loading.is_none() && self.recorded.swap(false, std::sync::atomic::Ordering::Relaxed) {
+            self.reload(ctx);
         }
         if self.last_check.elapsed() > Duration::from_secs(5) {
             self.last_check = Instant::now();
@@ -348,6 +416,15 @@ impl eframe::App for App {
         if self.state.character >= model.memory.characters.len() {
             self.state.character = 0;
         }
+        if model.memory.characters.is_empty() {
+            self.page = Page::Settings; // the welcome
+        }
+        if std::mem::take(&mut self.state.paths_changed) {
+            self.paths = Paths::from_settings(&config::get());
+            self.state.repo = self.paths.repo.clone();
+            self.art.retry();
+            self.state.reload_now = true;
+        }
         if ctx.input(|i| i.key_pressed(egui::Key::F5)) || std::mem::take(&mut self.state.reload_now)
         {
             self.reload(&ctx);
@@ -391,85 +468,30 @@ impl eframe::App for App {
                     .get(self.state.character)
                     .map(|c| c.class_file.to_lowercase())
                     .unwrap_or_default();
-                for p in Page::ALL {
-                    let selected = self.page == p;
-                    // The active page is marked by background and colour only.
-                    let (rect, resp) = ui.allocate_exact_size(
-                        egui::vec2(ui.available_width(), 38.0),
-                        egui::Sense::click(),
-                    );
-                    let painter = ui.painter();
-                    if selected || resp.hovered() {
-                        painter.rect_filled(
-                            rect,
-                            7.0,
-                            if selected {
-                                theme::RAISED
-                            } else {
-                                egui::Color32::from_rgb(0x12, 0x18, 0x33)
-                            },
-                        );
-                    }
-                    let icon_rect = egui::Rect::from_center_size(
-                        egui::pos2(rect.left() + 20.0, rect.center().y),
-                        egui::vec2(24.0, 24.0),
-                    );
-                    let tex = if p == Page::Overview {
-                        self.art.get(&ctx, &format!("class-{class}.png"))
-                    } else {
-                        self.art.icon(&ctx, Some(p.icon()))
-                    };
-                    if let Some(t) = tex {
-                        let tint = if selected {
-                            egui::Color32::WHITE
-                        } else {
-                            egui::Color32::from_gray(185)
-                        };
-                        painter.image(
-                            t.id(),
-                            icon_rect,
-                            egui::Rect::from_min_max(
-                                egui::pos2(0.07, 0.07),
-                                egui::pos2(0.93, 0.93),
-                            ),
-                            tint,
-                        );
-                        painter.rect_stroke(
-                            icon_rect,
-                            4.0,
-                            egui::Stroke::new(1.0, egui::Color32::from_rgb(0x6b, 0x5a, 0x2e)),
-                            egui::StrokeKind::Outside,
-                        );
-                    }
-                    painter.text(
-                        egui::pos2(rect.left() + 44.0, rect.center().y),
-                        egui::Align2::LEFT_CENTER,
-                        p.label(),
-                        egui::FontId::proportional(16.5),
-                        if selected { theme::GOLD } else { theme::INK },
-                    );
-                    if resp
-                        .on_hover_cursor(egui::CursorIcon::PointingHand)
-                        .clicked()
-                    {
+                for p in Page::ALL.into_iter().filter(|_| !model.memory.characters.is_empty()) {
+                    if nav_item(ui, &mut self.art, p, self.page == p, &class) {
                         self.page = p;
                     }
                 }
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
+                    if nav_item(ui, &mut self.art, Page::Settings, self.page == Page::Settings, &class) {
+                        self.page = Page::Settings;
+                    }
+                    ui.add_space(10.0);
                     let m = &model;
                     ui.label(
-                        egui::RichText::new(format!(
-                            "{} events\n{} combat log lines\n{} chat lines\n{} players met",
-                            theme::thousands(
+                        egui::RichText::new(tr!(
+                            "{events} events\n{combat} combat log lines\n{chat} chat lines\n{players} players met",
+                            events = theme::thousands(
                                 m.memory
                                     .characters
                                     .iter()
                                     .map(|c| c.events.len() as i64)
                                     .sum()
                             ),
-                            theme::thousands(m.combat.lines as i64),
-                            theme::thousands(m.chat.len() as i64),
-                            m.players.len()
+                            combat = theme::thousands(m.combat.lines as i64),
+                            chat = theme::thousands(m.chat.len() as i64),
+                            players = m.players.len()
                         ))
                         .small()
                         .color(theme::MUTED),
@@ -480,11 +502,11 @@ impl eframe::App for App {
         egui::CentralPanel::default()
             .frame(egui::Frame::new().fill(theme::NIGHT).inner_margin(egui::Margin { left: 8, right: 24, top: 8, bottom: 0 }))
             .show(ui, |ui| {
-                if model.memory.characters.is_empty() {
-                    ui::empty(ui, "No characters yet. Log in with the armory addon and let armory-sync archive a save.");
+                let st = &mut self.state;
+                if self.page == Page::Settings {
+                    ui::settings::show(ui, st, model.memory.characters.len());
                     return;
                 }
-                let st = &mut self.state;
                 let art = &mut self.art;
                 match self.page {
                     Page::Overview => ui::overview::show(ui, &model, st, art, &mut self.page),
@@ -496,9 +518,49 @@ impl eframe::App for App {
                     Page::Combat => ui::combat::show(ui, &model, st, art),
                     Page::Economy => ui::economy::show(ui, &model, st, art),
                     Page::Players => ui::players::show(ui, &model, st, art),
+                    Page::Settings => {}
                 }
             });
     }
+}
+
+/// One page in the navigation; returns whether it was clicked. The active
+/// page is marked by background and colour only.
+fn nav_item(ui: &mut egui::Ui, art: &mut art::Art, p: Page, selected: bool, class: &str) -> bool {
+    let ctx = ui.ctx().clone();
+    let (rect, resp) = ui.allocate_exact_size(egui::vec2(ui.available_width(), 38.0), egui::Sense::click());
+    let painter = ui.painter();
+    if selected || resp.hovered() {
+        painter.rect_filled(
+            rect,
+            7.0,
+            if selected { theme::RAISED } else { egui::Color32::from_rgb(0x12, 0x18, 0x33) },
+        );
+    }
+    let icon_rect = egui::Rect::from_center_size(egui::pos2(rect.left() + 20.0, rect.center().y), egui::vec2(24.0, 24.0));
+    let tex = if p == Page::Overview && !class.is_empty() {
+        art.get(&ctx, &format!("class-{class}.png"))
+    } else {
+        art.icon(&ctx, Some(p.icon()))
+    };
+    if let Some(t) = tex {
+        let tint = if selected { egui::Color32::WHITE } else { egui::Color32::from_gray(185) };
+        painter.image(t.id(), icon_rect, egui::Rect::from_min_max(egui::pos2(0.07, 0.07), egui::pos2(0.93, 0.93)), tint);
+        painter.rect_stroke(
+            icon_rect,
+            4.0,
+            egui::Stroke::new(1.0, egui::Color32::from_rgb(0x6b, 0x5a, 0x2e)),
+            egui::StrokeKind::Outside,
+        );
+    }
+    painter.text(
+        egui::pos2(rect.left() + 44.0, rect.center().y),
+        egui::Align2::LEFT_CENTER,
+        p.label(),
+        egui::FontId::proportional(16.5),
+        if selected { theme::GOLD } else { theme::INK },
+    );
+    resp.on_hover_cursor(egui::CursorIcon::PointingHand).clicked()
 }
 
 /// The first read, drawn like the game's own loading screen: Forever's

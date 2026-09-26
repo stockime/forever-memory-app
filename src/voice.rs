@@ -1,9 +1,11 @@
-//! Diary narration with ElevenLabs. Each character gets one voice, designed
-//! once from their race, class and personality note and kept in the archive
-//! (characters/<slug>/voice.json), so every entry is read in the same voice.
+//! Diary narration with ElevenLabs. Each character gets one voice per
+//! language, designed once from their race, class and personality note and
+//! kept in the archive (characters/<slug>/voice.json, voice.de.json, ...), so
+//! every entry is read in the same voice.
 //! Spoken entries are cached as mp3 and only regenerated when the text changes.
 
 use crate::data::memory::Character;
+use crate::i18n::Lang;
 use serde_json::{Value, json};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -13,29 +15,21 @@ const API: &str = "https://api.elevenlabs.io/v1";
 const TTS_MODEL: &str = "eleven_v3";
 const DESIGN_MODEL: &str = "eleven_ttv_v3";
 
-fn home() -> PathBuf {
-    PathBuf::from(std::env::var("HOME").unwrap_or_default())
-}
-
+/// Where the key is kept: the settings file.
 pub fn key_file() -> PathBuf {
-    home().join(".config/forever-memory/elevenlabs-api-key")
+    crate::config::settings_file()
 }
 
 pub fn api_key() -> Option<String> {
-    std::env::var("ELEVENLABS_API_KEY")
-        .ok()
-        .or_else(|| std::fs::read_to_string(key_file()).ok())
-        .map(|k| k.trim().to_string())
-        .filter(|k| !k.is_empty())
+    crate::config::get().elevenlabs_key()
 }
 
 pub fn save_key(key: &str) -> Result<(), String> {
-    let path = key_file();
-    std::fs::create_dir_all(path.parent().unwrap()).map_err(|e| e.to_string())?;
-    std::fs::write(&path, key.trim()).map_err(|e| e.to_string())?;
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600))
-        .map_err(|e| e.to_string())
+    crate::config::update(|s| s.elevenlabs_key = key.trim().to_string())
+}
+
+fn lang() -> Lang {
+    crate::i18n::current()
 }
 
 #[derive(Clone, Debug, Default)]
@@ -46,7 +40,11 @@ pub struct Voice {
 }
 
 pub fn voice_path(repo: &Path, c: &Character) -> PathBuf {
-    repo.join("characters").join(&c.slug).join("voice.json")
+    let file = match lang() {
+        Lang::En => "voice.json".to_string(),
+        l => format!("voice.{}.json", l.code()),
+    };
+    repo.join("characters").join(&c.slug).join(file)
 }
 
 pub fn load_voice(repo: &Path, c: &Character) -> Option<Voice> {
@@ -111,6 +109,17 @@ fn in_game_style(race: &str, female: bool) -> &'static str {
     }
 }
 
+/// The race's internal name ("Scourge", "NightElf"), the same in every
+/// client language, as the English name the voice styles use.
+fn race(c: &Character) -> &str {
+    match c.snapshot.get("raceFile").and_then(Value::as_str) {
+        Some("Scourge") => "Undead",
+        Some("NightElf") => "Night Elf",
+        Some(r @ ("Human" | "Dwarf" | "Gnome" | "Orc" | "Troll" | "Tauren")) => r,
+        _ => &c.race,
+    }
+}
+
 fn female(c: &Character) -> bool {
     c.snapshot.get("sex").and_then(Value::as_i64) == Some(3)
 }
@@ -120,9 +129,16 @@ fn female(c: &Character) -> bool {
 pub fn describe(c: &Character) -> String {
     let mut d = format!(
         "{}. A {} reading their own travel journal aloud, unhurried and personal.",
-        in_game_style(&c.race, female(c)),
-        c.class.to_lowercase()
+        in_game_style(race(c), female(c)),
+        c.class_file.to_lowercase()
     );
+    if lang() != Lang::En {
+        d += &format!(
+            " Speaks {} as a native speaker, like the {} voice cast of the game.",
+            lang().english_name(),
+            lang().english_name()
+        );
+    }
     let note = c.personality.trim();
     if !note.is_empty() {
         d += &format!(" Character: {note}");
@@ -135,7 +151,7 @@ pub fn describe(c: &Character) -> String {
 pub fn seed(c: &Character) -> u32 {
     use std::hash::{Hash, Hasher};
     let mut h = std::collections::hash_map::DefaultHasher::new();
-    (c.race.as_str(), female(c)).hash(&mut h);
+    (race(c), female(c), lang().code()).hash(&mut h);
     (h.finish() % 2_000_000_000) as u32
 }
 
@@ -179,7 +195,15 @@ fn check(
 
 /// Designs voices for a description; returns (generated voice id, preview mp3).
 pub fn design(key: &str, description: &str, seed: u32) -> Result<Vec<(String, Vec<u8>)>, String> {
-    let body = json!({"voice_description": description, "model_id": DESIGN_MODEL, "auto_generate_text": true, "seed": seed});
+    // The preview is spoken in the diary's language, so the voice is designed for it.
+    let body = match sample(lang()) {
+        None => {
+            json!({"voice_description": description, "model_id": DESIGN_MODEL, "auto_generate_text": true, "seed": seed})
+        }
+        Some(text) => {
+            json!({"voice_description": description, "model_id": DESIGN_MODEL, "text": text, "seed": seed})
+        }
+    };
     let mut resp = check(post("/text-to-voice/design", key, body)?)?;
     let v: Value = resp.body_mut().read_json().map_err(|e| e.to_string())?;
     use base64::Engine;
@@ -206,6 +230,28 @@ pub fn design(key: &str, description: &str, seed: u32) -> Result<Vec<(String, Ve
         return Err("ElevenLabs returned no voice previews.".into());
     }
     Ok(out)
+}
+
+/// A journal passage for designing a voice in a language other than English.
+fn sample(l: Lang) -> Option<&'static str> {
+    Some(match l {
+        Lang::En => return None,
+        Lang::De => {
+            "Heute führte mich der Weg durch die alten Friedhöfe. Ich habe nicht gelacht, aber ich habe seine Worte aufgeschrieben, bevor ich irgendetwas anderes tat, denn ich ahne, dass ich sie noch brauchen werde. Das Licht hat mir geantwortet."
+        }
+        Lang::Fr => {
+            "Aujourd'hui, la route m'a mené à travers les vieux cimetières. Je n'ai pas ri, mais j'ai noté ses paroles avant toute autre chose, car je sens que j'en aurai besoin. La Lumière m'a répondu, malgré ce que je suis devenu."
+        }
+        Lang::Es => {
+            "Hoy el camino me llevó por los viejos cementerios. No me reí, pero escribí sus palabras antes que nada, porque sospecho que las voy a necesitar. La Luz me respondió, a pesar de lo que me he convertido."
+        }
+        Lang::Pt => {
+            "Hoje a estrada me levou pelos velhos cemitérios. Eu não ri, mas anotei as palavras dele antes de qualquer outra coisa, porque desconfio que vou precisar delas. A Luz me respondeu, apesar do que me tornei."
+        }
+        Lang::Zh => {
+            "今天，道路带我穿过了古老的墓地。我没有笑，但我在做任何事之前先把他的话写了下来，因为我预感自己终将需要它们。尽管我已变成如今的模样，圣光依然回应了我。我会继续向前走，直到找到答案为止。"
+        }
+    })
 }
 
 /// Keeps a designed voice for good; returns its voice id.
@@ -269,8 +315,8 @@ pub fn audio_path(c: &Character, day: &str, voice_id: &str, text: &str) -> PathB
     use std::hash::{Hash, Hasher};
     let mut h = std::collections::hash_map::DefaultHasher::new();
     (voice_id, text).hash(&mut h);
-    home()
-        .join(".local/share/forever-memory/audio")
+    crate::platform::data_dir()
+        .join("audio")
         .join(&c.slug)
         .join(format!("{day}-{:016x}.mp3", h.finish()))
 }

@@ -7,26 +7,29 @@ pub mod players;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-/// Where everything lives; each can be overridden from the environment.
+/// Where everything lives, from the settings.
 #[derive(Clone, Debug)]
 pub struct Paths {
     pub repo: PathBuf,
     pub raw_logs: PathBuf,
+    /// The game's Logs folder, for the session in progress.
     pub live_logs: PathBuf,
     pub art: PathBuf,
-    pub wowdata: PathBuf,
+    pub game: Option<crate::art::Game>,
 }
 
 impl Paths {
-    pub fn from_env() -> Self {
-        let home = PathBuf::from(std::env::var("HOME").unwrap_or_default());
-        let env = |k: &str, d: PathBuf| std::env::var(k).map(PathBuf::from).unwrap_or(d);
+    pub fn from_settings(s: &crate::config::Settings) -> Self {
+        let game = crate::art::Game::from_settings(s);
         Paths {
-            repo: env("FM_REPO", home.join("Work/personal/forever-memory")),
-            raw_logs: env("FM_RAW_LOGS", home.join(".local/share/forever-memory/logs")),
-            live_logs: env("FM_LIVE_LOGS", home.join("Games/battlenet/drive_c/Program Files (x86)/World of Warcraft/_classic_beta_/Logs")),
-            art: env("FM_ART", home.join(".cache/forever-memory/art")),
-            wowdata: env("FM_WOWDATA", home.join(".local/bin/wowdata")),
+            repo: s.archive_dir(),
+            raw_logs: s.raw_logs_dir(),
+            live_logs: game
+                .as_ref()
+                .map(|g| g.install.join(&g.flavor).join("Logs"))
+                .unwrap_or_default(),
+            art: crate::platform::cache_dir().join("art"),
+            game,
         }
     }
 }
@@ -66,12 +69,13 @@ fn report(p: Option<&Shared>, frac: f32, stage: &str) {
 /// Reads everything. With `progress`, also renders all game art the pages
 /// will need, so the first frame shows the finished picture.
 pub fn load(p: &Paths, progress: Option<&Shared>) -> Model {
-    report(progress, 0.02, "Opening the archive");
+    report(progress, 0.02, crate::tr!("Opening the archive"));
     let memory = memory::load(&p.repo);
     if let (Some(pr), Some(c)) = (progress, memory.characters.first()) {
         if let Ok(mut g) = pr.lock() {
-            g.continent = Some(match c.race.as_str() {
-                "Orc" | "Troll" | "Tauren" | "Night Elf" => "kalimdor",
+            let race = c.snapshot.get("raceFile").and_then(serde_json::Value::as_str);
+            g.continent = Some(match race {
+                Some("Orc" | "Troll" | "Tauren" | "NightElf") => "kalimdor",
                 _ => "easternkingdom",
             });
             g.tips = tips(&memory);
@@ -87,13 +91,13 @@ pub fn load(p: &Paths, progress: Option<&Shared>) -> Model {
         report(
             progress,
             0.08 + 0.52 * done as f32 / total.max(1) as f32,
-            "Reading the combat logs",
+            crate::tr!("Reading the combat logs"),
         );
     });
     let fights = combat::fights(&combat);
-    report(progress, 0.62, "Reading what was said");
+    report(progress, 0.62, crate::tr!("Reading what was said"));
     let chat = chat::load(&chat_files);
-    report(progress, 0.68, "Remembering faces");
+    report(progress, 0.68, crate::tr!("Remembering faces"));
     let players = players::build(&combat, &chat, &names, &memory.players);
     let model = Model {
         memory,
@@ -107,7 +111,7 @@ pub fn load(p: &Paths, progress: Option<&Shared>) -> Model {
     if progress.is_some() {
         prefetch_art(p, &model, progress);
     }
-    report(progress, 1.0, "Ready");
+    report(progress, 1.0, crate::tr!("Ready"));
     model
 }
 
@@ -248,7 +252,7 @@ pub fn art_keys(m: &Model) -> Vec<String> {
 }
 
 fn prefetch_art(p: &Paths, m: &Model, progress: Option<&Shared>) {
-    let _ = std::fs::create_dir_all(&p.art);
+    let Some(game) = &p.game else { return };
     let missing: Vec<String> = art_keys(m)
         .into_iter()
         .filter(|k| !p.art.join(k).exists())
@@ -257,18 +261,13 @@ fn prefetch_art(p: &Paths, m: &Model, progress: Option<&Shared>) {
         report(
             progress,
             0.7 + 0.29 * (n * 40) as f32 / missing.len().max(1) as f32,
-            &format!(
-                "Painting icons ({} of {})",
-                (n * 40).min(missing.len()),
-                missing.len()
+            &crate::tr!(
+                "Painting icons ({done} of {total})",
+                done = (n * 40).min(missing.len()),
+                total = missing.len()
             ),
         );
-        let _ = std::process::Command::new(&p.wowdata)
-            .arg("art")
-            .args(chunk)
-            .env("OUT", &p.art)
-            .stderr(std::process::Stdio::null())
-            .status();
+        crate::art::render_missing(game, &p.art, chunk);
     }
 }
 
@@ -288,7 +287,9 @@ pub fn stamp(p: &Paths) -> u64 {
         }
     };
     add(&p.repo.join(".git/refs/heads/master"));
+    add(&p.repo.join(".git/refs/heads/main"));
     add(&p.repo.join(".git/HEAD"));
+    add(&p.repo.join("state.json"));
     if let Ok(rd) = std::fs::read_dir(&p.live_logs) {
         for f in rd.flatten() {
             add(&f.path());

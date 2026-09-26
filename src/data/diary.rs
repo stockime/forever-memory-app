@@ -64,7 +64,7 @@ pub fn store(
         "{}\n\n{MARKER} written {} by {} from these facts -->\n\n## The facts behind this entry\n\n",
         entry.trim(),
         chrono::Local::now().format("%Y-%m-%d %H:%M"),
-        crate::claude::WRITER
+        crate::claude::name()
     );
     for f in facts {
         out += &format!("- {f}\n");
@@ -104,9 +104,12 @@ pub fn save_personality(repo: &Path, c: &Character, text: &str) -> Result<(), St
 /// Commits one file. armory-sync commits in the same repository, so a
 /// held index lock is waited out briefly.
 pub fn commit(repo: &Path, file: &Path, msg: &str) -> Result<(), String> {
+    if !crate::sync::git_available() || !repo.join(".git").exists() {
+        return Ok(()); // the file is written; there is just no history
+    }
     let rel = file.strip_prefix(repo).unwrap_or(file);
     for attempt in 0..5 {
-        let add = std::process::Command::new("git")
+        let add = crate::platform::command("git")
             .arg("-C")
             .arg(repo)
             .arg("add")
@@ -114,9 +117,10 @@ pub fn commit(repo: &Path, file: &Path, msg: &str) -> Result<(), String> {
             .output()
             .map_err(|e| e.to_string())?;
         let out = if add.status.success() {
-            std::process::Command::new("git")
+            crate::platform::command("git")
                 .arg("-C")
                 .arg(repo)
+                .args(crate::sync::identity(repo))
                 .args(["commit", "-q", "-m", msg, "--"])
                 .arg(rel)
                 .output()
@@ -592,5 +596,12 @@ pub fn prompt(
         p += &format!("- {f}\n");
     }
     p += "</facts>\n\nWrite the journal entry for this day.";
+    let lang = crate::i18n::current();
+    if lang != crate::i18n::Lang::En {
+        p += &format!(
+            " Write it in {}, as a native speaker would, using the names the facts give for people, places and things.",
+            lang.english_name()
+        );
+    }
     p
 }
