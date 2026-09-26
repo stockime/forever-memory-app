@@ -1071,6 +1071,142 @@ def alt_snapshot(template, a, when):
     )
     return snap
 
+# ------------------------------------------------------------- roleplay
+
+def lua(v, depth=1):
+    """A value the way the game writes SavedVariables."""
+    tab = "\t" * depth
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    if isinstance(v, (int, float)):
+        return str(v)
+    if isinstance(v, str):
+        return '"' + v.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
+    if isinstance(v, list):
+        items = "".join(f"{tab}{lua(x, depth + 1)}, -- [{i + 1}]\n" for i, x in enumerate(v))
+    else:
+        items = "".join(f'{tab}[{k if isinstance(k, int) else lua(k)}] = {lua(x, depth + 1)},\n' for k, x in v.items())
+    return "{\n" + items + "\t" * (depth - 1) + "}"
+
+def write_lua(path, **tables):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        for name, v in tables.items():
+            f.write(f"\n{name} = {lua(v)}\n")
+
+def trp3_player(fn, ln, ti="", ft="", about=None, cu="", traits=(), motto="", nickname="", glances=(), **ch):
+    """A TRP3 profile's `player` (or a register profile), as Total RP 3 saves it."""
+    mi = []
+    if nickname:
+        mi.append({"ID": 3, "NA": "Nickname", "VA": nickname, "IC": "Ability_Hunter_BeastCall"})
+    if motto:
+        mi.append({"ID": 4, "NA": "Motto", "VA": motto, "IC": "INV_Inscription_ScrollOfWisdom_01"})
+    ps = []
+    for t in traits:
+        if isinstance(t[0], int):
+            ps.append({"ID": t[0], "V2": t[1]})
+        else:
+            ps.append({"LT": t[0], "RT": t[1], "V2": t[2], "LI": "Spell_Holy_HolyBolt", "RI": "Spell_Shadow_ShadowWordPain"})
+    characteristics = {"v": 5, "FN": fn, "LN": ln, "IC": "Achievement_Character_Undead_Male", "MI": mi, "PS": ps}
+    characteristics.update({k: v for k, v in (("TI", ti), ("FT", ft)) if v})
+    characteristics.update(ch)
+    out = {"characteristics": characteristics, "about": {"v": 2, "BK": 5, **(about or {"TE": 1, "T1": {}})},
+           "character": {"v": 3, "RP": 1, "WU": 2, **({"CU": cu} if cu else {})}}
+    if glances:
+        out["misc"] = {"v": 2, "PE": {str(i + 1): {"AC": True, "TI": t, "TX": x, "IC": "INV_Misc_QuestionMark"} for i, (t, x) in enumerate(glances)}}
+    return out
+
+def roleplay(game):
+    """Total RP 3, MyRolePlay and XRP files as a roleplayer's WTF folder has them."""
+    sv = os.path.join(game, "_classic_beta_", "WTF", "Account", "DEMO", "SavedVariables")
+    tom = trp3_player(
+        "Tom", "Crusader", ti="Brother", ft="Shield of Bandarion Keep",
+        RA="Forsaken", CL="Paladin of the Keep", AG="Forty-one when he died; six years dead since",
+        EC="Pale lantern-gold", EH="e8c96a", HE="Tall, a little stooped", WE="Gaunt, all tendon and plate",
+        BP="Andorhal", RE="Bandarion Keep, Tirisfal Glades",
+        motto="Count the living, not the dead.", nickname="Tin-Tom",
+        traits=[(1, 5), (6, 13), (7, 7), (5, 16), (11, 18), ("Hopeful", "Bitter", 9)],
+        about={"TE": 3, "T3": {
+            "PH": {"TX": "{h2}Appearance{/h2}\nA jaw held on with brass wire, and a tabard kept cleaner than the man inside it. "
+                         "The shield never leaves his back; the left gauntlet is a size too big, taken from a friend who no longer needs it."},
+            "PS": {"TX": "Dry, dutiful and stubborn. He jokes about being dead so nobody else has to. "
+                         "Trusts a shield wall more than a sermon, and keeps a quiet tally of every life he has kept."},
+            "HI": {"TX": "A farrier in Andorhal until the grain came. He rose in the Brill plague pits and walked to the "
+                         "{col:ffd100}Bandarion Keep{/col} gate because it was the only door that stayed open. "
+                         "The Light answered him there, to everyone's surprise, most of all his own."},
+        }},
+        cu="On the night watch at the keep gate. Will talk, if you bring a lantern.",
+        glances=[("Tabard", "The black and gold of Bandarion Keep, mended many times."),
+                 ("Wire jaw", "It clicks when he laughs. He laughs more than you'd expect.")],
+    )
+    elijah = trp3_player(
+        "Elijah", "Felwood", ft="Hexbinder of the Darkspear", AG="Thirty-two", EC="Sickly green",
+        RE="The Crossroads", BP="Echo Isles", motto="Every debt gets paid.",
+        traits=[(1, 16), (3, 17), (4, 12)],
+        about={"TE": 1, "T1": {"TX": "A troll who learned the fel from books he was told never to open. Polite, patient, keeps "
+                                      "a ledger of every slight. Speaks softly to his imp, and to nobody else."}},
+        cu="Looking for Kolkar talismans. Asks no questions about why.",
+    )
+    write_lua(os.path.join(sv, "totalRP3.lua"),
+              TRP3_Profiles={
+                  "0917153021Tomcr": {"profileName": "Tom Crusader", "player": tom},
+                  "0918201145Elife": {"profileName": "Elijah", "player": elijah},
+              },
+              TRP3_Characters={
+                  "Tom-Bandarion": {"profileID": "0917153021Tomcr", "client": "Total RP 3", "clientVersion": "3.1.4"},
+                  "Elijah-Bandarion": {"profileID": "0918201145Elife", "client": "Total RP 3", "clientVersion": "3.1.4"},
+              },
+              TRP3_Configuration={"register_auto_purge_mode": 864000})
+    seen = int(datetime(2026, 9, 24, 21, 0).timestamp())
+    register = {"character": {}, "profiles": {}}
+    for unit, pid, cls, race, prof in [
+        ("Mira-Bandarion", "0903120000Mira", "PRIEST", "Scourge", trp3_player(
+            "Mira", "Ashvale", ti="Sister", ft="Keeper of the Last Candle", AG="Nobody asks twice", EC="Milk-white",
+            RE="The chapel in Brill", motto="Even ash remembers the fire.",
+            traits=[(1, 8), (3, 4), (6, 17), (4, 15)],
+            about={"TE": 2, "T2": [
+                {"TX": "She lights a candle for every name she can remember from before. The chapel is running out of room.", "BK": 1, "IC": "INV_Misc_Candle_01"},
+                {"TX": "Heals without being asked and scolds while she does it.", "BK": 1, "IC": "Spell_Holy_Renew"}]},
+            cu="Collecting names of the Brill dead. Ask her about yours.")),
+        ("Rakka-Bandarion", "0903120001Rakk", "WARLOCK", "Orc", trp3_player(
+            "Rakka", "Emberfang", ft="Ember-Hand of the Vigil", AG="Twenty-six", EC="Red as coals",
+            RE="Razor Hill", BP="Internment camp near Durnholde",
+            traits=[(1, 17), (9, 3), (10, 5)],
+            about={"TE": 1, "T1": {"TX": "Grew up behind human walls and swore never to be caged again. Laughs loudly, burns things "
+                                          "carefully, and keeps her demons on a short leash."}},
+            cu="Hunting warlocks who give the rest of them a bad name.")),
+        ("Juno-Bandarion", "0903120002Juno", "DRUID", "Tauren", trp3_player(
+            "Juno", "Bramblecrest", ft="Wayfarer of Thunder Bluff", AG="Young for a tauren", HE="Taller than the door",
+            RE="Wherever the grass is", motto="The land remembers who walked it gently.",
+            traits=[(6, 18), (9, 16), (7, 6)],
+            about={"TE": 1, "T1": {"TX": "Follows the old migration paths and writes them down so the young ones won't forget. "
+                                          "Talks to trees. Some of them answer."}})),
+    ]:
+        register["character"][unit] = {"profileID": pid, "class": cls, "race": race, "gender": 3, "faction": "Horde",
+                                       "client": "Total RP 3", "clientVersion": "3.1.4", "msp": False}
+        register["profiles"][pid] = {**prof, "link": {unit: 1}, "time": seen, "zone": "Tirisfal Glades"}
+    write_lua(os.path.join(sv, "totalRP3_Data.lua"), TRP3_Register=register)
+    # XRP on the same account: its cache heard from Sil, a MyRolePlay user.
+    write_lua(os.path.join(sv, "xrp.lua"),
+              xrpAccountSaved={"dataVersion": 5, "notes": {}, "bookmarks": {}},
+              xrpCache={"Sil-Bandarion": {
+                  "fields": {"NA": "Sil Duskreed", "NT": "Tracker, Unpaid", "AG": "Old enough", "AE": "Yellow",
+                             "HH": "Sen'jin Village", "MO": "Never follow the same trail twice.",
+                             "DE": "Lean, quiet, painted in river clay. A raptor-tooth necklace clicks when she moves.",
+                             "CU": "Tracking something big through Silverpine.",
+                             "VA": "MyRolePlay/10.2.7.1", "VP": "1"},
+                  "versions": {}, "lastReceive": seen}})
+    # Oprah plays with MyRolePlay, which keeps her profiles in her own folder.
+    write_lua(os.path.join(game, "_classic_beta_", "WTF", "Account", "DEMO", "Bandarion", "Oprah", "SavedVariables", "MyRolePlay.lua"),
+              mrpSaved={"Build": 411, "SelectedProfile": "Default", "Options": {"Enabled": True}, "Versions": {},
+                        "Profiles": {"Default": {
+                            "NA": "Oprah Windfury", "NT": "Tinker of Thelsamar", "AG": "Eighty-something",
+                            "AH": "Short, even for a dwarf", "AE": "Bright blue behind welding goggles",
+                            "HH": "Thelsamar", "HB": "Ironforge", "MO": "If it ain't broke, I ain't finished.",
+                            "DE": "Soot on her cheeks, a squirrel made of brass on her shoulder, a wrench on every belt loop.",
+                            "HI": "Left the Tinkers' Town for the open road after the third explosion that wasn't her fault.",
+                            "CU": "Looking for crocolisk leather for a new pair of boots."}}})
+
 # ------------------------------------------------------------------ output
 
 def dump(path, v):
@@ -1188,6 +1324,7 @@ def main():
     for name in (".build.info", "Data"):
         os.symlink(os.path.join(GAME, name), os.path.join(game, name))
     shutil.copy(os.path.join(GAME, "_classic_beta_", ".flavor.info"), os.path.join(game, "_classic_beta_", ".flavor.info"))
+    roleplay(game)
     dump(os.path.join(OUT, "config", "forever-memory", "settings.json"), {
         "game_dir": game, "flavor": "_classic_beta_", "archive": arch, "raw_logs": os.path.join(OUT, "logs"),
         "language": "en", "record": False, "archive_logs": False, "writer": {"kind": "cli", "command": "claude"},
