@@ -702,40 +702,15 @@ fn talents(ui: &mut Ui, c: &Character, st: &mut State, art: &mut Art) {
 }
 
 fn legacy(ui: &mut Ui, c: &Character, art: &mut Art) {
-    let trees: Vec<(i64, &Value)> = c
-        .snapshot
-        .pointer("/legacy/trees")
-        .map(entries)
-        .unwrap_or_default();
-    if trees.is_empty() {
+    if c.snapshot.pointer("/legacy/trees").map(entries).unwrap_or_default().is_empty() {
         return;
     }
-    let names: Vec<String> = c
-        .snapshot
-        .pointer("/legacy/names")
-        .map(entries)
-        .unwrap_or_default()
-        .into_iter()
-        .filter_map(|(_, n)| n.as_str().map(str::to_string))
-        .collect();
-    let currency = trees
-        .first()
-        .and_then(|(_, t)| t.get("currency"))
-        .and_then(|cur| entries(cur).into_iter().next().map(|(_, v)| v.clone()));
     ui.horizontal(|ui| {
         super::heading(ui, tr!("Legacy"));
-        if let Some(cur) = currency {
-            let (spent, have) = (
-                cur.get("spent").and_then(Value::as_i64).unwrap_or(0),
-                cur.get("quantity").and_then(Value::as_i64).unwrap_or(0),
-            );
+        if let Some((spent, total)) = crate::data::house::legacy_points(c) {
             ui.label(
-                RichText::new(if spent + have > 0 {
-                    tr!(
-                        "{spent} of {total} points spent",
-                        spent = spent,
-                        total = spent + have
-                    )
+                RichText::new(if total > 0 {
+                    tr!("{spent} of {total} points spent", spent = spent, total = total)
                 } else {
                     tr!("No points earned yet").into()
                 })
@@ -744,6 +719,24 @@ fn legacy(ui: &mut Ui, c: &Character, art: &mut Art) {
         }
     });
     ui.add_space(6.0);
+    legacy_trees(ui, c, art);
+}
+
+/// The account's Legacy trees as a character's snapshot has them.
+pub fn legacy_trees(ui: &mut Ui, c: &Character, art: &mut Art) {
+    let trees: Vec<(i64, &Value)> = c
+        .snapshot
+        .pointer("/legacy/trees")
+        .map(entries)
+        .unwrap_or_default();
+    let names: Vec<String> = c
+        .snapshot
+        .pointer("/legacy/names")
+        .map(entries)
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|(_, n)| n.as_str().map(str::to_string))
+        .collect();
     let w = ((ui.available_width() - 28.0) / 3.0).max(240.0);
     ui.horizontal_wrapped(|ui| {
         ui.spacing_mut().item_spacing = egui::vec2(14.0, 14.0);

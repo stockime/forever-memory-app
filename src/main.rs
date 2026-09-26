@@ -660,7 +660,7 @@ impl eframe::App for App {
                     Page::Combat => ui::combat::show(ui, &model, st, art),
                     Page::Economy => ui::economy::show(ui, &model, st, art),
                     Page::Players => ui::players::show(ui, &model, st, art),
-                    Page::House => ui::house::show(ui, &model, st, art),
+                    Page::House => ui::house::show(ui, &model, st, art, &mut self.page),
                     Page::Deeds => ui::deeds::show(ui, &model, st, art),
                     Page::Standing => ui::standing::show(ui, &model, st, art),
                     Page::Chronicle => ui::chronicle::show(ui, &model, st, art),

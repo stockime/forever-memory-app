@@ -5,6 +5,7 @@ pub mod combat;
 pub mod dead;
 pub mod deeds;
 pub mod diary;
+pub mod house;
 pub mod items;
 pub mod letters;
 pub mod memory;
@@ -254,6 +255,9 @@ pub fn art_keys(m: &Model) -> Vec<String> {
         icon(Some(id), &mut keys);
     }
     for id in deeds::icons() {
+        icon(Some(id), &mut keys);
+    }
+    for id in crate::ui::house::art() {
         icon(Some(id), &mut keys);
     }
     for it in m.memory.items.values() {

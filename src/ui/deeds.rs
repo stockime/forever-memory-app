@@ -7,10 +7,12 @@ use crate::State;
 use crate::art::Art;
 use crate::data::Model;
 use crate::data::deeds::{self, Deed, Mine, Status, Unit};
+use crate::data::memory::Character;
 use crate::theme::{self, EDGE, GOLD, INK, MUTED, RAISED};
 use crate::tr;
 use egui::{Color32, Rect, RichText, Stroke, Ui, Vec2};
 use std::collections::HashMap;
+use std::sync::Arc;
 
 const RIBBON: i64 = 134411;
 const CARD_W: f32 = 320.0;
@@ -29,12 +31,7 @@ enum Tab {
 pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     let c = character(m, st);
     let list = deeds::for_class(&c.class_file);
-    let status = super::story::memo(ui, m, c, "deeds", || {
-        let mine = Mine::new(m, c);
-        list.iter()
-            .map(|d| (d.id, d.eval(&mine)))
-            .collect::<HashMap<&'static str, Status>>()
-    });
+    let status = statuses(ui, m, c);
     let get = |d: &Deed| {
         status.get(d.id).copied().unwrap_or(Status::Progress {
             have: 0.0,
@@ -171,6 +168,17 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
             }
         });
     ui.data_mut(|d| d.insert_temp(tab_id, tab));
+}
+
+/// How each of a character's deeds stands, worked out once per archive read.
+pub fn statuses(ui: &Ui, m: &Model, c: &Character) -> Arc<HashMap<&'static str, Status>> {
+    super::story::memo(ui, m, c, "deeds", || {
+        let mine = Mine::new(m, c);
+        deeds::for_class(&c.class_file)
+            .iter()
+            .map(|d| (d.id, d.eval(&mine)))
+            .collect()
+    })
 }
 
 fn grid(ui: &mut Ui, art: &mut Art, v: &[&Deed], get: &dyn Fn(&Deed) -> Status) {
