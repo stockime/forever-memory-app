@@ -47,16 +47,18 @@ jobs:
       - name: Package (macOS, universal)
         if: runner.os == 'macOS'
         run: |
-          cargo build --release --target aarch64-apple-darwin
-          cargo build --release --target x86_64-apple-darwin
+          # Failures show as annotations, which are readable without signing in.
+          step() { "$@" > step.log 2>&1 || { echo "::error::$* failed: $(tail -c 1500 step.log | tr '\n' ' ')"; exit 1; }; }
+          step cargo build --release --target aarch64-apple-darwin
+          step cargo build --release --target x86_64-apple-darwin
           app="dist/Forever Memory.app/Contents"
           mkdir -p "$app/MacOS"
-          lipo -create -output "$app/MacOS/forever-memory" \
+          step lipo -create -output "$app/MacOS/forever-memory" \
             target/aarch64-apple-darwin/release/forever-memory \
             target/x86_64-apple-darwin/release/forever-memory
-          version="${GITHUB_REF_NAME#v}"
-          sed "s/VERSION/${version}/g" packaging/Info.plist > "$app/Info.plist"
-          codesign --force --deep --sign - "dist/Forever Memory.app"
+          version="$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)"
+          sed "s|VERSION|${version}|g" packaging/Info.plist > "$app/Info.plist"
+          step codesign --force --deep --sign - "dist/Forever Memory.app"
           (cd dist && ditto -c -k --keepParent "Forever Memory.app" ../forever-memory-macos.zip)
       - name: Package (Windows)
         if: runner.os == 'Windows'
