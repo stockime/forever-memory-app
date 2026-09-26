@@ -70,6 +70,24 @@ The app speaks English, Deutsch, Français, Español, Português (Brasil) and
 - **Players**: everyone met, searchable, with full names, class, race, level
   and guild once the addon has seen them up close (else a class guess from
   their spells), what passed between you, what they cast and what they said.
+- **Fellowship and nemeses**: who each character travelled with, for how
+  long, and what passed between them; who killed them, where, and whether
+  they took their revenge.
+- **Deeds**: class-specific feats earned from what was recorded (Hands of
+  Mercy, Consecrated Ground, Payback…), each with the moment it was earned.
+- **Item stories**: every item's life, from who dropped it to what replaced
+  it, and the kills made while it was wielded.
+- **The Chronicle**: a character's diary bound as a book, with chapters by
+  zone and pages that turn.
+- **Letters**: a player's characters write to each other in their own voices,
+  about their days and what the account shares (mounts, companions, Legacy).
+- **The Book of the Dead**: every death with its last ten seconds, and an
+  epitaph written by the one who died.
+- **"Previously on…"** for streamers: a page for an OBS browser source that
+  reads the last diary entry aloud before the stream starts, with a
+  countdown.
+- Every race and class starts with a personality of its own for the diary,
+  which you can make your own.
 
 On start the app shows a loading screen (Forever's own continent art, a
 progress bar, tips about your characters) until the logs are read and all game
@@ -124,6 +142,18 @@ Tom Crusader, a level 20 Undead Protection Paladin, and his alts are made-up dem
 
 ![Diary](docs/screenshots/diary.png)
 
+**Chronicle**
+
+![Chronicle](docs/screenshots/chronicle.png)
+
+**Letters**
+
+![Letters](docs/screenshots/letters.png)
+
+**Deeds**
+
+![Deeds](docs/screenshots/deeds.png)
+
 **Quests**
 
 ![Quests](docs/screenshots/quests.png)
@@ -136,6 +166,10 @@ Tom Crusader, a level 20 Undead Protection Paladin, and his alts are made-up dem
 
 ![Combat](docs/screenshots/combat.png)
 
+**Book of the Dead**
+
+![Book of the Dead](docs/screenshots/dead.png)
+
 **Gold & loot**
 
 ![Gold & loot](docs/screenshots/gold.png)
@@ -143,6 +177,14 @@ Tom Crusader, a level 20 Undead Protection Paladin, and his alts are made-up dem
 **Players**
 
 ![Players](docs/screenshots/players.png)
+
+**Fellowship**
+
+![Fellowship](docs/screenshots/fellowship.png)
+
+**Nemeses**
+
+![Nemeses](docs/screenshots/nemeses.png)
 
 ## Data
 

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.0
+
+- Deeds: 14 for everyone and 6 per class, earned from what was recorded.
+- Item stories in the Armory and Gold & loot tooltips.
+- The Chronicle: the diary as a book with chapters and turning pages.
+- Letters between a player's characters, in their own voices, about what
+  they share: mounts and companions (recorded by addon 0.3.0), Legacy.
+- The Book of the Dead: every death, its last ten seconds, and an epitaph.
+- Fellowship and nemeses on the Players page.
+- "Previously on…": a page for OBS that reads the last entry aloud before a
+  stream, with a countdown; also `forever-memory previously <character>`.
+- Every race and class combination has a personality to start from.
+- Loading is 10 to 40 times faster: finished logs are parsed once and
+  cached, and reloads only read what changed. Position samples from
+  archived logs are no longer dropped when the game folder sorts first.
+
 ## 0.2.1
 
 - Files a partial game install hasn't downloaded yet (icons, maps, talent
