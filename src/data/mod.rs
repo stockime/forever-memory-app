@@ -59,12 +59,11 @@ pub struct Progress {
 pub type Shared = std::sync::Arc<std::sync::Mutex<Progress>>;
 
 fn report(p: Option<&Shared>, frac: f32, stage: &str) {
-    if let Some(p) = p {
-        if let Ok(mut g) = p.lock() {
+    if let Some(p) = p
+        && let Ok(mut g) = p.lock() {
             g.frac = frac;
             g.stage = stage.to_string();
         }
-    }
 }
 
 /// Reads everything. With `progress`, also renders all game art the pages
@@ -72,8 +71,8 @@ fn report(p: Option<&Shared>, frac: f32, stage: &str) {
 pub fn load(p: &Paths, progress: Option<&Shared>) -> Model {
     report(progress, 0.02, crate::tr!("Opening the archive"));
     let memory = memory::load(&p.repo);
-    if let (Some(pr), Some(c)) = (progress, memory.characters.first()) {
-        if let Ok(mut g) = pr.lock() {
+    if let (Some(pr), Some(c)) = (progress, memory.characters.first())
+        && let Ok(mut g) = pr.lock() {
             let race = c.snapshot.get("raceFile").and_then(serde_json::Value::as_str);
             g.continent = Some(match race {
                 Some("Orc" | "Troll" | "Tauren" | "NightElf") => "kalimdor",
@@ -81,7 +80,6 @@ pub fn load(p: &Paths, progress: Option<&Shared>) -> Model {
             });
             g.tips = tips(&memory);
         }
-    }
     let guids: Vec<String> = memory.characters.iter().map(|c| c.guid.clone()).collect();
     let names: Vec<String> = memory.characters.iter().map(|c| c.name.clone()).collect();
     let combat_dir = p.raw_logs.join("combat");

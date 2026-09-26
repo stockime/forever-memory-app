@@ -418,11 +418,10 @@ fn load_character(
                 if e.quality.is_none() {
                     e.quality = it.get("quality").and_then(Value::as_i64);
                 }
-                if e.name.is_empty() {
-                    if let Some(n) = it.pointer("/tooltip/0/l").and_then(Value::as_str) {
+                if e.name.is_empty()
+                    && let Some(n) = it.pointer("/tooltip/0/l").and_then(Value::as_str) {
                         e.name = n.to_string();
                     }
-                }
             }
         }
     }
@@ -528,11 +527,10 @@ fn sessions(events: &[Event]) -> Vec<Session> {
             "death" => s.deaths += 1,
             "level" => s.level_to = e.i("level").unwrap_or(s.level_to),
             "zone" | "login" => {
-                if let Some(z) = e.s("zone") {
-                    if !z.is_empty() && !s.zones.iter().any(|x| x == z) {
+                if let Some(z) = e.s("zone")
+                    && !z.is_empty() && !s.zones.iter().any(|x| x == z) {
                         s.zones.push(z.to_string());
                     }
-                }
             }
             "logout" => {
                 out.push(cur.take().unwrap());

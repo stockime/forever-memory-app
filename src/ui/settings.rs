@@ -65,20 +65,18 @@ pub fn show(ui: &mut Ui, st: &mut State, characters: usize) {
     if page.found.is_none() && page.finding.is_none() {
         page.finding = Some(find());
     }
-    if let Some(rx) = &page.finding {
-        if let Ok(f) = rx.try_recv() {
+    if let Some(rx) = &page.finding
+        && let Ok(f) = rx.try_recv() {
             page.found = Some(f);
             page.finding = None;
         }
-    }
-    if let Some((name, rx)) = &page.job {
-        if let Ok(r) = rx.try_recv() {
+    if let Some((name, rx)) = &page.job
+        && let Ok(r) = rx.try_recv() {
             page.results.insert(name, r);
             page.job = None;
         }
-    }
-    if let Some(rx) = &page.models_job {
-        if let Ok(r) = rx.try_recv() {
+    if let Some(rx) = &page.models_job
+        && let Ok(r) = rx.try_recv() {
             match r {
                 Ok(m) => page.models = m,
                 Err(e) => {
@@ -87,7 +85,6 @@ pub fn show(ui: &mut Ui, st: &mut State, characters: usize) {
             }
             page.models_job = None;
         }
-    }
     if page.finding.is_some() || page.job.is_some() || page.models_job.is_some() {
         ui.ctx()
             .request_repaint_after(std::time::Duration::from_millis(150));
@@ -116,7 +113,7 @@ pub fn show(ui: &mut Ui, st: &mut State, characters: usize) {
                 &found,
                 &mut page.job,
                 &page.results,
-                &mut page.models,
+                &page.models,
                 &mut page.models_job,
             );
             ui.add_space(12.0);
@@ -206,14 +203,13 @@ fn folder(ui: &mut Ui, value: &mut Option<PathBuf>, default: PathBuf, id: &str) 
         if r.changed() {
             *value = (!text.trim().is_empty()).then(|| PathBuf::from(text.trim()));
         }
-        if ui.button(tr!("Choose…")).clicked() {
-            if let Some(p) = rfd::FileDialog::new()
+        if ui.button(tr!("Choose…")).clicked()
+            && let Some(p) = rfd::FileDialog::new()
                 .set_directory(value.clone().unwrap_or(default.clone()))
                 .pick_folder()
             {
                 *value = Some(p);
             }
-        }
         if ui.button(tr!("Open")).clicked() {
             platform::reveal(&value.clone().unwrap_or(default.clone()));
         }
@@ -299,18 +295,17 @@ fn game(ui: &mut Ui, s: &mut Settings, found: &Found, finding: bool) {
                         }
                     }
                 });
-            if ui.button(tr!("Choose…")).clicked() {
-                if let Some(p) = rfd::FileDialog::new().pick_folder() {
+            if ui.button(tr!("Choose…")).clicked()
+                && let Some(p) = rfd::FileDialog::new().pick_folder() {
                     s.game_dir = Some(p);
                     s.flavor.clear();
                 }
-            }
             if finding {
                 ui.spinner();
             }
         });
-        if let Some(d) = &s.game_dir {
-            if !platform::is_install(d) {
+        if let Some(d) = &s.game_dir
+            && !platform::is_install(d) {
                 warn(
                     ui,
                     tr!(
@@ -318,7 +313,6 @@ fn game(ui: &mut Ui, s: &mut Settings, found: &Found, finding: bool) {
                     ),
                 );
             }
-        }
         let Some(install) = install else {
             note(
                 ui,
@@ -394,8 +388,8 @@ fn game(ui: &mut Ui, s: &mut Settings, found: &Found, finding: bool) {
                 _ if addon::outdated(&state) => Some(tr!("Update the addon").to_string()),
                 _ => None,
             };
-            if let Some(text) = text {
-                if ui.button(RichText::new(text).color(GOLD)).clicked() {
+            if let Some(text) = text
+                && ui.button(RichText::new(text).color(GOLD)).clicked() {
                     match addon::install(&dir) {
                         Ok(()) => {
                             if platform::game_running() {
@@ -410,7 +404,6 @@ fn game(ui: &mut Ui, s: &mut Settings, found: &Found, finding: bool) {
                         }
                     }
                 }
-            }
             if dir.exists() && ui.button(tr!("Open")).clicked() {
                 platform::reveal(&dir);
             }
@@ -482,7 +475,7 @@ fn writer_card(
     found: &Found,
     job: &mut Option<(&'static str, Receiver<Result<String, String>>)>,
     results: &std::collections::HashMap<&'static str, Result<String, String>>,
-    models: &mut Vec<String>,
+    models: &[String],
     models_job: &mut Option<Receiver<Result<Vec<String>, String>>>,
 ) {
     card(ui, |ui| {

@@ -214,7 +214,7 @@ fn detail(ui: &mut Ui, m: &Model, c: &Character, q: &Quest, art: &mut Art) {
                 for o in &q.objectives {
                     ui.horizontal(|ui| {
                         let share = if o.need > 0 { o.have as f32 / o.need as f32 } else if o.done { 1.0 } else { 0.0 };
-                        ui.add(egui::ProgressBar::new(share.min(1.0)).desired_width(180.0).fill(if o.done { theme::GOOD.gamma_multiply(0.55) } else { SERIES[0] }).text(RichText::new(format!("{}/{}", o.have, o.need)).color(INK)));
+                        super::widgets::bar(ui, share, if o.done { theme::GOOD.gamma_multiply(0.55) } else { SERIES[0] }, 180.0);
                         ui.label(RichText::new(&o.text).color(if o.done { MUTED } else { INK }));
                     });
                 }

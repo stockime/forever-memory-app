@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.1
+
+- Files a partial game install hasn't downloaded yet (icons, maps, talent
+  art) come from Blizzard's CDN, the way the game streams them, and are
+  cached.
+- Quest objectives and the open quests on the Overview no longer show a
+  dot at 0%.
+- A day without a diary entry shows what happened on the parchment too.
+- Chart axes for gold leave out the parts that are zero ("2g").
+- MIT license.
+
 ## 0.2.0
 
 - The map reveals only what your character has explored: the rest of the

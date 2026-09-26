@@ -86,9 +86,9 @@ fn parse(raw: &str, year: i32) -> Option<Line> {
         speaker: Some(clean(speaker)),
         text: text.to_string(),
     };
-    if let Some(r) = rest.strip_prefix('[') {
-        if let Some((tag, after)) = r.split_once("] ") {
-            if let Some((who, text)) = after.split_once(": ") {
+    if let Some(r) = rest.strip_prefix('[')
+        && let Some((tag, after)) = r.split_once("] ")
+            && let Some((who, text)) = after.split_once(": ") {
                 let kind = if tag.chars().next().is_some_and(|c| c.is_ascii_digit()) {
                     Kind::Channel(tag.to_string())
                 } else {
@@ -96,24 +96,20 @@ fn parse(raw: &str, year: i32) -> Option<Line> {
                 };
                 return Some(line(kind, who, text));
             }
-        }
-    }
     for (sep, kind) in [
         (" says: ", Kind::Say),
         (" yells: ", Kind::Yell),
         (" whispers: ", Kind::Whisper),
     ] {
-        if let Some((who, text)) = rest.split_once(sep) {
-            if !who.contains(' ') || who.split(' ').count() <= 4 {
+        if let Some((who, text)) = rest.split_once(sep)
+            && (!who.contains(' ') || who.split(' ').count() <= 4) {
                 return Some(line(kind, who, text));
             }
-        }
     }
-    if let Some(r) = rest.strip_prefix("To ") {
-        if let Some((who, text)) = r.split_once(": ") {
+    if let Some(r) = rest.strip_prefix("To ")
+        && let Some((who, text)) = r.split_once(": ") {
             return Some(line(Kind::WhisperTo, who, text));
         }
-    }
     Some(Line {
         t,
         kind: Kind::System,

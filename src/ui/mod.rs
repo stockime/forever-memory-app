@@ -95,6 +95,9 @@ pub fn top_bar(
 }
 
 /// One box that finds quests, players, items and zones anywhere (Ctrl+K).
+/// A search result: its kind, its text, and what picking it does.
+type SearchHit = (String, String, Box<dyn Fn(&mut State, &mut Page)>);
+
 fn search(ui: &mut Ui, m: &Model, st: &mut State, page: &mut Page) {
     let id = egui::Id::new("global-search");
     if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::K)) {
@@ -116,7 +119,7 @@ fn search(ui: &mut Ui, m: &Model, st: &mut State, page: &mut Page) {
         return;
     }
     let c = character(m, st);
-    let mut hits: Vec<(String, String, Box<dyn Fn(&mut State, &mut Page)>)> = vec![];
+    let mut hits: Vec<SearchHit> = vec![];
     for quest in &c.quests {
         if quest.title.to_lowercase().contains(&q) {
             let id = quest.id;

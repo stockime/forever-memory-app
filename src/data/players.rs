@@ -90,9 +90,8 @@ pub fn build(
         if p.first.is_empty() {
             p.first = who.split(' ').next().unwrap_or(who).to_string();
         }
-        if who.contains(' ') {
-            p.name = who.clone();
-        } else if p.name.is_empty() {
+        // A full name (with surname) wins over a first name alone.
+        if who.contains(' ') || p.name.is_empty() {
             p.name = who.clone();
         }
         p.chat.push(i);

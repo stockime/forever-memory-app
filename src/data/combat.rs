@@ -234,15 +234,15 @@ fn parse(c: &mut Combat, text: &str, mine: &[u32], last_hit: &mut HashMap<u32, f
                 f[adv + 14].parse::<f64>(),
                 f[adv + 15].parse::<f64>(),
                 f[adv + 16].parse::<i64>(),
-            ) {
-                if let Some(&u) = c.index.get(info) {
+            )
+                && let Some(&u) = c.index.get(info) {
                     if is_me(u) {
-                        if c.my_positions.last().map_or(true, |p| t - p.0 >= 2.0) {
+                        if c.my_positions.last().is_none_or(|p| t - p.0 >= 2.0) {
                             c.my_positions.push((t, map, x, y));
                         }
                     } else if c.units[u as usize].kind == UnitKind::Player {
                         let p = c.players.entry(u).or_default();
-                        if p.positions.last().map_or(true, |q| t - q.0 >= 10.0) {
+                        if p.positions.last().is_none_or(|q| t - q.0 >= 10.0) {
                             p.positions.push((t, map, x, y));
                         }
                         if let Ok(hp) = f[adv + 3].parse::<i64>() {
@@ -250,7 +250,6 @@ fn parse(c: &mut Combat, text: &str, mine: &[u32], last_hit: &mut HashMap<u32, f
                         }
                     }
                 }
-            }
         }
 
         for u in [src, dst] {

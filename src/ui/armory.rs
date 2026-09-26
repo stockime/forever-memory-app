@@ -261,7 +261,7 @@ fn strip_codes(s: &str) -> String {
         match chars.next() {
             Some('c') => {
                 if chars.peek() == Some(&'n') {
-                    while let Some(x) = chars.next() {
+                    for x in chars.by_ref() {
                         if x == ':' {
                             break;
                         }
@@ -440,8 +440,8 @@ fn tree(ui: &mut Ui, art: &mut Art, head: TreeHead, nodes: &[&Value], width: f32
     let (rect, _) = ui.allocate_exact_size(egui::vec2(width, height), egui::Sense::hover());
     let p = ui.painter_at(rect);
     p.rect_filled(rect, 8.0, theme::PANEL);
-    if let Some(key) = &head.bg {
-        if let Some(tex) = art.get(ui.ctx(), key) {
+    if let Some(key) = &head.bg
+        && let Some(tex) = art.get(ui.ctx(), key) {
             p.image(
                 tex.id(),
                 rect,
@@ -449,7 +449,6 @@ fn tree(ui: &mut Ui, art: &mut Art, head: TreeHead, nodes: &[&Value], width: f32
                 Color32::from_gray(95),
             );
         }
-    }
     p.rect_stroke(rect, 8.0, Stroke::new(1.0, EDGE), egui::StrokeKind::Inside);
     let bar = Rect::from_min_size(rect.min, egui::vec2(width, 44.0));
     p.rect_filled(
@@ -584,13 +583,12 @@ fn tree(ui: &mut Ui, art: &mut Art, head: TreeHead, nodes: &[&Value], width: f32
             if let Some(t) = rank_text(ranks.max(1)) {
                 ui.label(RichText::new(t).color(GOLD));
             }
-            if ranks > 0 && ranks < max {
-                if let Some(t) = rank_text(ranks + 1) {
+            if ranks > 0 && ranks < max
+                && let Some(t) = rank_text(ranks + 1) {
                     ui.add_space(6.0);
                     ui.label(tr!("Next rank:"));
                     ui.label(RichText::new(t).color(GOLD));
                 }
-            }
         });
     }
 }

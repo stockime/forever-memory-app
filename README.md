@@ -181,3 +181,9 @@ and quits (used to check layouts), `FM_LANG=de` picks a language for it.
 
 Releases are built by GitHub Actions for Linux, macOS (universal) and
 Windows when a `v*` tag is pushed.
+
+## License
+
+MIT, see [LICENSE](LICENSE). World of Warcraft and its art belong to
+Blizzard Entertainment; the app ships none of it and reads the art from your
+own game install.

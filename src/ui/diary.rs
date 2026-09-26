@@ -66,12 +66,11 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
             ui.horizontal(|ui| {
                 super::heading(ui, tr!("Days"));
                 let missing: Vec<String> = days.iter().filter(|(d, _)| !c.diary.contains_key(d)).map(|(d, _)| d.clone()).collect();
-                if !missing.is_empty() && st.diary_job.is_none() {
-                    if ui.button(tr!("Write {n} missing", n = missing.len())).on_hover_text(tr!("Writes every day without an entry, oldest first")).clicked() {
+                if !missing.is_empty() && st.diary_job.is_none()
+                    && ui.button(tr!("Write {n} missing", n = missing.len())).on_hover_text(tr!("Writes every day without an entry, oldest first")).clicked() {
                         st.diary_queue = missing.into_iter().rev().collect();
                         start_next(m, st);
                     }
-                }
             });
             egui::ScrollArea::vertical().id_salt("days").auto_shrink(false).show(ui, |ui| {
                 for (d, secs) in &days {
@@ -192,8 +191,7 @@ fn render(ui: &mut Ui, md: &str) {
         let text = block
             .replace("**", "")
             .replace('*', "")
-            .replace('_', " ")
-            .replace('\n', " ");
+            .replace(['_', '\n'], " ");
         ui.label(
             RichText::new(text)
                 .family(theme::italic())

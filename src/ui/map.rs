@@ -38,11 +38,10 @@ fn samples(c: &Character) -> Vec<Sample> {
 fn map_names(c: &Character) -> BTreeMap<i64, String> {
     let mut out = BTreeMap::new();
     for e in &c.events {
-        if e.e == "zone" {
-            if let (Some(m), Some(z)) = (e.i("map"), e.s("zone")) {
+        if e.e == "zone"
+            && let (Some(m), Some(z)) = (e.i("map"), e.s("zone")) {
                 out.insert(m, z.to_string());
             }
-        }
     }
     out.entry(1415)
         .or_insert_with(|| tr!("Eastern Kingdoms").into());

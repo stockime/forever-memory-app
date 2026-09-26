@@ -146,11 +146,10 @@ fn main() -> eframe::Result {
                 println!("settings reloaded");
             }
             let st = status.lock().map(|s| s.clone()).unwrap_or_default();
-            if let Some((t, msg)) = &st.last {
-                if shown.0 != Some(*t) {
+            if let Some((t, msg)) = &st.last
+                && shown.0 != Some(*t) {
                     println!("{msg}");
                 }
-            }
             if st.error.is_some() && st.error != shown.1 {
                 eprintln!("{}", st.error.clone().unwrap_or_default());
             }
@@ -393,25 +392,23 @@ impl App {
     /// Reload when the archive commits or the live logs grow, at most every
     /// 30 seconds, since the game appends to its logs constantly.
     fn watch(&mut self, ctx: &egui::Context) {
-        if let Some(rx) = &self.loading {
-            if let Ok(m) = rx.try_recv() {
+        if let Some(rx) = &self.loading
+            && let Ok(m) = rx.try_recv() {
                 self.model = Some(Arc::new(m));
                 self.loading = None;
             }
-        }
         // A new save was recorded: show it now rather than on the next check.
         if self.loading.is_none() && self.recorded.swap(false, std::sync::atomic::Ordering::Relaxed) {
             self.reload(ctx);
         }
         if self.last_check.elapsed() > Duration::from_secs(5) {
             self.last_check = Instant::now();
-            if let Some(m) = &self.model {
-                if data::stamp(&self.paths) != m.stamp
+            if let Some(m) = &self.model
+                && data::stamp(&self.paths) != m.stamp
                     && self.last_load.elapsed() > Duration::from_secs(30)
                 {
                     self.reload(ctx);
                 }
-            }
         }
         ctx.request_repaint_after(Duration::from_secs(5));
     }
@@ -453,20 +450,17 @@ impl App {
 impl eframe::App for App {
     /// FM_HOVER=x,y places the pointer there (with FM_SHOT, to check tooltips).
     fn raw_input_hook(&mut self, _ctx: &egui::Context, raw: &mut egui::RawInput) {
-        if let Ok(v) = std::env::var("FM_HOVER") {
-            if let Some((x, y)) = v
+        if let Ok(v) = std::env::var("FM_HOVER")
+            && let Some((x, y)) = v
                 .split_once(',')
                 .and_then(|(x, y)| Some((x.parse().ok()?, y.parse().ok()?)))
-            {
-                if self
+                && self
                     .shot
                     .as_ref()
                     .is_some_and(|(_, t, _)| t.elapsed().as_secs_f64() < 1.5)
                 {
                     raw.events.push(egui::Event::PointerMoved(egui::pos2(x, y)));
                 }
-            }
-        }
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
@@ -478,11 +472,10 @@ impl eframe::App for App {
             ctx.request_repaint_after(Duration::from_millis(50));
             return;
         };
-        if let Some(slug) = self.state.select_slug.take() {
-            if let Some(i) = model.memory.characters.iter().position(|c| c.slug == slug) {
+        if let Some(slug) = self.state.select_slug.take()
+            && let Some(i) = model.memory.characters.iter().position(|c| c.slug == slug) {
                 self.state.character = i;
             }
-        }
         if self.state.character >= model.memory.characters.len() {
             self.state.character = 0;
         }

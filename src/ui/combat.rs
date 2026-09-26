@@ -148,14 +148,13 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                                     duration = theme::duration(f.end - f.start)
                                 ))
                             });
-                        if r.response.clicked() {
-                            if let Some(p) = r.inner {
+                        if r.response.clicked()
+                            && let Some(p) = r.inner {
                                 let k = p.x.round() as usize;
                                 if k >= 1 && k <= fights.len() {
                                     fight_sel.set(Some(fights[k - 1].0));
                                 }
                             }
-                        }
                     });
                 },
                 |ui| {

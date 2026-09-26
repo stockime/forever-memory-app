@@ -173,8 +173,8 @@ impl Parser<'_> {
             if self.eat(b'}') {
                 break;
             }
-            let key;
-            if self.eat(b'[') {
+            
+            let key = if self.eat(b'[') {
                 let k = self.value()?;
                 self.space();
                 if !self.eat(b']') {
@@ -184,10 +184,10 @@ impl Parser<'_> {
                 if !self.eat(b'=') {
                     return Err(self.error("expected '='"));
                 }
-                key = match k {
+                match k {
                     Value::String(s) => s,
                     other => other.to_string(),
-                };
+                }
             } else {
                 let save = self.pos;
                 let id = self.ident();
@@ -198,14 +198,14 @@ impl Parser<'_> {
                         named = Some(id);
                     }
                 }
-                key = match named {
+                match named {
                     Some(k) => k,
                     None => {
                         self.pos = save; // a positional value
                         next.to_string()
                     }
-                };
-            }
+                }
+            };
             let v = self.value()?;
             let positional = key == next.to_string();
             if !v.is_null() {

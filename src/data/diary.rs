@@ -232,8 +232,8 @@ pub fn facts(m: &Model, c: &Character, day: &str) -> Vec<String> {
                 .or(Some(zone.clone())),
             _ => None,
         };
-        if let Some(p) = place.filter(|p| !p.is_empty()) {
-            if legs.last().is_none_or(|l| l.place != p) {
+        if let Some(p) = place.filter(|p| !p.is_empty())
+            && legs.last().is_none_or(|l| l.place != p) {
                 // Coming back to a place visited moments ago continues that stretch.
                 if let Some(pos) = legs.iter().rposition(|l| l.place == p && t - l.to < 120.0) {
                     let leg = legs.remove(pos);
@@ -247,7 +247,6 @@ pub fn facts(m: &Model, c: &Character, day: &str) -> Vec<String> {
                     });
                 }
             }
-        }
         if legs.is_empty() {
             legs.push(Leg {
                 place: if zone.is_empty() {
@@ -319,7 +318,7 @@ pub fn facts(m: &Model, c: &Character, day: &str) -> Vec<String> {
                     *by.entry(m.combat.unit_name(h.src)).or_default() += h.amount;
                 }
                 let mut by: Vec<_> = by.into_iter().collect();
-                by.sort_by(|a, b| b.1.cmp(&a.1));
+                by.sort_by_key(|x| std::cmp::Reverse(x.1));
                 let who = by
                     .iter()
                     .take(3)
@@ -422,7 +421,7 @@ pub fn facts(m: &Model, c: &Character, day: &str) -> Vec<String> {
         }
         if !slain.is_empty() {
             let mut v: Vec<_> = slain.into_iter().collect();
-            v.sort_by(|a, b| b.1.cmp(&a.1));
+            v.sort_by_key(|x| std::cmp::Reverse(x.1));
             leg.things.push(format!(
                 "fought here: {}",
                 v.iter()

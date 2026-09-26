@@ -58,7 +58,8 @@ fn hero(ui: &mut Ui, c: &Character, art: &mut Art) {
     let dark = Color32::from_rgba_unmultiplied(10, 14, 31, 235);
     let (l, r, t, b) = (rect.left(), rect.right(), rect.top(), rect.bottom());
     let mid = l + rect.width() * 0.62;
-    for (a, bb, ca, cb) in [((l, t), (mid, b), dark, clear)] {
+    {
+        let (a, bb, ca, cb) = ((l, t), (mid, b), dark, clear);
         let i = mesh.vertices.len() as u32;
         mesh.colored_vertex(egui::pos2(a.0, a.1), ca);
         mesh.colored_vertex(egui::pos2(bb.0, a.1), cb);
@@ -324,11 +325,10 @@ pub fn zone_time(c: &Character) -> Vec<(String, f64)> {
             if matches!(
                 e.e.as_str(),
                 "login" | "zone" | "logout" | "level" | "death"
-            ) {
-                if let Some(z) = e.s("zone").filter(|z| !z.is_empty()) {
+            )
+                && let Some(z) = e.s("zone").filter(|z| !z.is_empty()) {
                     zone = z.to_string();
                 }
-            }
         }
     }
     let mut v: Vec<_> = by.into_iter().filter(|(_, s)| *s > 0.0).collect();
@@ -468,14 +468,11 @@ fn up_next(ui: &mut Ui, c: &Character, st: &mut State, page: &mut Page) {
     for q in active.into_iter().take(6) {
         ui.horizontal(|ui| {
             let s = share(q);
-            ui.add(
-                egui::ProgressBar::new(s as f32)
-                    .desired_width(120.0)
-                    .fill(if q.complete {
-                        theme::GOOD.gamma_multiply(0.6)
-                    } else {
-                        SERIES[0]
-                    }),
+            super::widgets::bar(
+                ui,
+                s as f32,
+                if q.complete { theme::GOOD.gamma_multiply(0.6) } else { SERIES[0] },
+                120.0,
             );
             let text = if q.complete {
                 tr!("{quest}  (ready to turn in)", quest = q.title)

@@ -157,8 +157,8 @@ pub fn detect_apis() -> Vec<Api> {
         ("Ollama", "http://localhost:11434/v1"),
         ("LM Studio", "http://localhost:1234/v1"),
     ] {
-        if let Ok(models) = list_models(base, "", Duration::from_millis(400)) {
-            if let Some(m) = models.into_iter().next() {
+        if let Ok(models) = list_models(base, "", Duration::from_millis(400))
+            && let Some(m) = models.into_iter().next() {
                 out.push(Api {
                     name: name.into(),
                     base_url: base.into(),
@@ -166,7 +166,6 @@ pub fn detect_apis() -> Vec<Api> {
                     model: m,
                 });
             }
-        }
     }
     out
 }

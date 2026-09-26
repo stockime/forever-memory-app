@@ -59,11 +59,10 @@ impl Cdn {
             for e in std::fs::read_dir(&self.indices_dir).into_iter().flatten().flatten() {
                 let p = e.path();
                 let name = p.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
-                if p.extension().is_some_and(|x| x == "index") {
-                    if let Some(i) = read_toc(&p, name) {
+                if p.extension().is_some_and(|x| x == "index")
+                    && let Some(i) = read_toc(&p, name) {
                         out.push(i);
                     }
-                }
             }
             out
         })
@@ -154,7 +153,7 @@ fn read_toc(path: &Path, name: String) -> Option<Index> {
     let mut toc = vec![0u8; blocks * 16];
     f.seek(SeekFrom::Start((blocks * block_size) as u64)).ok()?;
     f.read_exact(&mut toc).ok()?;
-    let last_keys = toc.chunks_exact(16).map(|c| c.try_into().unwrap()).collect();
+    let last_keys = toc.as_chunks::<16>().0.to_vec();
     Some(Index {
         name,
         file: path.to_path_buf(),

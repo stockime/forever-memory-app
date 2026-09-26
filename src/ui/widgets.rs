@@ -273,6 +273,7 @@ impl Col {
 
 /// A full-width table: click a header to sort by it, again to flip.
 /// `key(row, col)` gives the sort value, `cell(ui, row, col)` draws a cell.
+#[allow(clippy::too_many_arguments)]
 pub fn table<R>(
     ui: &mut Ui,
     id: &str,
