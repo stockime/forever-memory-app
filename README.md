@@ -16,8 +16,16 @@ https://github.com/user-attachments/assets/155cfd52-e408-4c76-b37f-cc8a5c515874
 ## Getting started
 
 1. Download the app for your system above and start it.
-   - **macOS**: the app isn't notarized; the first time, right-click it and
-     choose Open.
+   - The app is free and open source and its downloads aren't signed with a
+     paid certificate, so your system warns you the first time:
+     - **Windows**: SmartScreen says it "protected your PC". Click
+       **More info**, then **Run anyway**.
+     - **macOS**: macOS says the app "can't be opened". Open **System
+       Settings → Privacy & Security**, scroll down to the message about
+       Forever Memory and click **Open Anyway**. (On macOS 14 and earlier,
+       right-clicking the app and choosing **Open** also works.) Or, in
+       Terminal: `xattr -dr com.apple.quarantine "/Applications/Forever Memory.app"`.
+     - Either way, you can build it yourself instead (see [Build](#build)).
    - **Linux**: unpack it and run `forever-memory`; the `.desktop` file next
      to it adds it to your menu.
 2. The app finds World of Warcraft on its own (Blizzard's usual folders on
@@ -230,6 +238,23 @@ by day (`log/<date>.jsonl`), the quest log, when each item was first seen,
 the diary and the voice; plus the item catalogue, quest texts, the players
 met and a manifest of every native log. No game art is stored or shipped:
 it is read from your own install.
+
+## Trying it with the demo data
+
+`demo/make_demo.py` makes up a whole account to look at without playing: Tom
+Crusader, a level 20 Undead Paladin, four alts, a week of sessions, chat,
+fights, diary entries, letters and roleplay profiles. It needs Python 3 and a
+World of Warcraft install for the art (only read, never changed):
+
+```sh
+python3 demo/make_demo.py /tmp/fm-demo --game "/path/to/World of Warcraft"
+FM_BIN=target/release/forever-memory /tmp/fm-demo/run.sh
+```
+
+`run.sh` points the app at the demo's own settings and archive, so your real
+ones are left alone. Without `FM_BIN` it runs the `forever-memory` on your
+`PATH`. For a screenshot of one page, add `FM_SHOT=page.png FM_PAGE=map`
+(and `FM_CHARACTER=usain-frostbolt` for another character).
 
 ## Build
 
