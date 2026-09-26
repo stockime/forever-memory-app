@@ -417,5 +417,9 @@
  "There is no bucket by that name (404).": "Não existe um bucket com esse nome (404).",
  "The storage answered {status}.": "O armazenamento respondeu {status}.",
  "Reading speed": "Velocidade de leitura",
- "Unexplored parts stay dark": "As áreas inexploradas ficam escuras"
+ "Unexplored parts stay dark": "As áreas inexploradas ficam escuras",
+ "Deeds": "Feitos",
+ "Chronicle": "Crônica",
+ "Letters": "Cartas",
+ "Book of the Dead": "Livro dos Mortos"
 }

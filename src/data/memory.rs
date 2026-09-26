@@ -260,8 +260,23 @@ pub struct KnownPlayer {
     pub guild: String,
 }
 
+/// Something the whole account owns (a mount or a companion), with when it
+/// first showed up and on whom.
+#[derive(Clone, Debug, Default)]
+pub struct Collected {
+    /// "mounts" or "pets".
+    pub kind: String,
+    pub name: String,
+    pub icon: Option<i64>,
+    pub first: i64,
+    /// The GUID of the character logged in when it first showed up.
+    pub by: String,
+}
+
 pub struct Memory {
     pub characters: Vec<Character>,
+    /// Account-wide collections, oldest first.
+    pub account: Vec<Collected>,
     /// By GUID, the same key the combat log uses.
     pub players: HashMap<String, KnownPlayer>,
     pub items: HashMap<i64, ItemInfo>,
@@ -354,8 +369,25 @@ pub fn load(repo: &Path) -> Memory {
             players.insert(guid, known);
         }
     }
+    let mut account = vec![];
+    if let Some(Value::Object(kinds)) = read_json(&repo.join("account.json")) {
+        for (kind, v) in kinds {
+            for (_, e) in entries(&v) {
+                let s = |k: &str| e.get(k).and_then(Value::as_str).unwrap_or("").to_string();
+                account.push(Collected {
+                    kind: kind.clone(),
+                    name: s("name"),
+                    icon: e.get("icon").and_then(Value::as_i64),
+                    first: e.get("first").and_then(Value::as_i64).unwrap_or(0),
+                    by: s("by"),
+                });
+            }
+        }
+    }
+    account.sort_by_key(|c| c.first);
     Memory {
         characters,
+        account,
         players,
         items,
         gossip,

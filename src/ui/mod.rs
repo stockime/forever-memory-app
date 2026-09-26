@@ -1,8 +1,12 @@
 pub mod armory;
+pub mod chronicle;
 pub mod combat;
+pub mod dead;
+pub mod deeds;
 pub mod diary;
 pub mod economy;
 pub mod journal;
+pub mod letters;
 pub mod map;
 pub mod overview;
 pub mod players;

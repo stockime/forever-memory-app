@@ -417,5 +417,9 @@
  "There is no bucket by that name (404).": "没有该名称的存储桶（404）。",
  "The storage answered {status}.": "存储返回了 {status}。",
  "Reading speed": "朗读速度",
- "Unexplored parts stay dark": "未探索的区域保持黑暗"
+ "Unexplored parts stay dark": "未探索的区域保持黑暗",
+ "Deeds": "事迹",
+ "Chronicle": "编年史",
+ "Letters": "书信",
+ "Book of the Dead": "亡者之书"
 }

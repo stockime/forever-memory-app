@@ -11,6 +11,7 @@
 //!   characters/<slug>/questlog.json       the quest log with objective progress
 //!   characters/<slug>/explored.json       the explored parts of each zone map
 //!   items.json, players.json, gossip.json, quests/<id>.json
+//!   account.json                          account-wide mounts and companions
 //!   logs/manifest.jsonl                   every archived native log
 //!   state.json                            the last archived row number
 //!
@@ -329,6 +330,7 @@ fn export(dir: &Path, raw: &[u8], vars: &Map<String, Value>) -> Result<Option<St
         ("players", "players.json"),
         ("items", "items.json"),
         ("gossip", "gossip.json"),
+        ("account", "account.json"),
     ] {
         if let Some(v) = mem.get(key).filter(|v| v.is_object()) {
             write_json(&dir.join(file), v)?;

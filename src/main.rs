@@ -204,11 +204,15 @@ pub enum Page {
     Combat,
     Economy,
     Players,
+    Deeds,
+    Chronicle,
+    Letters,
+    Dead,
     Settings,
 }
 
 impl Page {
-    const ALL: [Page; 9] = [
+    const ALL: [Page; 13] = [
         Page::Overview,
         Page::Armory,
         Page::Journal,
@@ -218,6 +222,10 @@ impl Page {
         Page::Combat,
         Page::Economy,
         Page::Players,
+        Page::Deeds,
+        Page::Chronicle,
+        Page::Letters,
+        Page::Dead,
     ];
     fn label(self) -> &'static str {
         match self {
@@ -230,6 +238,10 @@ impl Page {
             Page::Combat => tr!("Combat"),
             Page::Economy => tr!("Gold & loot"),
             Page::Players => tr!("Players"),
+            Page::Deeds => tr!("Deeds"),
+            Page::Chronicle => tr!("Chronicle"),
+            Page::Letters => tr!("Letters"),
+            Page::Dead => tr!("Book of the Dead"),
             Page::Settings => tr!("Settings"),
         }
     }
@@ -253,7 +265,11 @@ impl Page {
             Page::Combat => icons::SWORDS,
             Page::Economy => icons::COIN,
             Page::Players => icons::GROUP,
-            Page::Settings => 134063, // a gear
+            Page::Deeds => 134411,     // a ribbon
+            Page::Chronicle => 133741, // a bound tome
+            Page::Letters => 133468,   // a sealed letter
+            Page::Dead => 133738,      // a dark book
+            Page::Settings => 134063,  // a gear
         }
     }
 }
@@ -581,6 +597,10 @@ impl eframe::App for App {
                     Page::Combat => ui::combat::show(ui, &model, st, art),
                     Page::Economy => ui::economy::show(ui, &model, st, art),
                     Page::Players => ui::players::show(ui, &model, st, art),
+                    Page::Deeds => ui::deeds::show(ui, &model, st, art),
+                    Page::Chronicle => ui::chronicle::show(ui, &model, st, art),
+                    Page::Letters => ui::letters::show(ui, &model, st, art),
+                    Page::Dead => ui::dead::show(ui, &model, st, art),
                     Page::Settings => {}
                 }
             });
