@@ -1,10 +1,12 @@
 # Builds Forever Memory for Linux, macOS and Windows and publishes a release
-# with the armory addon, whenever a v* tag is pushed.
+# with the armory addon whenever a v* tag is pushed. Pushing a ci/* branch
+# runs the builds without publishing.
 name: release
 
 on:
   push:
     tags: ["v*"]
+    branches: ["ci/**"]
   workflow_dispatch:
 
 permissions:
