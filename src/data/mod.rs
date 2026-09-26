@@ -1,6 +1,8 @@
 pub mod chat;
 pub mod combat;
+pub mod deeds;
 pub mod diary;
+pub mod items;
 pub mod memory;
 pub mod players;
 
@@ -185,6 +187,9 @@ pub fn art_keys(m: &Model) -> Vec<String> {
         icon(Some(*id), &mut keys);
     }
     for id in [3450737, 7963776, 7963779] {
+        icon(Some(id), &mut keys);
+    }
+    for id in deeds::icons() {
         icon(Some(id), &mut keys);
     }
     for it in m.memory.items.values() {

@@ -179,6 +179,7 @@ fn items(ui: &mut Ui, m: &Model, c: &Character, filter: &str, art: &mut Art) {
         ui.label(RichText::new(tr!("No items match.")).color(MUTED));
         return;
     }
+    let stories = super::story::all(ui, m, c);
     let cols = [
         Col::grow(tr!("Item")),
         Col::num(tr!("Gained"), 80.0),
@@ -209,7 +210,20 @@ fn items(ui: &mut Ui, m: &Model, c: &Character, filter: &str, art: &mut Art) {
                     None => ui.add_space(30.0),
                 }
                 ui.label(RichText::new(&r.name).color(theme::quality(r.quality)));
-                let _ = r.id;
+                let lines = stories
+                    .get(&r.id)
+                    .map(|s| super::story::lines(m, c, s))
+                    .unwrap_or_default();
+                if !lines.is_empty() {
+                    let cell = ui.interact(ui.max_rect(), ui.id().with(r.id), egui::Sense::hover());
+                    cell.on_hover_ui(|ui| {
+                        ui.set_max_width(320.0);
+                        ui.label(RichText::new(&r.name).size(17.0).color(theme::quality(r.quality)));
+                        ui.separator();
+                        ui.label(RichText::new(tr!("Story")).small().color(theme::GOLD));
+                        ui.label(RichText::new(lines.join(" ")).color(INK));
+                    });
+                }
             }
             1 => {
                 ui.label(RichText::new(r.gained.to_string()).color(INK));

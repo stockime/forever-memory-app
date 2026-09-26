@@ -71,7 +71,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 let doll_w = ui.available_width() - stats_w - 14.0;
                 let doll = ui.vertical(|ui| {
                     ui.set_width(doll_w);
-                    paper_doll(ui, c, art)
+                    paper_doll(ui, m, c, art)
                 });
                 let h = doll.response.rect.height();
                 ui.add_space(6.0);
@@ -93,7 +93,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
         });
 }
 
-fn paper_doll(ui: &mut Ui, c: &Character, art: &mut Art) {
+fn paper_doll(ui: &mut Ui, m: &Model, c: &Character, art: &mut Art) {
     // The class's second scene sits behind the doll, where the game shows the model.
     let bg_shape = ui.painter().add(egui::Shape::Noop);
     let frame = egui::Frame::new()
@@ -116,7 +116,7 @@ fn paper_doll(ui: &mut Ui, c: &Character, art: &mut Art) {
                     |ui| {
                         ui.spacing_mut().item_spacing.y = 10.0;
                         for &s in slots.iter() {
-                            slot(ui, c, art, s, items.get(&s).copied(), right);
+                            slot(ui, m, c, art, s, items.get(&s).copied(), right);
                         }
                     },
                 );
@@ -129,7 +129,7 @@ fn paper_doll(ui: &mut Ui, c: &Character, art: &mut Art) {
             for s in WEAPONS {
                 ui.vertical(|ui| {
                     ui.set_width(170.0);
-                    slot(ui, c, art, s, items.get(&s).copied(), false);
+                    slot(ui, m, c, art, s, items.get(&s).copied(), false);
                 });
             }
         });
@@ -154,7 +154,16 @@ fn paper_doll(ui: &mut Ui, c: &Character, art: &mut Art) {
     ui.painter().set(bg_shape, egui::Shape::Vec(shapes));
 }
 
-fn slot(ui: &mut Ui, c: &Character, art: &mut Art, s: i64, item: Option<&Value>, right: bool) {
+#[allow(clippy::too_many_arguments)]
+fn slot(
+    ui: &mut Ui,
+    m: &Model,
+    c: &Character,
+    art: &mut Art,
+    s: i64,
+    item: Option<&Value>,
+    right: bool,
+) {
     let q = item.and_then(|i| i.get("quality")).and_then(Value::as_i64);
     let name = item
         .and_then(|i| i.pointer("/tooltip/0/l"))
@@ -233,9 +242,12 @@ fn slot(ui: &mut Ui, c: &Character, art: &mut Art, s: i64, item: Option<&Value>,
             if let Some(t) = it.get("tooltip") {
                 tooltip_lines(ui, t);
             }
+            let id = it.get("id").and_then(Value::as_i64);
+            if id.is_some_and(|id| super::story::section(ui, m, c, id)) {
+                return;
+            }
             let first = it.get("firstSeen").and_then(Value::as_i64).or_else(|| {
-                let id = it.get("id").and_then(Value::as_i64)?;
-                c.seen.get(&id.to_string()).copied()
+                c.seen.get(&id?.to_string()).copied()
             });
             if let Some(t) = first {
                 ui.separator();
