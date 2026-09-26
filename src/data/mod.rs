@@ -4,8 +4,10 @@ pub mod combat;
 pub mod deeds;
 pub mod diary;
 pub mod items;
+pub mod letters;
 pub mod memory;
 pub mod players;
+pub mod presets;
 
 use crate::tr;
 use std::path::{Path, PathBuf};
