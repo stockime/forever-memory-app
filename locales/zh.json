@@ -670,5 +670,7 @@
  "{name} has never died.": "{name}从未死过。",
  "{name} is choosing the words…": "{name}正在斟酌字句…",
  "{n} days": "{n}天",
- "{when}, at level {n}": "{when}，{n}级"
+ "{when}, at level {n}": "{when}，{n}级",
+ "House": "家族",
+ "Standing": "声望"
 }

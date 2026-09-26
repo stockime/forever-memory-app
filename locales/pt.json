@@ -670,5 +670,7 @@
  "{name} has never died.": "{name} nunca morreu.",
  "{name} is choosing the words…": "{name} está escolhendo as palavras…",
  "{n} days": "{n} dias",
- "{when}, at level {n}": "{when}, no nível {n}"
+ "{when}, at level {n}": "{when}, no nível {n}",
+ "House": "Casa",
+ "Standing": "Reputação"
 }

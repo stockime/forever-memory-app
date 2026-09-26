@@ -240,6 +240,7 @@ fn main() -> eframe::Result {
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Page {
     Overview,
+    House,
     Armory,
     Journal,
     Diary,
@@ -249,6 +250,7 @@ pub enum Page {
     Economy,
     Players,
     Deeds,
+    Standing,
     Chronicle,
     Letters,
     Dead,
@@ -256,8 +258,9 @@ pub enum Page {
 }
 
 impl Page {
-    const ALL: [Page; 13] = [
+    const ALL: [Page; 15] = [
         Page::Overview,
+        Page::House,
         Page::Armory,
         Page::Journal,
         Page::Diary,
@@ -267,6 +270,7 @@ impl Page {
         Page::Economy,
         Page::Players,
         Page::Deeds,
+        Page::Standing,
         Page::Chronicle,
         Page::Letters,
         Page::Dead,
@@ -282,7 +286,9 @@ impl Page {
             Page::Combat => tr!("Combat"),
             Page::Economy => tr!("Gold & loot"),
             Page::Players => tr!("Players"),
+            Page::House => tr!("House"),
             Page::Deeds => tr!("Deeds"),
+            Page::Standing => tr!("Standing"),
             Page::Chronicle => tr!("Chronicle"),
             Page::Letters => tr!("Letters"),
             Page::Dead => tr!("Book of the Dead"),
@@ -309,7 +315,9 @@ impl Page {
             Page::Combat => icons::SWORDS,
             Page::Economy => icons::COIN,
             Page::Players => icons::GROUP,
+            Page::House => 132484,     // a banner
             Page::Deeds => 134411,     // a ribbon
+            Page::Standing => 236683,  // a reputation seal
             Page::Chronicle => 133741, // a bound tome
             Page::Letters => 133468,   // a sealed letter
             Page::Dead => 133738,      // a dark book
@@ -652,7 +660,9 @@ impl eframe::App for App {
                     Page::Combat => ui::combat::show(ui, &model, st, art),
                     Page::Economy => ui::economy::show(ui, &model, st, art),
                     Page::Players => ui::players::show(ui, &model, st, art),
+                    Page::House => ui::house::show(ui, &model, st, art),
                     Page::Deeds => ui::deeds::show(ui, &model, st, art),
+                    Page::Standing => ui::standing::show(ui, &model, st, art),
                     Page::Chronicle => ui::chronicle::show(ui, &model, st, art),
                     Page::Letters => ui::letters::show(ui, &model, st, art),
                     Page::Dead => ui::dead::show(ui, &model, st, art),

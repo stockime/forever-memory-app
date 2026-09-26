@@ -5,6 +5,7 @@ pub mod dead;
 pub mod deeds;
 pub mod diary;
 pub mod economy;
+pub mod house;
 pub mod journal;
 pub mod letters;
 pub mod map;
@@ -12,6 +13,7 @@ pub mod overview;
 pub mod players;
 pub mod quests;
 pub mod settings;
+pub mod standing;
 pub mod story;
 pub mod widgets;
 
