@@ -34,6 +34,9 @@ The app speaks English, Deutsch, Français, Español, Português (Brasil) and
 
 ## What's in it
 
+- **The House**: all of a player's characters as one household, with a
+  banner and name of its own, its members, the mounts and companions it
+  owns, the Legacy and its history.
 - **Overview**: leveling curve and gold against hours played, time per zone,
   XP per hour per session, open quests nearest to done.
 - **Armory**: gear on the class scene with the game's tooltips and when each
@@ -59,7 +62,8 @@ The app speaks English, Deutsch, Français, Español, Português (Brasil) and
   (each language gets its own voice). Optional; needs an ElevenLabs API key.
 - **Quests**: active (with objective progress), completed and abandoned, with
   the full quest text, rewards offered and chosen, time taken, and how the
-  objectives progressed.
+  objectives progressed. **Conversations**: every word an NPC said to the
+  character (gossip, quest text, greetings), by NPC, replayed as a scene.
 - **Map**: the recorded path on the zone's Classic world map with quests,
   deaths and level-ups where they happened, and a replay scrubber. Only what
   the character has explored is revealed; the rest stays dark.
@@ -70,9 +74,14 @@ The app speaks English, Deutsch, Français, Español, Português (Brasil) and
 - **Players**: everyone met, searchable, with full names, class, race, level
   and guild once the addon has seen them up close (else a class guess from
   their spells), what passed between you, what they cast and what they said.
+  Their **roleplay profile** from Total RP 3, MyRolePlay or XRP (name, title,
+  appearance, history, personality traits, currently) when you have one of
+  those addons.
 - **Fellowship and nemeses**: who each character travelled with, for how
   long, and what passed between them; who killed them, where, and whether
   they took their revenge.
+- **Standing**: where each character stands with every faction, when each
+  standing was reached and how it moved (addon 0.4.0).
 - **Deeds**: class-specific feats earned from what was recorded (Hands of
   Mercy, Consecrated Ground, Payback…), each with the moment it was earned.
 - **Item stories**: every item's life, from who dropped it to what replaced
@@ -126,6 +135,10 @@ on macOS, `%APPDATA%\forever-memory` on Windows), readable only by you.
 
 Tom Crusader, a level 20 Undead Protection Paladin, and his alts are made-up demo characters (see `demo/`); no real account or player is shown.
 
+**The House**
+
+![The House](docs/screenshots/house.png)
+
 **Overview**
 
 ![Overview](docs/screenshots/overview.png)
@@ -158,6 +171,10 @@ Tom Crusader, a level 20 Undead Protection Paladin, and his alts are made-up dem
 
 ![Quests](docs/screenshots/quests.png)
 
+**Conversations**
+
+![Conversations](docs/screenshots/conversations.png)
+
 **Map**
 
 ![Map](docs/screenshots/map.png)
@@ -165,6 +182,10 @@ Tom Crusader, a level 20 Undead Protection Paladin, and his alts are made-up dem
 **Combat**
 
 ![Combat](docs/screenshots/combat.png)
+
+**Standing**
+
+![Standing](docs/screenshots/standing.png)
 
 **Book of the Dead**
 
@@ -174,7 +195,7 @@ Tom Crusader, a level 20 Undead Protection Paladin, and his alts are made-up dem
 
 ![Gold & loot](docs/screenshots/gold.png)
 
-**Players**
+**Players** (with a Total RP 3 profile)
 
 ![Players](docs/screenshots/players.png)
 

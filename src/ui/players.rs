@@ -163,7 +163,6 @@ fn everyone(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art, realm: &str) 
     ui.horizontal_top(|ui| {
         ui.vertical(|ui| {
             ui.set_width(330.0);
-            super::heading(ui, tr!("Players"));
             ui.add(
                 egui::TextEdit::singleline(&mut st.player_search)
                     .hint_text(tr!("Search by name or class"))

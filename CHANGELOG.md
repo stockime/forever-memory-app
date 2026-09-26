@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0
+
+- The House: the account as a household, with a banner, a name you can
+  change, its members, the mounts and companions it owns, the Legacy and a
+  history of firsts, deaths, deeds, letters and notable kills.
+- Standing: every faction's standing, when each was reached, and how it
+  moved. Needs addon 0.4.0 (offered in Settings) and a login.
+- Conversations under Quests: what each NPC said, replayed as a scene.
+- Roleplay profiles from Total RP 3, MyRolePlay and XRP on the Players page.
+- Empty pages say what will appear there, in the game's own look.
+- Pages no longer carry a title of their own.
+
 ## 0.3.0
 
 - Deeds: 14 for everyone and 6 per class, earned from what was recorded.
