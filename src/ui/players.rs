@@ -55,7 +55,9 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
             });
         });
         ui.add_space(16.0);
+        let w = ui.available_width();
         ui.vertical(|ui| {
+            ui.set_width(w);
             match st.player.as_ref().and_then(|n| m.players.iter().find(|p| &p.name == n)) {
                 Some(p) => profile(ui, m, p, art),
                 None => super::empty(ui, "Pick someone on the left."),

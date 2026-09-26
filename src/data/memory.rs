@@ -128,7 +128,11 @@ impl Session {
 
 #[derive(Clone, Debug, Default)]
 pub struct Character {
+    pub slug: String, // the character's folder in the repository
     pub name: String,
+    pub personality: String,
+    /// Diary entries by date ("2026-09-26"), as stored.
+    pub diary: BTreeMap<String, String>,
     pub guid: String,
     pub class: String,
     pub class_file: String,
@@ -227,7 +231,9 @@ fn load_character(dir: &Path, texts: &HashMap<i64, Value>, items: &mut HashMap<i
         name = format!("{} {}", s("name"), s("surname")).trim().to_string();
     }
     let mut c = Character {
+        slug: dir.file_name()?.to_string_lossy().to_string(),
         name,
+        personality: fs::read_to_string(dir.join("personality.md")).unwrap_or_default().trim().to_string(),
         guid: s("guid"),
         class: s("class"),
         class_file: s("classFile"),
@@ -259,6 +265,14 @@ fn load_character(dir: &Path, texts: &HashMap<i64, Value>, items: &mut HashMap<i
         }
     }
     c.snapshot = snapshot;
+    if let Ok(rd) = fs::read_dir(dir.join("diary")) {
+        for f in rd.flatten() {
+            let n = f.file_name().to_string_lossy().to_string();
+            if let (Some(day), Ok(text)) = (n.strip_suffix(".md"), fs::read_to_string(f.path())) {
+                c.diary.insert(day.to_string(), text);
+            }
+        }
+    }
     if let Some(Value::Object(o)) = read_json(&dir.join("seen.json")) {
         c.seen = o.into_iter().filter_map(|(k, v)| v.as_i64().map(|t| (k, t))).collect();
     }
@@ -280,7 +294,9 @@ fn load_character(dir: &Path, texts: &HashMap<i64, Value>, items: &mut HashMap<i
         if e.e == "login" {
             login = e.t;
         }
-        !(e.e == "item" && e.s("ctx").is_none() && e.t - login <= 10)
+        // PLAYER_ALIVE also fires at every login; only real revivals count.
+        let login_alive = matches!(e.e.as_str(), "alive" | "unghost") && e.t - login <= 15;
+        !(e.e == "item" && e.s("ctx").is_none() && e.t - login <= 10) && !login_alive
     });
     for e in &c.events {
         for key in ["link", "choice"] {

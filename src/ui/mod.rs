@@ -1,5 +1,6 @@
 pub mod armory;
 pub mod combat;
+pub mod diary;
 pub mod economy;
 pub mod journal;
 pub mod map;

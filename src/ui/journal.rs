@@ -10,6 +10,7 @@ use crate::theme::{self, DANGER, GOLD, INK, MUTED, RAISED};
 use crate::State;
 use egui::{Color32, RichText, Ui};
 
+const SORTS: [&str; 7] = ["Newest first", "Oldest first", "Longest", "Most experience", "Fastest leveling", "Most loot", "Most deaths"];
 const CATEGORIES: [&str; 9] = ["Quests", "Loot", "Money", "Experience", "Places", "Combat", "People", "Chat", "System"];
 
 pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
@@ -22,9 +23,28 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     ui.horizontal_top(|ui| {
         ui.vertical(|ui| {
             ui.set_width(300.0);
-            super::heading(ui, "Sessions");
+            ui.horizontal(|ui| {
+                super::heading(ui, "Sessions");
+                egui::ComboBox::from_id_salt("session-sort").selected_text(SORTS[st.session_sort.min(SORTS.len() - 1)]).show_ui(ui, |ui| {
+                    for (i, s) in SORTS.iter().enumerate() {
+                        ui.selectable_value(&mut st.session_sort, i, *s);
+                    }
+                });
+            });
+            let mut order: Vec<usize> = (0..c.sessions.len()).collect();
+            let rate = |s: &crate::data::memory::Session| s.xp as f64 / s.seconds().max(60) as f64;
+            match st.session_sort {
+                0 => order.reverse(),
+                1 => {}
+                2 => order.sort_by_key(|&i| std::cmp::Reverse(c.sessions[i].seconds())),
+                3 => order.sort_by_key(|&i| std::cmp::Reverse(c.sessions[i].xp)),
+                4 => order.sort_by(|&a, &b| rate(&c.sessions[b]).total_cmp(&rate(&c.sessions[a]))),
+                5 => order.sort_by_key(|&i| std::cmp::Reverse(c.sessions[i].items)),
+                _ => order.sort_by_key(|&i| std::cmp::Reverse((c.sessions[i].deaths, c.sessions[i].start))),
+            }
             egui::ScrollArea::vertical().id_salt("sessions").auto_shrink(false).show(ui, |ui| {
-                for (i, s) in c.sessions.iter().enumerate().rev() {
+                for i in order {
+                    let s = &c.sessions[i];
                     let selected = i == sel;
                     let r = egui::Frame::new()
                         .fill(if selected { RAISED } else { Color32::TRANSPARENT })
@@ -48,7 +68,9 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
             });
         });
         ui.add_space(16.0);
+        let w = ui.available_width();
         ui.vertical(|ui| {
+            ui.set_width(w);
             let s = &c.sessions[sel];
             ui.label(RichText::new(format!("{}, {} to {}", theme::day(s.start as f64), theme::clock(s.start as f64), theme::clock(s.end as f64))).font(theme::display_font(28.0)));
             ui.horizontal_wrapped(|ui| {

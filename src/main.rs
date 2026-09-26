@@ -2,6 +2,7 @@
 //! reading the forever-memory archive, the native logs and the game's art.
 
 mod art;
+mod claude;
 mod data;
 mod theme;
 mod ui;
@@ -28,6 +29,7 @@ pub enum Page {
     Overview,
     Armory,
     Journal,
+    Diary,
     Quests,
     Map,
     Combat,
@@ -36,12 +38,13 @@ pub enum Page {
 }
 
 impl Page {
-    const ALL: [Page; 8] = [Page::Overview, Page::Armory, Page::Journal, Page::Quests, Page::Map, Page::Combat, Page::Economy, Page::Players];
+    const ALL: [Page; 9] = [Page::Overview, Page::Armory, Page::Journal, Page::Diary, Page::Quests, Page::Map, Page::Combat, Page::Economy, Page::Players];
     fn label(self) -> &'static str {
         match self {
             Page::Overview => "Overview",
             Page::Armory => "Armory",
             Page::Journal => "Journal",
+            Page::Diary => "Diary",
             Page::Quests => "Quests",
             Page::Map => "Map",
             Page::Combat => "Combat",
@@ -54,6 +57,7 @@ impl Page {
             Page::Overview => "🏠",
             Page::Armory => "⛨",
             Page::Journal => "📖",
+            Page::Diary => "📜",
             Page::Quests => "❗",
             Page::Map => "⌖",
             Page::Combat => "⚔",
@@ -83,6 +87,16 @@ pub struct State {
     pub loot_search: String,
     pub spec: usize,
     pub search: String,
+    pub session_sort: usize,
+    pub repo: std::path::PathBuf,
+    pub reload_now: bool,
+    pub note_edit: Option<(String, String)>,
+    pub diary_day: Option<String>,
+    pub diary_job: Option<ui::diary::Job>,
+    pub diary_queue: Vec<String>,
+    pub diary_error: Option<String>,
+    pub diary_status: Option<String>,
+    pub key_input: String,
 }
 
 pub struct App {
@@ -103,6 +117,7 @@ impl App {
         theme::install(ctx);
         let paths = Paths::from_env();
         let art = art::Art::new(ctx, paths.art.clone(), paths.wowdata.clone());
+        let repo = paths.repo.clone();
         let mut app = App {
             paths,
             model: None,
@@ -111,7 +126,7 @@ impl App {
             last_load: Instant::now(),
             art,
             page: Page::Overview,
-            state: State::default(),
+            state: State { repo, ..Default::default() },
             shot: std::env::var("FM_SHOT").ok().map(|p| (p.into(), Instant::now(), false)),
         };
         if let Ok(p) = std::env::var("FM_PAGE") {
@@ -174,11 +189,24 @@ impl App {
             *asked = true;
             ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::UserData::default()));
         }
-        ctx.request_repaint_after(Duration::from_millis(200));
+        if std::env::var("FM_HOVER").is_err() {
+            ctx.request_repaint_after(Duration::from_millis(200));
+        }
     }
 }
 
 impl eframe::App for App {
+    /// FM_HOVER=x,y places the pointer there (with FM_SHOT, to check tooltips).
+    fn raw_input_hook(&mut self, _ctx: &egui::Context, raw: &mut egui::RawInput) {
+        if let Ok(v) = std::env::var("FM_HOVER") {
+            if let Some((x, y)) = v.split_once(',').and_then(|(x, y)| Some((x.parse().ok()?, y.parse().ok()?))) {
+                if self.shot.as_ref().is_some_and(|(_, t, _)| t.elapsed().as_secs_f64() < 1.5) {
+                    raw.events.push(egui::Event::PointerMoved(egui::pos2(x, y)));
+                }
+            }
+        }
+    }
+
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
         self.watch(&ctx);
@@ -194,7 +222,7 @@ impl eframe::App for App {
         if self.state.character >= model.memory.characters.len() {
             self.state.character = 0;
         }
-        if ctx.input(|i| i.key_pressed(egui::Key::F5)) {
+        if ctx.input(|i| i.key_pressed(egui::Key::F5)) || std::mem::take(&mut self.state.reload_now) {
             self.reload(&ctx);
         }
 
@@ -252,6 +280,7 @@ impl eframe::App for App {
                     Page::Overview => ui::overview::show(ui, &model, st, art, &mut self.page),
                     Page::Armory => ui::armory::show(ui, &model, st, art),
                     Page::Journal => ui::journal::show(ui, &model, st, art),
+                    Page::Diary => ui::diary::show(ui, &model, st, art),
                     Page::Quests => ui::quests::show(ui, &model, st, art),
                     Page::Map => ui::map::show(ui, &model, st, art),
                     Page::Combat => ui::combat::show(ui, &model, st, art),

@@ -8,8 +8,17 @@ characters: the armory, plus everything the memory recorder keeps.
 - **Armory**: gear on the class scene with the game's tooltips and when each
   item was first acquired, the character sheet, both talent specs on their
   Classic backgrounds, Legacy trees.
-- **Journal**: every session as a feed of loot, money, XP, quests, places,
+- **Journal**: sessions sortable by date, length, experience, leveling speed,
+  loot or deaths; each one as a feed of loot, money, XP, quests, places,
   deaths, NPCs and the chat going on at the time, with filters.
+- **Diary**: a personality note per character, and for each day played an
+  entry the character writes themselves, in first person and from inside the
+  world, written by Claude (`claude-opus-5`) from that day's recorded facts.
+  The facts sit under each entry so every sentence can be checked; entries and
+  notes are committed to the memory archive (`characters/<name>/diary/`,
+  `personality.md`). Other players' chat is never sent. Needs an Anthropic API
+  key: `ANTHROPIC_API_KEY`, or paste one in the app (kept in
+  `~/.config/forever-memory/anthropic-api-key`, mode 600).
 - **Quests**: active (with objective progress), completed and abandoned, with
   the full quest text, rewards offered and chosen, time taken, and how the
   objectives progressed.

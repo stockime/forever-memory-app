@@ -154,6 +154,49 @@ fn slot(ui: &mut Ui, c: &Character, art: &mut Art, s: i64, item: Option<&Value>,
     }
 }
 
+/// Drops the client's colour and texture escapes from hover text.
+fn strip_codes(s: &str) -> String {
+    let mut out = String::new();
+    let mut chars = s.chars().peekable();
+    while let Some(ch) = chars.next() {
+        if ch != '|' {
+            out.push(ch);
+            continue;
+        }
+        match chars.next() {
+            Some('c') => {
+                if chars.peek() == Some(&'n') {
+                    while let Some(x) = chars.next() {
+                        if x == ':' {
+                            break;
+                        }
+                    }
+                } else {
+                    for _ in 0..8 {
+                        chars.next();
+                    }
+                }
+            }
+            Some('r') => {}
+            Some('n') => out.push('\n'),
+            Some('T') | Some('A') => {
+                while let Some(x) = chars.next() {
+                    if x == '|' {
+                        chars.next();
+                        break;
+                    }
+                }
+            }
+            Some(x) => {
+                out.push('|');
+                out.push(x);
+            }
+            None => out.push('|'),
+        }
+    }
+    out
+}
+
 fn stats(ui: &mut Ui, c: &Character) {
     let mut seen = std::collections::HashSet::new();
     for (_, cat) in c.snapshot.get("stats").map(entries).unwrap_or_default() {
@@ -170,12 +213,22 @@ fn stats(ui: &mut Ui, c: &Character) {
         }
         label(ui, name);
         for (_, s) in rows {
-            ui.horizontal(|ui| {
+            let r = ui.horizontal(|ui| {
                 ui.label(RichText::new(s.get("label").and_then(Value::as_str).unwrap_or("")).color(MUTED));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.label(RichText::new(s.get("value").and_then(Value::as_str).unwrap_or("")).color(INK));
                 });
             });
+            // The character sheet's own hover text, recorded by the addon.
+            let tips: Vec<String> = s.get("tooltip").map(entries).unwrap_or_default().into_iter().filter_map(|(_, t)| t.as_str().map(strip_codes)).filter(|t| !t.trim().is_empty()).collect();
+            if !tips.is_empty() {
+                r.response.interact(egui::Sense::hover()).on_hover_ui(|ui| {
+                    ui.set_max_width(320.0);
+                    for (i, t) in tips.iter().enumerate() {
+                        ui.label(RichText::new(t).color(if i == 0 { INK } else { GOLD }).size(if i == 0 { 16.5 } else { 15.0 }));
+                    }
+                });
+            }
         }
         ui.add_space(10.0);
     }

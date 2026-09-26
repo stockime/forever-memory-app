@@ -108,6 +108,14 @@ pub fn install(ctx: &egui::Context) {
         s.spacing.item_spacing = egui::vec2(8.0, 6.0);
         s.spacing.button_padding = egui::vec2(10.0, 5.0);
         s.spacing.interact_size.y = 26.0;
+        // Tooltips like the game's: right away, even while the pointer drifts.
+        // Labels aren't selectable, so hovering an item's name counts as
+        // hovering the item.
+        s.interaction.show_tooltips_only_when_still = false;
+        s.interaction.tooltip_delay = 0.08;
+        s.interaction.selectable_labels = false;
+        // Long text wraps, also inside horizontal layouts.
+        s.wrap_mode = Some(egui::TextWrapMode::Wrap);
         let v = &mut s.visuals;
         *v = egui::Visuals::dark();
         v.panel_fill = NIGHT;

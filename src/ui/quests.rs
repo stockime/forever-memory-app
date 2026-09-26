@@ -21,7 +21,9 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
             list(ui, c, st);
         });
         ui.add_space(16.0);
+        let w = ui.available_width();
         ui.vertical(|ui| {
+            ui.set_width(w);
             let sel = st.quest.and_then(|id| c.quests.iter().find(|q| q.id == id));
             match sel {
                 Some(q) => detail(ui, m, c, q, art),
