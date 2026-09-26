@@ -8,6 +8,7 @@ use crate::data::Model;
 use crate::data::chat::Kind;
 use crate::data::memory::{Character, Event};
 use crate::theme::{self, DANGER, GOLD, INK, MUTED, RAISED};
+use crate::tr;
 use egui::{Color32, RichText, Ui};
 
 const SORTS: [&str; 7] = [
@@ -34,7 +35,7 @@ const CATEGORIES: [&str; 9] = [
 pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     let c = character(m, st);
     if c.sessions.is_empty() {
-        super::empty(ui, "No sessions recorded yet.");
+        super::empty(ui, tr!("No sessions recorded yet."));
         return;
     }
     let sel = st
@@ -45,12 +46,12 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
         ui.vertical(|ui| {
             ui.set_width(300.0);
             ui.horizontal(|ui| {
-                super::heading(ui, "Sessions");
+                super::heading(ui, tr!("Sessions"));
                 egui::ComboBox::from_id_salt("session-sort")
-                    .selected_text(SORTS[st.session_sort.min(SORTS.len() - 1)])
+                    .selected_text(crate::i18n::t(SORTS[st.session_sort.min(SORTS.len() - 1)]))
                     .show_ui(ui, |ui| {
                         for (i, s) in SORTS.iter().enumerate() {
-                            ui.selectable_value(&mut st.session_sort, i, *s);
+                            ui.selectable_value(&mut st.session_sort, i, crate::i18n::t(s));
                         }
                     });
             });
@@ -94,16 +95,16 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                                     .size(16.0),
                                 );
                                 let levels = if s.level_to > s.level_from {
-                                    format!("level {} → {}", s.level_from, s.level_to)
+                                    tr!("level {from} → {to}", from = s.level_from, to = s.level_to)
                                 } else {
-                                    format!("level {}", s.level_from)
+                                    tr!("level {level}", level = s.level_from)
                                 };
                                 ui.label(
                                     RichText::new(format!(
-                                        "{}, {}, {} XP",
+                                        "{}, {}, {}",
                                         theme::duration(s.seconds() as f64),
                                         levels,
-                                        theme::thousands(s.xp)
+                                        tr!("{xp} XP", xp = theme::thousands(s.xp))
                                     ))
                                     .small()
                                     .color(MUTED),
@@ -128,11 +129,11 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
             ui.set_width(w);
             let s = &c.sessions[sel];
             ui.label(
-                RichText::new(format!(
-                    "{}, {} to {}",
-                    theme::day(s.start as f64),
-                    theme::clock(s.start as f64),
-                    theme::clock(s.end as f64)
+                RichText::new(tr!(
+                    "{day}, {start} to {end}",
+                    day = theme::day(s.start as f64),
+                    start = theme::clock(s.start as f64),
+                    end = theme::clock(s.end as f64)
                 ))
                 .font(theme::display_font(28.0)),
             );
@@ -144,19 +145,31 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                     art,
                     icons::WATCH,
                     &theme::duration(s.seconds() as f64),
-                    "played",
+                    tr!("played"),
                 );
                 widgets::figure_text(
                     ui,
                     art,
                     icons::SPIRIT,
                     &theme::thousands(s.xp),
-                    "experience",
+                    tr!("experience"),
                 );
-                widgets::figure_money(ui, art, icons::COIN, s.money, "money");
-                widgets::figure_text(ui, art, icons::BAG, &s.items.to_string(), "items looted");
-                widgets::figure_text(ui, art, icons::NOTE, &s.quests.to_string(), "quests done");
-                widgets::figure_text(ui, art, icons::FEIGN, &s.deaths.to_string(), "deaths");
+                widgets::figure_money(ui, art, icons::COIN, s.money, tr!("money"));
+                widgets::figure_text(
+                    ui,
+                    art,
+                    icons::BAG,
+                    &s.items.to_string(),
+                    tr!("items looted"),
+                );
+                widgets::figure_text(
+                    ui,
+                    art,
+                    icons::NOTE,
+                    &s.quests.to_string(),
+                    tr!("quests done"),
+                );
+                widgets::figure_text(ui, art, icons::FEIGN, &s.deaths.to_string(), tr!("deaths"));
             });
             ui.add_space(8.0);
             chips(ui, &CATEGORIES, &mut st.journal_hide);
@@ -257,17 +270,17 @@ fn category(e: &Event) -> &'static str {
 
 fn context(ctx: Option<&str>, gained: bool) -> &'static str {
     match (ctx, gained) {
-        (Some("loot"), _) => "Looted",
-        (Some("merchant"), true) => "Bought",
-        (Some("merchant"), false) => "Sold",
-        (Some("quest"), true) => "Quest reward",
-        (Some("quest"), false) => "Handed in",
-        (Some("mail"), true) => "From the mail",
-        (Some("trade"), _) => "Traded",
-        (Some("auction"), _) => "Auction house",
-        (Some("bank"), _) => "Bank",
-        (_, true) => "Received",
-        (_, false) => "Used up",
+        (Some("loot"), _) => tr!("Looted"),
+        (Some("merchant"), true) => tr!("Bought"),
+        (Some("merchant"), false) => tr!("Sold"),
+        (Some("quest"), true) => tr!("Quest reward"),
+        (Some("quest"), false) => tr!("Handed in"),
+        (Some("mail"), true) => tr!("From the mail"),
+        (Some("trade"), _) => tr!("Traded"),
+        (Some("auction"), _) => tr!("Auction house"),
+        (Some("bank"), _) => tr!("Bank"),
+        (_, true) => tr!("Received"),
+        (_, false) => tr!("Used up"),
     }
 }
 
@@ -288,26 +301,28 @@ fn event(
         id.and_then(|i| titles.get(&i).copied())
             .map(str::to_string)
             .or_else(|| e.s("title").map(str::to_string))
-            .unwrap_or_else(|| "a quest".into())
+            .unwrap_or_else(|| tr!("a quest").into())
     };
     match e.e.as_str() {
         "login" => line(ui, t, "▶", |ui| {
-            let place = e
-                .s("zone")
-                .filter(|z| !z.is_empty())
-                .map(|z| format!(" in {z}"))
-                .unwrap_or_default();
-            ui.label(
-                RichText::new(format!(
-                    "Logged in at level {}{place}",
-                    e.i("level").unwrap_or(0)
-                ))
-                .color(INK),
-            );
+            let level = e.i("level").unwrap_or(0);
+            let text = match e.s("zone").filter(|z| !z.is_empty()) {
+                Some(zone) => tr!(
+                    "Logged in at level {level} in {zone}",
+                    level = level,
+                    zone = zone
+                ),
+                None => tr!("Logged in at level {level}", level = level),
+            };
+            ui.label(RichText::new(text).color(INK));
         }),
         "logout" => line(ui, t, "■", |ui| {
             ui.label(
-                RichText::new(format!("Logged out in {}", e.s("zone").unwrap_or("?"))).color(MUTED),
+                RichText::new(tr!(
+                    "Logged out in {zone}",
+                    zone = e.s("zone").unwrap_or("?")
+                ))
+                .color(MUTED),
             );
         }),
         "item" => {
@@ -324,12 +339,12 @@ fn event(
         }
         "equip" => line(ui, t, "⛨", |ui| match e.s("link") {
             Some(l) => {
-                ui.label(RichText::new("Equipped").color(MUTED));
+                ui.label(RichText::new(tr!("Equipped")).color(MUTED));
                 item_link(ui, m, art, l, 20.0);
             }
             None => {
                 ui.label(
-                    RichText::new(format!("Took off slot {}", e.i("slot").unwrap_or(0)))
+                    RichText::new(tr!("Took off slot {slot}", slot = e.i("slot").unwrap_or(0)))
                         .color(MUTED),
                 );
             }
@@ -340,11 +355,11 @@ fn event(
                 super::widgets::coins(ui, art, d.abs(), 15.0);
                 ui.label(
                     RichText::new(match e.s("ctx") {
-                        Some("loot") => "looted",
-                        Some("merchant") => "at a vendor",
-                        Some("quest") => "quest reward",
-                        Some("trainer") => "at a trainer",
-                        Some("mail") => "mail",
+                        Some("loot") => tr!("looted"),
+                        Some("merchant") => tr!("at a vendor"),
+                        Some("quest") => tr!("quest reward"),
+                        Some("trainer") => tr!("at a trainer"),
+                        Some("mail") => tr!("mail"),
                         Some(x) => x,
                         None => "",
                     })
@@ -353,32 +368,35 @@ fn event(
             });
         }
         "xp" => line(ui, t, "↑", |ui| {
-            ui.label(RichText::new(format!("+{} XP", e.i("d").unwrap_or(0))).color(MUTED));
+            ui.label(RichText::new(tr!("+{xp} XP", xp = e.i("d").unwrap_or(0))).color(MUTED));
         }),
         "level" => line(ui, t, "★", |ui| {
             ui.label(
-                RichText::new(format!("Reached level {}", e.i("level").unwrap_or(0)))
-                    .font(theme::display_font(20.0))
-                    .color(GOLD),
+                RichText::new(tr!(
+                    "Reached level {level}",
+                    level = e.i("level").unwrap_or(0)
+                ))
+                .font(theme::display_font(20.0))
+                .color(GOLD),
             );
         }),
         "quest" => line(ui, t, "❗", |ui| match e.s("act") {
             Some("accept") => {
-                ui.label(RichText::new("Accepted").color(MUTED));
+                ui.label(RichText::new(tr!("Accepted")).color(MUTED));
                 ui.label(RichText::new(title(e.i("id"))).color(INK));
             }
             Some("turnin") => {
-                ui.label(RichText::new("Completed").color(GOLD));
+                ui.label(RichText::new(tr!("Completed")).color(GOLD));
                 ui.label(RichText::new(title(e.i("id"))).color(INK));
                 if let Some(xp) = e.i("xp").filter(|x| *x > 0) {
-                    ui.label(RichText::new(format!("+{xp} XP")).color(MUTED));
+                    ui.label(RichText::new(tr!("+{xp} XP", xp = xp)).color(MUTED));
                 }
                 if let Some(l) = e.s("choice") {
                     item_link(ui, m, art, l, 20.0);
                 }
             }
             _ => {
-                ui.label(RichText::new("Abandoned").color(MUTED));
+                ui.label(RichText::new(tr!("Abandoned")).color(MUTED));
                 ui.label(RichText::new(title(e.i("id"))).color(INK));
             }
         }),
@@ -394,7 +412,9 @@ fn event(
             ui.label(RichText::new(e.s("text").unwrap_or("")).color(MUTED));
         }),
         "zone" => line(ui, t, "⌖", |ui| {
-            ui.label(RichText::new(format!("Entered {}", e.s("zone").unwrap_or("?"))).color(INK));
+            ui.label(
+                RichText::new(tr!("Entered {zone}", zone = e.s("zone").unwrap_or("?"))).color(INK),
+            );
         }),
         "subzone" => {
             if let Some(sub) = e.s("sub").filter(|s| !s.is_empty()) {
@@ -409,14 +429,14 @@ fn event(
                 .filter(|s| !s.is_empty())
                 .collect::<Vec<_>>()
                 .join(", ");
-            ui.label(RichText::new(format!("Died in {place}")).color(DANGER));
+            ui.label(RichText::new(tr!("Died in {place}", place = place)).color(DANGER));
         }),
         "alive" | "unghost" => line(ui, t, "✚", |ui| {
-            ui.label(RichText::new("Back on your feet").color(MUTED));
+            ui.label(RichText::new(tr!("Back on your feet")).color(MUTED));
         }),
         "gossip" => line(ui, t, "☺", |ui| {
-            let name = e.s("name").unwrap_or("someone");
-            let r = ui.label(RichText::new(format!("Talked to {name}")).color(MUTED));
+            let name = e.s("name").unwrap_or(tr!("someone"));
+            let r = ui.label(RichText::new(tr!("Talked to {name}", name = name)).color(MUTED));
             // What they said, from the gossip cache.
             if let Some((_, text, options)) = m.memory.gossip.iter().find(|(n, _, _)| n == name) {
                 r.on_hover_ui(|ui| {
@@ -441,9 +461,9 @@ fn event(
                     .collect();
             ui.label(
                 RichText::new(if names.is_empty() {
-                    "Left the group".into()
+                    tr!("Left the group").into()
                 } else {
-                    format!("Group: {}", names.join(", "))
+                    tr!("Group: {names}", names = names.join(", "))
                 })
                 .color(INK),
             );
@@ -451,7 +471,16 @@ fn event(
         "open" => {
             if let Some(w) = e.s("what").filter(|w| *w != "loot") {
                 line(ui, t, "⌂", |ui| {
-                    ui.label(RichText::new(format!("Visited a {w}")).color(MUTED));
+                    let text = match w {
+                        "merchant" => tr!("Visited a vendor").into(),
+                        "trainer" => tr!("Visited a trainer").into(),
+                        "bank" => tr!("Visited the bank").into(),
+                        "mail" | "mailbox" => tr!("Checked the mail").into(),
+                        "auction" => tr!("Visited the auction house").into(),
+                        "taxi" => tr!("Visited a flight master").into(),
+                        _ => tr!("Visited a {what}", what = w),
+                    };
+                    ui.label(RichText::new(text).color(MUTED));
                 });
             }
         }
@@ -463,13 +492,13 @@ fn event(
             }
         }
         "spell" => line(ui, t, "•", |ui| {
-            ui.label(RichText::new("Learned a new spell").color(INK));
+            ui.label(RichText::new(tr!("Learned a new spell")).color(INK));
         }),
         "played" => line(ui, t, "•", |ui| {
             ui.label(
-                RichText::new(format!(
-                    "/played: {}",
-                    theme::duration(e.f("total").unwrap_or(0.0))
+                RichText::new(tr!(
+                    "/played: {time}",
+                    time = theme::duration(e.f("total").unwrap_or(0.0))
                 ))
                 .color(MUTED),
             );

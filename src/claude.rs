@@ -19,4 +19,3 @@ pub fn write(system: &str, prompt: &str) -> Result<String, String> {
     let r = resolved().ok_or("No writer is set up. Pick one in Settings.")?;
     writer::write(&r, system, prompt)
 }
-pub const WRITER: &str = "the writer"; // TODO(merge): ui/diary.rs uses name()

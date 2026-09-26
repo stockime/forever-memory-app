@@ -8,6 +8,7 @@ use crate::art::Art;
 use crate::data::Model;
 use crate::data::combat::Hit;
 use crate::theme::{self, DANGER, INK, MUTED, SERIES};
+use crate::tr;
 use egui::{RichText, Ui};
 use egui_plot::{Bar, BarChart, Line, PlotPoints};
 use std::collections::HashMap;
@@ -18,7 +19,9 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
     if cb.lines == 0 {
         super::empty(
             ui,
-            "No combat logs yet. They are archived after the game closes, or read live from the game's Logs folder.",
+            tr!(
+                "No combat logs yet. They are archived after the game closes, or read live from the game's Logs folder."
+            ),
         );
         return;
     }
@@ -55,36 +58,42 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                         art,
                         icons::SWORDS,
                         &theme::thousands(total),
-                        "damage done",
+                        tr!("damage done"),
                     );
                     widgets::figure_text(
                         ui,
                         art,
                         icons::SWORDS,
                         &format!("{:.1}", total as f64 / fight_time.max(1.0)),
-                        "per second in a fight",
+                        tr!("per second in a fight"),
                     );
                     widgets::figure_text(
                         ui,
                         art,
                         icons::HEAL,
                         &theme::thousands(healed.iter().map(|h| h.amount - h.over).sum()),
-                        "healing done",
+                        tr!("healing done"),
                     );
                     widgets::figure_text(
                         ui,
                         art,
                         icons::FEIGN,
                         &theme::thousands(taken.iter().map(|h| h.amount).sum()),
-                        "damage taken",
+                        tr!("damage taken"),
                     );
-                    widgets::figure_text(ui, art, icons::SKULL, &kills.len().to_string(), "kills");
+                    widgets::figure_text(
+                        ui,
+                        art,
+                        icons::SKULL,
+                        &kills.len().to_string(),
+                        tr!("kills"),
+                    );
                     widgets::figure_text(
                         ui,
                         art,
                         icons::FEIGN,
                         &deaths.len().to_string(),
-                        "deaths",
+                        tr!("deaths"),
                     );
                 });
             });
@@ -95,11 +104,11 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 ui,
                 |ui| {
                     card(ui, |ui| {
-                        label(ui, "Fights");
+                        label(ui, tr!("Fights"));
                         ui.label(
-                            RichText::new(
-                                "Damage per second in each fight, in order. Click one to see it.",
-                            )
+                            RichText::new(tr!(
+                                "Damage per second in each fight, in order. Click one to see it."
+                            ))
                             .small()
                             .color(MUTED),
                         );
@@ -115,12 +124,12 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                                 Bar::new(k as f64 + 1.0, f.dps())
                                     .width(0.8)
                                     .fill(fill)
-                                    .name(format!(
-                                        "{} at {}\n{:.1} DPS over {}",
-                                        f.target,
-                                        theme::clock(f.start),
-                                        f.dps(),
-                                        theme::duration(f.end - f.start)
+                                    .name(tr!(
+                                        "{target} at {time}\n{dps} DPS over {duration}",
+                                        target = f.target,
+                                        time = theme::clock(f.start),
+                                        dps = format!("{:.1}", f.dps()),
+                                        duration = theme::duration(f.end - f.start)
                                     ))
                             })
                             .collect();
@@ -153,13 +162,20 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                             .or(fights.last().map(|(i, _)| *i));
                         match idx.map(|i| &m.fights[i]) {
                             Some(f) => {
-                                label(ui, &format!("{} at {}", f.target, theme::clock(f.start)));
+                                label(
+                                    ui,
+                                    &tr!(
+                                        "{target} at {time}",
+                                        target = f.target,
+                                        time = theme::clock(f.start)
+                                    ),
+                                );
                                 ui.label(
-                                    RichText::new(format!(
-                                        "{} damage in {}, {:.1} per second",
-                                        theme::thousands(f.damage),
-                                        theme::duration(f.end - f.start),
-                                        f.dps()
+                                    RichText::new(tr!(
+                                        "{damage} damage in {duration}, {dps} per second",
+                                        damage = theme::thousands(f.damage),
+                                        duration = theme::duration(f.end - f.start),
+                                        dps = format!("{:.1}", f.dps())
                                     ))
                                     .small()
                                     .color(MUTED),
@@ -173,10 +189,16 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                                     .collect();
                                 plot("fight")
                                     .height(220.0)
-                                    .x_axis_formatter(|g, _| format!("{:.0}s", g.value))
+                                    .x_axis_formatter(|g, _| {
+                                        tr!("{s}s", s = format!("{:.0}", g.value))
+                                    })
                                     .label_formatter(|h| {
                                         let p = super::hover(h);
-                                        Some(format!("{:.0} damage after {:.1}s", p.y, p.x))
+                                        Some(tr!(
+                                            "{damage} damage after {s}s",
+                                            damage = format!("{:.0}", p.y),
+                                            s = format!("{:.1}", p.x)
+                                        ))
                                     })
                                     .show(ui, |pu| {
                                         pu.line(
@@ -188,7 +210,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                                         );
                                     });
                             }
-                            None => super::empty(ui, "No fights yet."),
+                            None => super::empty(ui, tr!("No fights yet.")),
                         }
                     });
                 },
@@ -200,7 +222,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 if col == 0 {
                     card(ui, |ui| {
                         ui.set_width(ui.available_width());
-                        label(ui, "Abilities");
+                        label(ui, tr!("Abilities"));
                         struct A {
                             name: String,
                             dmg: i64,
@@ -227,10 +249,10 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                             })
                             .collect();
                         let cols = [
-                            Col::grow("Ability"),
-                            Col::fit("Share", 100.0),
-                            Col::num("Damage", 56.0),
-                            Col::num("Hits", 84.0),
+                            Col::grow(tr!("Ability")),
+                            Col::fit(tr!("Share"), 100.0),
+                            Col::num(tr!("Damage"), 80.0),
+                            Col::num(tr!("Hits"), 110.0),
                         ];
                         widgets::table(
                             ui,
@@ -261,10 +283,13 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                                 }
                                 _ => {
                                     ui.label(
-                                        RichText::new(format!(
-                                            "{} ({:.0}% crit)",
-                                            r.hits,
-                                            r.crits as f64 / r.hits.max(1) as f64 * 100.0
+                                        RichText::new(tr!(
+                                            "{hits} ({pct}% crit)",
+                                            hits = r.hits,
+                                            pct = format!(
+                                                "{:.0}",
+                                                r.crits as f64 / r.hits.max(1) as f64 * 100.0
+                                            )
                                         ))
                                         .small()
                                         .color(MUTED),
@@ -276,7 +301,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 } else {
                     card(ui, |ui| {
                         ui.set_width(ui.available_width());
-                        label(ui, "Kills");
+                        label(ui, tr!("Kills"));
                         let mut by: HashMap<&str, usize> = HashMap::new();
                         for (_, u) in &kills {
                             *by.entry(cb.unit_name(*u)).or_default() += 1;
@@ -284,9 +309,9 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                         let max = by.values().copied().max().unwrap_or(1) as f32;
                         let rows: Vec<(&str, usize)> = by.into_iter().collect();
                         let cols = [
-                            Col::grow("Creature"),
+                            Col::grow(tr!("Creature")),
                             Col::fit("", 110.0),
-                            Col::num("Kills", 40.0),
+                            Col::num(tr!("Kills"), 70.0),
                         ];
                         widgets::table(
                             ui,
@@ -324,18 +349,18 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
 
             card(ui, |ui| {
                 ui.set_width(ui.available_width());
-                label(ui, "Deaths");
+                label(ui, tr!("Deaths"));
                 if deaths.is_empty() {
-                    ui.label(RichText::new("No deaths. Keep it that way.").color(MUTED));
+                    ui.label(RichText::new(tr!("No deaths. Keep it that way.")).color(MUTED));
                 }
                 for t in deaths.iter().rev() {
                     ui.label(
-                        RichText::new(format!("Died {}", theme::when(*t)))
+                        RichText::new(tr!("Died {when}", when = theme::when(*t)))
                             .color(DANGER)
                             .size(17.0),
                     );
                     ui.label(
-                        RichText::new("The ten seconds before:")
+                        RichText::new(tr!("The ten seconds before:"))
                             .small()
                             .color(MUTED),
                     );
@@ -345,10 +370,10 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                         .filter(|h| h.t <= *t && h.t > t - 10.0)
                         .collect();
                     let cols = [
-                        Col::num("Before", 60.0),
-                        Col::grow("From"),
-                        Col::fit("With", 140.0),
-                        Col::num("Damage", 70.0),
+                        Col::num(tr!("Before"), 70.0),
+                        Col::grow(tr!("From")),
+                        Col::fit(tr!("With"), 150.0),
+                        Col::num(tr!("Damage"), 90.0),
                     ];
                     widgets::table(
                         ui,
@@ -365,7 +390,13 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                         },
                         |ui, h, i| match i {
                             0 => {
-                                ui.label(RichText::new(format!("−{:.1}s", t - h.t)).color(MUTED));
+                                ui.label(
+                                    RichText::new(format!(
+                                        "−{}",
+                                        tr!("{s}s", s = format!("{:.1}", t - h.t))
+                                    ))
+                                    .color(MUTED),
+                                );
                             }
                             1 => {
                                 ui.label(RichText::new(cb.unit_name(h.src)).color(INK));
@@ -375,11 +406,11 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                             }
                             _ => {
                                 ui.label(
-                                    RichText::new(format!(
-                                        "{}{}",
-                                        h.amount,
-                                        if h.crit { " crit" } else { "" }
-                                    ))
+                                    RichText::new(if h.crit {
+                                        tr!("{damage} crit", damage = h.amount)
+                                    } else {
+                                        h.amount.to_string()
+                                    })
                                     .color(DANGER),
                                 );
                             }

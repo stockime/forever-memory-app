@@ -186,6 +186,13 @@ impl Page {
             Page::Settings => tr!("Settings"),
         }
     }
+    /// A name that stays the same in every language (for FM_PAGE).
+    fn id(self) -> String {
+        match self {
+            Page::Economy => "gold".into(),
+            p => format!("{p:?}").to_lowercase(),
+        }
+    }
     /// Game icons (file IDs) for the navigation.
     fn icon(self) -> i64 {
         use ui::widgets::icons;
@@ -302,7 +309,7 @@ impl App {
             app.page = Page::ALL
                 .into_iter()
                 .chain([Page::Settings])
-                .find(|x| x.label().to_lowercase().starts_with(&p.to_lowercase()))
+                .find(|x| x.id().starts_with(&p.to_lowercase()))
                 .unwrap_or(Page::Overview);
         }
         app.reload(ctx);

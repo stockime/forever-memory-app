@@ -14,6 +14,7 @@ use crate::art::Art;
 use crate::data::Model;
 use crate::data::memory::{Character, QuestStatus, parse_link};
 use crate::theme::{self, EDGE, GOLD, INK, MUTED, PANEL, RAISED};
+use crate::tr;
 use crate::{Page, State};
 use egui::{Color32, RichText, Stroke, Ui, Vec2};
 use serde_json::Value;
@@ -73,11 +74,11 @@ pub fn top_bar(
         }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let status = if loading {
-                "reading…".to_string()
+                tr!("reading…").to_string()
             } else {
-                format!(
-                    "read {}",
-                    theme::ago(
+                tr!(
+                    "read {when}",
+                    when = theme::ago(
                         m.loaded_at
                             .duration_since(std::time::UNIX_EPOCH)
                             .map(|d| d.as_secs_f64())
@@ -86,7 +87,7 @@ pub fn top_bar(
                 )
             };
             ui.label(RichText::new(status).small().color(MUTED))
-                .on_hover_text("Reloads on its own after each save; F5 reloads now");
+                .on_hover_text(tr!("Reloads on its own after each save; F5 reloads now"));
             ui.add_space(12.0);
             search(ui, m, st, page);
         });
@@ -102,7 +103,7 @@ fn search(ui: &mut Ui, m: &Model, st: &mut State, page: &mut Page) {
     let resp = ui.add(
         egui::TextEdit::singleline(&mut st.search)
             .id(id)
-            .hint_text("Search quests, players, items  (Ctrl+K)")
+            .hint_text(tr!("Search quests, players, items  (Ctrl+K)"))
             .desired_width(320.0),
     );
     if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
@@ -125,7 +126,7 @@ fn search(ui: &mut Ui, m: &Model, st: &mut State, page: &mut Page) {
                 _ => 2,
             };
             hits.push((
-                "Quest".into(),
+                tr!("Quest").into(),
                 quest.title.clone(),
                 Box::new(move |s, p| {
                     s.quest = Some(id);
@@ -139,7 +140,7 @@ fn search(ui: &mut Ui, m: &Model, st: &mut State, page: &mut Page) {
         if p.name.to_lowercase().contains(&q) {
             let name = p.name.clone();
             hits.push((
-                "Player".into(),
+                tr!("Player").into(),
                 p.name.clone(),
                 Box::new(move |s, pg| {
                     s.player = Some(name.clone());
@@ -160,7 +161,7 @@ fn search(ui: &mut Ui, m: &Model, st: &mut State, page: &mut Page) {
     for name in items.into_iter().take(6) {
         let n = name.clone();
         hits.push((
-            "Item".into(),
+            tr!("Item").into(),
             name,
             Box::new(move |s, p| {
                 s.loot_search = n.clone();
@@ -176,7 +177,7 @@ fn search(ui: &mut Ui, m: &Model, st: &mut State, page: &mut Page) {
         egui::Frame::popup(ui.style()).fill(PANEL).show(ui, |ui| {
             ui.set_width(resp.rect.width().max(320.0));
             if hits.is_empty() {
-                ui.label(RichText::new("Nothing found").color(MUTED));
+                ui.label(RichText::new(tr!("Nothing found")).color(MUTED));
             }
             for (kind, label, go) in &hits {
                 let r = ui.add(
@@ -325,7 +326,7 @@ pub fn item_link(ui: &mut Ui, m: &Model, art: &mut Art, link: &str, size: f32) -
     let info = m.memory.items.get(&l.id);
     let name = if l.name.is_empty() {
         info.map(|i| i.name.clone())
-            .unwrap_or_else(|| format!("Item {}", l.id))
+            .unwrap_or_else(|| tr!("Item {id}", id = l.id))
     } else {
         l.name.clone()
     };
@@ -361,7 +362,7 @@ pub fn chips(
     ui.horizontal_wrapped(|ui| {
         for &c in all {
             let on = !hidden.contains(c);
-            let text = RichText::new(c).color(if on { INK } else { MUTED });
+            let text = RichText::new(crate::i18n::t(c)).color(if on { INK } else { MUTED });
             if ui
                 .add(
                     egui::Button::new(text)

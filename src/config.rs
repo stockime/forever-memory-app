@@ -209,7 +209,3 @@ pub fn update(f: impl FnOnce(&mut Settings)) -> Result<(), String> {
     f(&mut s);
     s.save()
 }
-
-pub fn settings_file() -> PathBuf {
-    file()
-}

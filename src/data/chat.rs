@@ -29,12 +29,12 @@ impl Line {
     pub fn label(&self) -> String {
         match &self.kind {
             Kind::Channel(c) => c.split_once(". ").map(|(_, n)| n).unwrap_or(c).to_string(),
-            Kind::Say => "Say".into(),
-            Kind::Yell => "Yell".into(),
-            Kind::Whisper => "Whisper".into(),
-            Kind::WhisperTo => "Whisper to".into(),
+            Kind::Say => crate::tr!("Say").into(),
+            Kind::Yell => crate::tr!("Yell").into(),
+            Kind::Whisper => crate::tr!("Whisper").into(),
+            Kind::WhisperTo => crate::tr!("Whisper to").into(),
             Kind::Group(g) => g.clone(),
-            Kind::System => "System".into(),
+            Kind::System => crate::tr!("System").into(),
         }
     }
 }

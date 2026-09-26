@@ -8,19 +8,20 @@ use crate::art::Art;
 use crate::data::Model;
 use crate::data::memory::{Character, parse_link};
 use crate::theme::{self, INK, MUTED, SERIES};
+use crate::tr;
 use egui::{RichText, Ui};
 use std::collections::HashMap;
 
 fn source(ctx: Option<&str>) -> &'static str {
     match ctx {
-        Some("loot") => "Loot",
-        Some("quest") => "Quests",
-        Some("merchant") => "Vendors",
-        Some("trainer") => "Trainers",
-        Some("mail") => "Mail",
-        Some("auction") => "Auction house",
-        Some("trade") => "Trade",
-        _ => "Other",
+        Some("loot") => tr!("Loot"),
+        Some("quest") => tr!("Quests"),
+        Some("merchant") => tr!("Vendors"),
+        Some("trainer") => tr!("Trainers"),
+        Some("mail") => tr!("Mail"),
+        Some("auction") => tr!("Auction house"),
+        Some("trade") => tr!("Trade"),
+        _ => tr!("Other"),
     }
 }
 
@@ -45,9 +46,9 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                 super::widgets::figure_row(ui, |ui| {
                     ui.spacing_mut().item_spacing.x = 40.0;
                     let total: i64 = earned.values().sum();
-                    widgets::figure_money(ui, art, icons::COIN, total, "earned");
-                    widgets::figure_money(ui, art, icons::BAG, spent.values().sum(), "spent");
-                    widgets::figure_money(ui, art, icons::COINS, c.money, "carried now");
+                    widgets::figure_money(ui, art, icons::COIN, total, tr!("earned"));
+                    widgets::figure_money(ui, art, icons::BAG, spent.values().sum(), tr!("spent"));
+                    widgets::figure_money(ui, art, icons::COINS, c.money, tr!("carried now"));
                     let played = c.total_play() as f64;
                     if played > 60.0 {
                         widgets::figure_money(
@@ -55,7 +56,7 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
                             art,
                             icons::WATCH,
                             (total as f64 / played * 3600.0) as i64,
-                            "earned per hour",
+                            tr!("earned per hour"),
                         );
                     }
                 });
@@ -63,20 +64,20 @@ pub fn show(ui: &mut Ui, m: &Model, st: &mut State, art: &mut Art) {
             ui.add_space(14.0);
             super::pair_by(ui, |ui, i| {
                 if i == 0 {
-                    flows(ui, art, "Where money comes from", &earned)
+                    flows(ui, art, tr!("Where money comes from"), &earned)
                 } else {
-                    flows(ui, art, "Where it goes", &spent)
+                    flows(ui, art, tr!("Where it goes"), &spent)
                 }
             });
             ui.add_space(14.0);
             card(ui, |ui| {
                 ui.set_width(ui.available_width());
                 ui.horizontal(|ui| {
-                    label(ui, "Everything that went through the bags");
+                    label(ui, tr!("Everything that went through the bags"));
                 });
                 ui.add(
                     egui::TextEdit::singleline(&mut st.loot_search)
-                        .hint_text("Filter items")
+                        .hint_text(tr!("Filter items"))
                         .desired_width(260.0),
                 );
                 ui.add_space(6.0);
@@ -94,15 +95,15 @@ fn flows(ui: &mut Ui, art: &mut Art, title: &str, map: &HashMap<&str, i64>) {
         let mut rows: Vec<(&str, i64)> = map.iter().map(|(k, v)| (*k, *v)).collect();
         rows.sort_by(|a, b| b.1.cmp(&a.1));
         if rows.is_empty() {
-            ui.label(RichText::new("Nothing yet.").color(MUTED));
+            ui.label(RichText::new(tr!("Nothing yet.")).color(MUTED));
             return;
         }
         let max = rows[0].1.max(1) as f32;
-        let bar_w = (ui.available_width() - 260.0).max(80.0);
+        let bar_w = (ui.available_width() - 290.0).max(80.0);
         for (name, v) in rows {
             ui.horizontal(|ui| {
                 ui.add_sized(
-                    [110.0, 22.0],
+                    [140.0, 22.0],
                     egui::Label::new(RichText::new(name).color(INK)),
                 );
                 widgets::bar(ui, v as f32 / max, SERIES[0], bar_w);
@@ -143,7 +144,7 @@ fn items(ui: &mut Ui, m: &Model, c: &Character, filter: &str, art: &mut Art) {
                     id: l.id,
                     icon: info.and_then(|i| i.icon),
                     name: if name.is_empty() {
-                        format!("Item {}", l.id)
+                        tr!("Item {id}", id = l.id)
                     } else {
                         name
                     },
@@ -175,15 +176,15 @@ fn items(ui: &mut Ui, m: &Model, c: &Character, filter: &str, art: &mut Art) {
         .filter(|r| needle.is_empty() || r.name.to_lowercase().contains(&needle))
         .collect();
     if rows.is_empty() {
-        ui.label(RichText::new("No items match.").color(MUTED));
+        ui.label(RichText::new(tr!("No items match.")).color(MUTED));
         return;
     }
     let cols = [
-        Col::grow("Item"),
-        Col::num("Gained", 60.0),
-        Col::num("Gone", 50.0),
-        Col::fit("From", 110.0),
-        Col::fit("First seen", 130.0),
+        Col::grow(tr!("Item")),
+        Col::num(tr!("Gained"), 80.0),
+        Col::num(tr!("Gone"), 70.0),
+        Col::fit(tr!("From"), 130.0),
+        Col::fit(tr!("First seen"), 150.0),
     ];
     widgets::table(
         ui,

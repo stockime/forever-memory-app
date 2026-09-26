@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 base64 = "0.23.1"
-chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
+chrono = { version = "0.4.45", default-features = false, features = ["clock", "unstable-locales"] }
 dirs = "7.0.0"
 eframe = "0.36.2"
 egui = "0.36.2"
@@ -24,5 +24,6 @@ sha2 = "0.11.0"
 shell-words = "1.1.1"
 sys-locale = "0.3.2"
 sysinfo = { version = "0.39.6", default-features = false, features = ["system"] }
+ttf-parser = "0.25"
 ureq = { version = "3.4.2", features = ["json"] }
 zstd = "0.14.0"

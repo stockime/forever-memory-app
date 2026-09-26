@@ -15,11 +15,6 @@ const API: &str = "https://api.elevenlabs.io/v1";
 const TTS_MODEL: &str = "eleven_v3";
 const DESIGN_MODEL: &str = "eleven_ttv_v3";
 
-/// Where the key is kept: the settings file.
-pub fn key_file() -> PathBuf {
-    crate::config::settings_file()
-}
-
 pub fn api_key() -> Option<String> {
     crate::config::get().elevenlabs_key()
 }

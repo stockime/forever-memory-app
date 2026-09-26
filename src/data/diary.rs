@@ -17,7 +17,7 @@ pub fn day_of(t: i64) -> String {
 
 pub fn pretty_day(day: &str) -> String {
     chrono::NaiveDate::parse_from_str(day, "%Y-%m-%d")
-        .map(|d| d.format("%A, %-d %B %Y").to_string())
+        .map(crate::theme::long_day)
         .unwrap_or_else(|_| day.to_string())
 }
 

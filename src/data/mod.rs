@@ -4,6 +4,7 @@ pub mod diary;
 pub mod memory;
 pub mod players;
 
+use crate::tr;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
@@ -126,45 +127,48 @@ fn tips(m: &memory::Memory) -> Vec<String> {
             .count();
         let deaths = c.events.iter().filter(|e| e.e == "death").count();
         let played: i64 = c.sessions.iter().map(|s| s.seconds()).sum();
-        out.push(format!(
-            "{} has spent {} in the world.",
-            c.name,
-            crate::theme::duration(played as f64)
+        let name = &c.name;
+        out.push(tr!(
+            "{name} has spent {time} in the world.",
+            name = name,
+            time = crate::theme::duration(played as f64)
         ));
-        if done > 0 {
-            out.push(format!(
-                "{} has seen {done} task{} through.",
-                c.name,
-                if done == 1 { "" } else { "s" }
+        if done == 1 {
+            out.push(tr!(
+                "{name} has seen {n} task through.",
+                name = name,
+                n = done
+            ));
+        } else if done > 1 {
+            out.push(tr!(
+                "{name} has seen {n} tasks through.",
+                name = name,
+                n = done
             ));
         }
-        out.push(if deaths == 0 {
-            format!("{} has not died. Yet.", c.name)
-        } else {
-            format!(
-                "{} has died {deaths} time{}.",
-                c.name,
-                if deaths == 1 { "" } else { "s" }
-            )
+        out.push(match deaths {
+            0 => tr!("{name} has not died. Yet.", name = name),
+            1 => tr!("{name} has died {n} time.", name = name, n = deaths),
+            _ => tr!("{name} has died {n} times.", name = name, n = deaths),
         });
         if let Some(q) = c
             .quests
             .iter()
             .find(|q| q.status == memory::QuestStatus::Active)
         {
-            out.push(format!(
-                "Still waiting on {}: \"{}\".",
-                c.name.split(' ').next().unwrap_or(""),
-                q.title
+            out.push(tr!(
+                "Still waiting on {name}: \"{quest}\".",
+                name = c.name.split(' ').next().unwrap_or(""),
+                quest = q.title
             ));
         }
         if !c.diary.is_empty() {
-            out.push(format!(
-                "{} has written {} diary entr{}.",
-                c.name,
-                c.diary.len(),
-                if c.diary.len() == 1 { "y" } else { "ies" }
-            ));
+            let n = c.diary.len();
+            out.push(if n == 1 {
+                tr!("{name} has written {n} diary entry.", name = name, n = n)
+            } else {
+                tr!("{name} has written {n} diary entries.", name = name, n = n)
+            });
         }
     }
     out
