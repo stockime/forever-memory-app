@@ -62,6 +62,8 @@ pub struct Combat {
     pub dealt: Vec<Hit>,  // by me (or my pet)
     pub taken: Vec<Hit>,  // to me
     pub healed: Vec<Hit>, // by me
+    /// SPELL_CAST_SUCCESS by me (amount 0), for spells that neither hit nor heal.
+    pub casts: Vec<Hit>,
     pub kills: Vec<(f64, u32)>,
     pub deaths: Vec<f64>,
     pub players: HashMap<u32, PlayerSeen>,
@@ -316,6 +318,15 @@ fn parse(c: &mut Combat, text: &str, mine: &[u32], last_hit: &mut HashMap<u32, f
             }
         }
         match event {
+            "SPELL_CAST_SUCCESS" if src != u32::MAX && is_me(src) => c.casts.push(Hit {
+                t,
+                src,
+                dst,
+                spell,
+                amount: 0,
+                over: 0,
+                crit: false,
+            }),
             "SPELL_CAST_SUCCESS"
                 if src != u32::MAX
                     && !is_me(src)

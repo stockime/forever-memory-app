@@ -12,6 +12,7 @@ pub mod overview;
 pub mod players;
 pub mod quests;
 pub mod settings;
+pub mod story;
 pub mod widgets;
 
 use crate::art::Art;

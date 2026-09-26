@@ -163,13 +163,14 @@ impl Settings {
 
     /// The chosen language, else the game client's, else the system's.
     pub fn lang(&self) -> Lang {
-        if let Some(l) = Lang::from_code(&self.language) {
-            return l;
-        }
+        // FM_LANG wins, for screenshots and testing.
         if let Some(l) = std::env::var("FM_LANG")
             .ok()
             .and_then(|c| Lang::from_code(&c))
         {
+            return l;
+        }
+        if let Some(l) = Lang::from_code(&self.language) {
             return l;
         }
         self.install()
