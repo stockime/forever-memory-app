@@ -684,7 +684,7 @@ impl eframe::App for App {
                     return;
                 }
                 if self.page == Page::Settings {
-                    ui::settings::show(ui, st, model.memory.characters.len(), &model.rp.sources);
+                    ui::settings::show(ui, st, &mut self.art, model.memory.characters.len(), &model.rp.sources);
                     return;
                 }
                 let art = &mut self.art;

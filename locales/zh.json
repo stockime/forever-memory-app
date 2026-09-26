@@ -922,5 +922,18 @@
  "for": "花费",
  "Nothing of that kind in this session.": "这次游戏中没有这类记录。",
  "The session after": "下一次游戏",
- "The session before": "上一次游戏"
+ "The session before": "上一次游戏",
+ "Found": "已找到",
+ "Linked": "已链接",
+ "Looking…": "正在查找……",
+ "Not installed": "未安装",
+ "Off": "关闭",
+ "On": "开启",
+ "Paused": "已暂停",
+ "Recording": "记录中",
+ "Safekeeping": "妥善保管",
+ "The diary": "日记",
+ "The game": "游戏",
+ "Update ready": "有可用更新",
+ "Waiting for the game": "等待游戏"
 }

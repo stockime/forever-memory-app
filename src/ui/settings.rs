@@ -2,12 +2,14 @@
 //! addon, the language, who writes the diary, the narration key, where the
 //! archive lives and an optional backup to object storage.
 
-use super::{card, heading, label};
+use super::{card, label};
+use crate::art::Art;
 use crate::config::{S3, Settings, Writer};
 use crate::i18n::Lang;
 use crate::theme::{self, DANGER, GOLD, GOOD, INK, MUTED};
 use crate::{State, addon, platform, sync, tr, writer};
-use egui::{RichText, Ui};
+use egui::{Color32, Rect, RichText, Sense, Stroke, Ui, pos2, vec2};
+use std::cell::RefCell;
 use std::path::PathBuf;
 use std::sync::mpsc::{Receiver, channel};
 
@@ -58,7 +60,7 @@ fn job(
     (name, rx)
 }
 
-pub fn show(ui: &mut Ui, st: &mut State, characters: usize, rp: &[crate::data::rp::Source]) {
+pub fn show(ui: &mut Ui, st: &mut State, art: &mut Art, characters: usize, rp: &[crate::data::rp::Source]) {
     let page = &mut st.settings_page;
     let saved = crate::config::get();
     let draft = page.draft.get_or_insert_with(|| saved.clone());
@@ -95,37 +97,65 @@ pub fn show(ui: &mut Ui, st: &mut State, characters: usize, rp: &[crate::data::r
         .id_salt("settings")
         .auto_shrink(false)
         .show(ui, |ui| {
-            ui.set_max_width(780.0);
+            ui.set_max_width(1180.0);
             if !draft.onboarded || characters == 0 {
-                welcome(ui, draft, characters);
-                ui.add_space(14.0);
-            } else {
-                heading(ui, tr!("Settings"));
-                ui.add_space(8.0);
+                welcome(ui, art, draft, characters);
+                ui.add_space(22.0);
             }
-            game(ui, draft, &found, page.finding.is_some());
-            ui.add_space(12.0);
-            if !rp.is_empty() {
-                roleplay(ui, rp);
-                ui.add_space(12.0);
-            }
-            language(ui, draft);
-            ui.add_space(12.0);
-            writer_card(
+            // Both halves of a pair change the settings and draw icons.
+            let d = RefCell::new(&mut *draft);
+            let a = RefCell::new(&mut *art);
+            let jobs = RefCell::new((&mut page.job, &mut page.models_job));
+            let finding = page.finding.is_some();
+
+            label(ui, tr!("The game"));
+            ui.add_space(4.0);
+            super::pair(
                 ui,
-                draft,
-                &found,
-                &mut page.job,
-                &page.results,
-                &page.models,
-                &mut page.models_job,
+                |ui| game(ui, &mut a.borrow_mut(), &mut d.borrow_mut(), &found, finding),
+                |ui| addon_card(ui, &mut a.borrow_mut(), &mut d.borrow_mut()),
             );
-            ui.add_space(12.0);
-            narration(ui, draft);
-            ui.add_space(12.0);
-            archive(ui, draft, &st.sync_status);
-            ui.add_space(12.0);
-            backup(ui, draft, &mut page.job, &page.results);
+            if !rp.is_empty() {
+                ui.add_space(14.0);
+                roleplay(ui, &mut a.borrow_mut(), rp);
+            }
+
+            ui.add_space(24.0);
+            label(ui, tr!("The diary"));
+            ui.add_space(4.0);
+            super::pair(
+                ui,
+                |ui| {
+                    let (job, models_job) = &mut *jobs.borrow_mut();
+                    writer_card(
+                        ui,
+                        &mut a.borrow_mut(),
+                        &mut d.borrow_mut(),
+                        &found,
+                        job,
+                        &page.results,
+                        &page.models,
+                        models_job,
+                    );
+                },
+                |ui| {
+                    narration(ui, &mut a.borrow_mut(), &mut d.borrow_mut());
+                    ui.add_space(14.0);
+                    language(ui, &mut a.borrow_mut(), &mut d.borrow_mut());
+                },
+            );
+
+            ui.add_space(24.0);
+            label(ui, tr!("Safekeeping"));
+            ui.add_space(4.0);
+            super::pair(
+                ui,
+                |ui| archive(ui, &mut a.borrow_mut(), &mut d.borrow_mut(), &st.sync_status),
+                |ui| {
+                    let (job, _) = &mut *jobs.borrow_mut();
+                    backup(ui, &mut a.borrow_mut(), &mut d.borrow_mut(), job, &page.results);
+                },
+            );
             ui.add_space(24.0);
         });
 
@@ -171,12 +201,80 @@ fn check(ui: &mut Ui, value: &mut bool, text: &str) {
     });
 }
 
+/// A long path with its middle left out, so its start and its end show.
+fn middle(text: &str, max: usize) -> String {
+    let chars: Vec<char> = text.chars().collect();
+    if chars.len() <= max || max < 12 {
+        return text.to_string();
+    }
+    let head = max / 3;
+    let tail = max - head - 1;
+    let mut out: String = chars[..head].iter().collect();
+    out.push('…');
+    out.extend(&chars[chars.len() - tail..]);
+    out
+}
+
+/// A painted tick in a ring, or an open ring for a step still to take.
+fn tick(ui: &mut Ui, done: bool, size: f32) {
+    let (r, _) = ui.allocate_exact_size(vec2(size, size), Sense::hover());
+    let c = r.center();
+    let p = ui.painter();
+    if done {
+        p.circle_filled(c, size / 2.0, Color32::from_rgba_unmultiplied(0x3c, 0xb3, 0x71, 40));
+        p.circle_stroke(c, size / 2.0 - 1.0, Stroke::new(1.5, GOOD));
+        let s = size / 2.0;
+        p.line(
+            vec![c + vec2(-s * 0.42, 0.0), c + vec2(-s * 0.1, s * 0.32), c + vec2(s * 0.45, -s * 0.35)],
+            Stroke::new(2.0, GOOD),
+        );
+    } else {
+        p.circle_stroke(c, size / 2.0 - 1.0, Stroke::new(1.5, Color32::from_rgb(0x6b, 0x5a, 0x33)));
+    }
+}
+
 fn ok(ui: &mut Ui, text: &str) {
-    ui.label(RichText::new(format!("✔ {text}")).color(GOOD));
+    ui.horizontal_top(|ui| {
+        tick(ui, true, 16.0);
+        ui.add(egui::Label::new(RichText::new(text).color(GOOD)).wrap());
+    });
 }
 
 fn warn(ui: &mut Ui, text: &str) {
-    ui.label(RichText::new(text).color(DANGER));
+    ui.add(egui::Label::new(RichText::new(text).color(DANGER)).wrap());
+}
+
+/// How a card's subject stands, shown at its top right.
+enum Status {
+    Good(String),
+    Warn(String),
+    Quiet(String),
+}
+
+/// A card's head: its framed icon, its title and how it stands.
+fn head(ui: &mut Ui, art: &mut Art, icon: i64, title: &str, status: Status) {
+    ui.horizontal(|ui| {
+        let (r, _) = ui.allocate_exact_size(vec2(34.0, 34.0), Sense::hover());
+        let p = ui.painter();
+        p.rect_filled(r, 5.0, Color32::from_rgb(5, 7, 15));
+        if let Some(t) = art.icon(ui.ctx(), Some(icon)) {
+            p.image(t.id(), r.shrink(1.5), Rect::from_min_max(pos2(0.07, 0.07), pos2(0.93, 0.93)), Color32::WHITE);
+        }
+        p.rect_stroke(r, 5.0, Stroke::new(1.0, Color32::from_rgb(0x8a, 0x6d, 0x2c)), egui::StrokeKind::Outside);
+        ui.add_space(6.0);
+        ui.label(RichText::new(title).font(theme::display_font(20.0)).color(INK));
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let (text, color) = match &status {
+                Status::Good(t) => (t, GOOD),
+                Status::Warn(t) => (t, DANGER),
+                Status::Quiet(t) => (t, MUTED),
+            };
+            ui.label(RichText::new(text).color(color));
+            let (r, _) = ui.allocate_exact_size(vec2(8.0, 8.0), Sense::hover());
+            ui.painter().circle_filled(r.center(), 3.5, color);
+        });
+    });
+    ui.add_space(8.0);
 }
 
 fn note(ui: &mut Ui, text: &str) {
@@ -197,50 +295,64 @@ fn folder(ui: &mut Ui, value: &mut Option<PathBuf>, default: PathBuf, id: &str) 
         .as_ref()
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_default();
-    ui.horizontal(|ui| {
-        let r = ui.add(
-            egui::TextEdit::singleline(&mut text)
-                .id_salt(id)
-                .hint_text(default.to_string_lossy())
-                .desired_width((ui.available_width() - 190.0).max(200.0)),
-        );
-        if r.changed() {
-            *value = (!text.trim().is_empty()).then(|| PathBuf::from(text.trim()));
-        }
-        if ui.button(tr!("Choose…")).clicked()
-            && let Some(p) = rfd::FileDialog::new()
-                .set_directory(value.clone().unwrap_or(default.clone()))
-                .pick_folder()
+    // The buttons take what they need from the right; the field the rest.
+    ui.allocate_ui_with_layout(
+        vec2(ui.available_width(), 28.0),
+        egui::Layout::right_to_left(egui::Align::Center),
+        |ui| {
+            if ui.button(tr!("Open")).clicked() {
+                platform::reveal(&value.clone().unwrap_or(default.clone()));
+            }
+            if ui.button(tr!("Choose…")).clicked()
+                && let Some(p) = rfd::FileDialog::new()
+                    .set_directory(value.clone().unwrap_or(default.clone()))
+                    .pick_folder()
             {
                 *value = Some(p);
             }
-        if ui.button(tr!("Open")).clicked() {
-            platform::reveal(&value.clone().unwrap_or(default.clone()));
-        }
-    });
+            let r = ui.add(
+                egui::TextEdit::singleline(&mut text)
+                    .id_salt(id)
+                    .hint_text(default.to_string_lossy())
+                    .desired_width(ui.available_width()),
+            );
+            if r.changed() {
+                *value = (!text.trim().is_empty()).then(|| PathBuf::from(text.trim()));
+            }
+        },
+    );
 }
 
-fn welcome(ui: &mut Ui, s: &mut Settings, characters: usize) {
+fn welcome(ui: &mut Ui, art: &mut Art, s: &mut Settings, characters: usize) {
     card(ui, |ui| {
         ui.set_width(ui.available_width());
-        ui.label(
-            RichText::new(tr!("Welcome to Forever Memory"))
-                .font(theme::display_font(30.0))
-                .color(GOLD),
-        );
+        ui.horizontal(|ui| {
+            let (r, _) = ui.allocate_exact_size(vec2(44.0, 44.0), Sense::hover());
+            let p = ui.painter();
+            p.rect_filled(r, 6.0, Color32::from_rgb(5, 7, 15));
+            if let Some(t) = art.icon(ui.ctx(), Some(134063)) {
+                p.image(t.id(), r.shrink(2.0), Rect::from_min_max(pos2(0.07, 0.07), pos2(0.93, 0.93)), Color32::WHITE);
+            }
+            p.rect_stroke(r, 6.0, Stroke::new(1.5, GOLD), egui::StrokeKind::Outside);
+            ui.add_space(8.0);
+            ui.label(
+                RichText::new(tr!("Welcome to Forever Memory"))
+                    .font(theme::display_font(30.0))
+                    .color(GOLD),
+            );
+        });
+        ui.add_space(6.0);
         ui.label(RichText::new(tr!("Your characters' armory, every step on the map, their fights, quests and the people they met, and a diary they write themselves. Three steps and you're set:")).color(INK));
         ui.add_space(10.0);
         let install = s.install();
         let flavor = install.as_ref().and_then(|i| s.flavor_in(i));
         let step = |ui: &mut Ui, done: bool, text: &str| {
             ui.horizontal(|ui| {
-                ui.label(
-                    RichText::new(if done { "✔" } else { "○" })
-                        .color(if done { GOOD } else { MUTED })
-                        .size(18.0),
-                );
-                ui.label(RichText::new(text).color(if done { MUTED } else { INK }));
+                tick(ui, done, 20.0);
+                ui.add_space(4.0);
+                ui.label(RichText::new(text).size(16.0).color(if done { MUTED } else { INK }));
             });
+            ui.add_space(2.0);
         };
         step(
             ui,
@@ -274,40 +386,52 @@ fn welcome(ui: &mut Ui, s: &mut Settings, characters: usize) {
     });
 }
 
-fn game(ui: &mut Ui, s: &mut Settings, found: &Found, finding: bool) {
+fn game(ui: &mut Ui, art: &mut Art, s: &mut Settings, found: &Found, finding: bool) {
     card(ui, |ui| {
         ui.set_width(ui.available_width());
-        label(ui, tr!("World of Warcraft"));
         let install = s.install();
-        ui.horizontal(|ui| {
-            let current = install
-                .as_ref()
-                .map(|p| p.to_string_lossy().to_string())
-                .unwrap_or_else(|| tr!("Not found").to_string());
-            egui::ComboBox::from_id_salt("install")
-                .width((ui.available_width() - 190.0).max(200.0))
-                .selected_text(current)
-                .show_ui(ui, |ui| {
-                    for p in &found.installs {
-                        let text = p.to_string_lossy().to_string();
-                        if ui
-                            .selectable_label(install.as_ref() == Some(p), text)
-                            .clicked()
-                        {
-                            s.game_dir = Some(p.clone());
-                            s.flavor.clear();
-                        }
-                    }
-                });
-            if ui.button(tr!("Choose…")).clicked()
-                && let Some(p) = rfd::FileDialog::new().pick_folder() {
+        let status = match &install {
+            Some(_) => Status::Good(tr!("Found").into()),
+            None if finding => Status::Quiet(tr!("Looking…").into()),
+            None => Status::Warn(tr!("Not found").into()),
+        };
+        head(ui, art, 236180, tr!("World of Warcraft"), status);
+        ui.allocate_ui_with_layout(
+            vec2(ui.available_width(), 28.0),
+            egui::Layout::right_to_left(egui::Align::Center),
+            |ui| {
+                if finding {
+                    ui.spinner();
+                }
+                if ui.button(tr!("Choose…")).clicked()
+                    && let Some(p) = rfd::FileDialog::new().pick_folder()
+                {
                     s.game_dir = Some(p);
                     s.flavor.clear();
                 }
-            if finding {
-                ui.spinner();
-            }
-        });
+                let current = install
+                    .as_ref()
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_else(|| tr!("Not found").to_string());
+                let w = ui.available_width() - 8.0;
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                    egui::ComboBox::from_id_salt("install")
+                        .width(w - 30.0)
+                        .selected_text(middle(&current, ((w - 40.0) / 8.5) as usize))
+                        .show_ui(ui, |ui| {
+                            for p in &found.installs {
+                                let text = p.to_string_lossy().to_string();
+                                if ui.selectable_label(install.as_ref() == Some(p), text).clicked() {
+                                    s.game_dir = Some(p.clone());
+                                    s.flavor.clear();
+                                }
+                            }
+                        })
+                        .response
+                        .on_hover_text(&current);
+                });
+            },
+        );
         if let Some(d) = &s.game_dir
             && !platform::is_install(d) {
                 warn(
@@ -359,12 +483,28 @@ fn game(ui: &mut Ui, s: &mut Settings, found: &Found, finding: bool) {
                 );
             }
         });
-        let Some(flavor) = flavor else { return };
-        ui.add_space(10.0);
-        label(ui, tr!("The armory addon"));
+    });
+}
+
+fn addon_card(ui: &mut Ui, art: &mut Art, s: &mut Settings) {
+    card(ui, |ui| {
+        ui.set_width(ui.available_width());
+        let place = s.install().and_then(|i| s.flavor_in(&i).map(|f| (i, f)));
+        let Some((install, flavor)) = place else {
+            head(ui, art, 133740, tr!("The armory addon"), Status::Quiet(tr!("Waiting for the game").into()));
+            note(ui, tr!("It records what your characters live through into the game's saved variables. It changes nothing in the game and sends nothing anywhere."));
+            return;
+        };
         let dir = addon::dir(&install, &flavor);
         let state = addon::state(&dir);
         let bundled = addon::bundled_version();
+        let status = match &state {
+            addon::State::Missing => Status::Warn(tr!("Not installed").into()),
+            addon::State::Linked(_) => Status::Good(tr!("Linked").into()),
+            _ if addon::outdated(&state) => Status::Warn(tr!("Update ready").into()),
+            addon::State::Installed { version } => Status::Good(version.clone()),
+        };
+        head(ui, art, 133740, tr!("The armory addon"), status);
         match &state {
             addon::State::Missing => note(
                 ui,
@@ -434,10 +574,11 @@ fn game(ui: &mut Ui, s: &mut Settings, found: &Found, finding: bool) {
 }
 
 /// The roleplay addons found in the game folder; read, never written.
-fn roleplay(ui: &mut Ui, sources: &[crate::data::rp::Source]) {
+fn roleplay(ui: &mut Ui, art: &mut Art, sources: &[crate::data::rp::Source]) {
     card(ui, |ui| {
         ui.set_width(ui.available_width());
-        label(ui, tr!("Roleplay profiles"));
+        let names: Vec<&str> = sources.iter().map(|s| s.addon).collect();
+        head(ui, art, 136118, tr!("Roleplay profiles"), Status::Good(names.join(", ")));
         for s in sources {
             let mut parts = vec![];
             match s.own {
@@ -461,15 +602,15 @@ fn roleplay(ui: &mut Ui, sources: &[crate::data::rp::Source]) {
     });
 }
 
-fn language(ui: &mut Ui, s: &mut Settings) {
+fn language(ui: &mut Ui, art: &mut Art, s: &mut Settings) {
     card(ui, |ui| {
         ui.set_width(ui.available_width());
-        label(ui, tr!("Language"));
         let auto = {
             let mut probe = s.clone();
             probe.language.clear();
             probe.lang()
         };
+        head(ui, art, 134939, tr!("Language"), Status::Quiet(s.lang().native_name().to_string()));
         let chosen = Lang::from_code(&s.language);
         let auto_text = tr!("Automatic ({language})", language = auto.native_name());
         egui::ComboBox::from_id_salt("language")
@@ -503,6 +644,7 @@ fn language(ui: &mut Ui, s: &mut Settings) {
 #[allow(clippy::too_many_arguments)]
 fn writer_card(
     ui: &mut Ui,
+    art: &mut Art,
     s: &mut Settings,
     found: &Found,
     job: &mut Option<(&'static str, Receiver<Result<String, String>>)>,
@@ -512,7 +654,14 @@ fn writer_card(
 ) {
     card(ui, |ui| {
         ui.set_width(ui.available_width());
-        label(ui, tr!("Who writes the diary"));
+        let status = match &s.writer {
+            Writer::Off => Status::Quiet(tr!("Nobody").into()),
+            w => match writer::resolve(w) {
+                Some(r) => Status::Good(r.name()),
+                None => Status::Warn(tr!("Nothing found").into()),
+            },
+        };
+        head(ui, art, 132602, tr!("Who writes the diary"), status);
         note(
             ui,
             tr!(
@@ -638,24 +787,24 @@ fn writer_card(
                     .num_columns(2)
                     .spacing([12.0, 6.0])
                     .show(ui, |ui| {
-                        ui.label(RichText::new(tr!("Base URL")).color(MUTED));
+                        ui.add(egui::Label::new(RichText::new(tr!("Base URL")).color(MUTED)).extend());
                         ui.add(
                             egui::TextEdit::singleline(base_url)
                                 .hint_text("https://api.openai.com/v1")
-                                .desired_width(420.0),
+                                .desired_width(ui.available_width().min(420.0)),
                         );
                         ui.end_row();
-                        ui.label(RichText::new(tr!("API key")).color(MUTED));
+                        ui.add(egui::Label::new(RichText::new(tr!("API key")).color(MUTED)).extend());
                         ui.add(
                             egui::TextEdit::singleline(api_key)
                                 .password(true)
                                 .hint_text(tr!("not needed for local servers"))
-                                .desired_width(420.0),
+                                .desired_width(ui.available_width().min(420.0)),
                         );
                         ui.end_row();
-                        ui.label(RichText::new(tr!("Model")).color(MUTED));
+                        ui.add(egui::Label::new(RichText::new(tr!("Model")).color(MUTED)).extend());
                         ui.horizontal(|ui| {
-                            ui.add(egui::TextEdit::singleline(model).desired_width(260.0));
+                            ui.add(egui::TextEdit::singleline(model).desired_width((ui.available_width() - 240.0).clamp(120.0, 260.0)));
                             if !models.is_empty() {
                                 egui::ComboBox::from_id_salt("models")
                                     .selected_text(tr!("Pick"))
@@ -722,10 +871,12 @@ fn writer_card(
     });
 }
 
-fn narration(ui: &mut Ui, s: &mut Settings) {
+fn narration(ui: &mut Ui, art: &mut Art, s: &mut Settings) {
     card(ui, |ui| {
         ui.set_width(ui.available_width());
-        label(ui, tr!("Reading the diary aloud"));
+        let on = !s.elevenlabs_key.trim().is_empty() || std::env::var("ELEVENLABS_API_KEY").is_ok();
+        let status = if on { Status::Good(tr!("On").into()) } else { Status::Quiet(tr!("Off").into()) };
+        head(ui, art, 135974, tr!("Reading the diary aloud"), status);
         note(
             ui,
             tr!(
@@ -737,7 +888,7 @@ fn narration(ui: &mut Ui, s: &mut Settings) {
             ui.add(
                 egui::TextEdit::singleline(&mut s.elevenlabs_key)
                     .password(true)
-                    .desired_width(360.0),
+                    .desired_width(ui.available_width().min(360.0)),
             );
         });
         if std::env::var("ELEVENLABS_API_KEY").is_ok() {
@@ -749,10 +900,11 @@ fn narration(ui: &mut Ui, s: &mut Settings) {
     });
 }
 
-fn archive(ui: &mut Ui, s: &mut Settings, status: &sync::SharedStatus) {
+fn archive(ui: &mut Ui, art: &mut Art, s: &mut Settings, status: &sync::SharedStatus) {
     card(ui, |ui| {
         ui.set_width(ui.available_width());
-        label(ui, tr!("The archive"));
+        let state = if s.record { Status::Good(tr!("Recording").into()) } else { Status::Quiet(tr!("Paused").into()) };
+        head(ui, art, 133611, tr!("The archive"), state);
         note(
             ui,
             tr!(
@@ -817,13 +969,15 @@ fn archive(ui: &mut Ui, s: &mut Settings, status: &sync::SharedStatus) {
 
 fn backup(
     ui: &mut Ui,
+    art: &mut Art,
     s: &mut Settings,
     job: &mut Option<(&'static str, Receiver<Result<String, String>>)>,
     results: &std::collections::HashMap<&'static str, Result<String, String>>,
 ) {
     card(ui, |ui| {
         ui.set_width(ui.available_width());
-        label(ui, tr!("Backup to object storage"));
+        let status = if s.s3.enabled { Status::Good(tr!("On").into()) } else { Status::Quiet(tr!("Off").into()) };
+        head(ui, art, 135925, tr!("Backup to object storage"), status);
         check(
             ui,
             &mut s.s3.enabled,
@@ -862,12 +1016,12 @@ fn backup(
                     (tr!("Access key"), access_key, "", true),
                     (tr!("Secret key"), secret_key, "", true),
                 ] {
-                    ui.label(RichText::new(text).color(MUTED));
+                    ui.add(egui::Label::new(RichText::new(text).color(MUTED)).extend());
                     ui.add(
                         egui::TextEdit::singleline(value)
                             .password(secret)
                             .hint_text(hint)
-                            .desired_width(360.0),
+                            .desired_width(ui.available_width().min(360.0)),
                     );
                     ui.end_row();
                 }

@@ -922,5 +922,18 @@
  "for": "por",
  "Nothing of that kind in this session.": "Nada de eso en esta sesión.",
  "The session after": "La sesión siguiente",
- "The session before": "La sesión anterior"
+ "The session before": "La sesión anterior",
+ "Found": "Encontrado",
+ "Linked": "Enlazado",
+ "Looking…": "Buscando…",
+ "Not installed": "No instalado",
+ "Off": "Desactivado",
+ "On": "Activado",
+ "Paused": "En pausa",
+ "Recording": "Grabando",
+ "Safekeeping": "A buen recaudo",
+ "The diary": "El diario",
+ "The game": "El juego",
+ "Update ready": "Actualización lista",
+ "Waiting for the game": "Esperando al juego"
 }

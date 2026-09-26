@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.3
+
+- Settings in three parts (the game, the diary, safekeeping), two cards to
+  a row on wide windows. Each card shows its game icon and how it stands at
+  a glance (found, linked, recording, on or off); the welcome's steps are
+  ticked off as they are done. Long paths no longer push the page wider
+  than the window.
+
 ## 0.4.2
 
 - The Journal reads as a timeline: a chapter for each zone entered, the
